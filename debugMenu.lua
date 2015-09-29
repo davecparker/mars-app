@@ -21,6 +21,7 @@ local act = game.newAct()
 local debugActs = {
 	"sampleAct",
 	"blankAct",
+	"circuit",
 }
 
 ------------------------- Start of Activity --------------------------------
