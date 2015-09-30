@@ -16,6 +16,7 @@ local widget = require( "widget" )  -- need to make buttons
 local nutsRemoved = 0    -- the number of nuts that have been removed
 local panel
 local adjustment = 0   -- used for rotation of the wrench
+local largeBG
 
 -- function to remove everything when the toolbox closes
 local function toolBoxClose ()
@@ -155,9 +156,9 @@ function act:init()
 	wires.y = act.yCenter + 15
 
 	-- background
-	local bg = act:newImage ( "background.png", { width = 400 } )
-	bg.x = act.xCenter
-	bg.y = act.yCenter + 25
+	local bg = act:newImage ( "backgroundLarge.jpg", { width = 480 } )
+	--bg.x = act.xCenter
+	--bg.y = act.yCenter
 	bg:addEventListener( "touch", bgTouch )
 
 	-- toolbox icon
@@ -195,6 +196,22 @@ function act:init()
 	nut.BR.x = act.xCenter + 110
 	nut.BR.y = act.yCenter + 170
 	nut.BR:addEventListener( "touch", nutTouch )
+
+	-- function to remove the Large background after the zoom
+	local function removeBG ( event )
+		if largeBG then   -- make sure that it is still there
+			largeBG:removeSelf( )  -- remove it
+			largeBG = nil
+		end
+		return true -- prevents other things in the image from being touched
+	end
+
+	-- Draws the large background (NEEDS TO BE LAST THING DRAWN)
+	largeBG = act:newImage ( "backgroundLarge.jpg", { width = 480 / 1.5} )
+
+	largeBG:addEventListener( "touch", removeBG )    -- added a touch event if the player wants to skip the zoom in
+	transition.scaleBy( largeBG, { xScale = 0.5, yScale = 0.5, time = 2000 } )  -- this is the zoom in time controls how long this sequence is (2000 = 2 seconds)
+	timer.performWithDelay( 2500, removeBG )  -- 2500 (2.5 seconds)  is the delay amount. Needs to be equal or greater to the transistion time
 
 end
 
