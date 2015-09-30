@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------------------------
 --
--- blankAct.lua
+-- circuit.lua
 --
--- An empty (template) activity
+-- Joe Cracchiolo
 -----------------------------------------------------------------------------------------
 
 -- Get local reference to the game globals
@@ -90,6 +90,9 @@ local function turnWrench ( event )
 		if nutsRemoved == 4 then
 			wrench:removeSelf()
 			wrench = nil
+			---- TODO Should have something before it jumps to next scene=======================================================================
+			game.gotoAct( "wireCut" )
+			--==================================================================================================================================
 		end
 	end
 
@@ -212,7 +215,6 @@ function act:init()
 	largeBG:addEventListener( "touch", removeBG )    -- added a touch event if the player wants to skip the zoom in
 	transition.scaleBy( largeBG, { xScale = 0.5, yScale = 0.5, time = 2000 } )  -- this is the zoom in time controls how long this sequence is (2000 = 2 seconds)
 	timer.performWithDelay( 2500, removeBG )  -- 2500 (2.5 seconds)  is the delay amount. Needs to be equal or greater to the transistion time
-
 end
 
 ------------------------- End of Activity --------------------------------
