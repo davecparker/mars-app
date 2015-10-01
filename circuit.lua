@@ -91,7 +91,7 @@ local function turnWrench ( event )
 			wrench:removeSelf()
 			wrench = nil
 			---- TODO Should have something before it jumps to next scene=======================================================================
-			--game.gotoAct( "wireCut" )
+			game.gotoAct( "wireCut" )
 			--==================================================================================================================================
 		end
 	end
