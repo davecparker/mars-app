@@ -23,6 +23,7 @@ local debugActs = {
 	"blankAct",
 	"circuit",
 	"doorLock",
+	"wireCut",
 }
 
 ------------------------- Start of Activity --------------------------------
