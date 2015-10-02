@@ -23,7 +23,7 @@ local ufo       	-- flying UFO object
 -- Make a small green circle centered at the given location
 local function makeGreenCircle( x, y )
 	local c = display.newCircle( act.group, x, y, 20 )
-	c:setFillColor( 1, 1, 0 )  -- green
+	c:setFillColor( 0, 0, 1 )  -- blue
 	return c
 end
 
