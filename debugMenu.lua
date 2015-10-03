@@ -24,6 +24,7 @@ local debugActs = {
 	"circuit",
 	"doorLock",
 	"wireCut",
+	"thrustNav",
 }
 
 ------------------------- Start of Activity --------------------------------
