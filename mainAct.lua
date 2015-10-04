@@ -18,6 +18,9 @@ local act = game.newAct()
 function act:init()
 	-- For now, just display sample map image
 	act:newImage( "shipPlan.png", { width = act.width } )
+
+	-- Post a new document (TODO: Temporary)
+	game.foundDocument( "Security Announcement" )
 end
 
 

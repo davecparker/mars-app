@@ -64,6 +64,9 @@ function act:init()
 	local xStart = act.xMin - 100       -- start off screen to the left
 	local yStart = act.yCenter - 142    -- height from center is consistent relative to background image
 	ufo = act:newImage( "ufo.png", { x = xStart, y = yStart, height = 25 } )
+
+	-- Post a new document (TODO: Temporary)
+	game.foundDocument( "UFO Sighting Protocol" )
 end
 
 -- Handle enterFrame events
@@ -72,7 +75,7 @@ function act:enterFrame( event )
 	ufo.x = ufo.x + 3
 	if ufo.x > act.xMax + ufo.width / 2 then
 		ufo.x = act.xMin - ufo.width / 2
-		game.sendMessage( "ufo" )
+		game.sendMessage( "ufo" )  -- TODO: Temporary
 	end
 end
 
