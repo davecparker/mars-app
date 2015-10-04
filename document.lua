@@ -31,14 +31,8 @@ end
 
 -- Init the act
 function act:init()
-	-- Title bar for the view
-	act:makeTitleBar()
-
-	-- Back button
-	local bb = act:newImage( "back.png", { height = act.dyTitleBar * 0.6 } )
-	bb.x = act.xMin + 15
-	bb.y = act.yMin + act.dyTitleBar / 2
-	bb:addEventListener( "tap", backTapped )
+	-- Title bar for the view with back button
+	act:makeTitleBar( "", backTapped )
 
 	-- Text area
 	-- TODO: Make this a native web view for HTML support?
