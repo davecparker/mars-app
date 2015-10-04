@@ -28,17 +28,8 @@ local newMsgs = {}       -- array of message ids sent but not yet displayed
 local scrollView         -- scrollView widget for the list
 local yNextMsg           -- y position for next text message in the scrollView
 local newMsgTimer        -- timer for checking for new messages
-local badge              -- display badge for new message indicator
+local badge              -- tab bar badge for new message indicator
 
-
--- Create a new message badge at the given position
-function createBadge( x, y )
-	local badge = display.newCircle( x, y, 5)
-	badge:setFillColor( 1, 1, 0 ) -- yellow fill
-	badge:setStrokeColor( 0 )     -- black frame
-	badge.strokeWidth = 1
-	return badge
-end
 
 -- Send the message with the given id
 function game.sendMessage( id )
@@ -46,9 +37,9 @@ function game.sendMessage( id )
 
 	-- Create new message badge if necessary, and show it
 	if not badge then
-		badge = createBadge( act.xMin + act.width * 0.75, act.yMax + 15 )
+		badge = game.createBadge( act.xMin + act.width * 0.75, act.yMax + 15 )
 	end
-	transition.fadeIn( badge, { time = 200 } )
+	game.showBadge( badge )
 end
 
 -- Send all the messages ids given by variable parameter list
@@ -131,7 +122,7 @@ local function checkNewMsg()
 
 		-- Hide the badge if this was the last message waiting
 		if #newMsgs <= 0 then
-			transition.fadeOut( badge, { time = 200 })
+			game.hideBadge( badge )
 		end
 	end
 end
@@ -139,7 +130,7 @@ end
 -- Prepare the act to show
 function act:start()
 	-- Start a repeating timer to check for messages after a brief interval each
-	newMsgTimer = timer.performWithDelay( 300, checkNewMsg, 0 )  
+	newMsgTimer = timer.performWithDelay( 250, checkNewMsg, 0 )  
 end
 
 -- Stop the act
