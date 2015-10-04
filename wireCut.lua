@@ -20,7 +20,9 @@ local act = game.newAct()
 function act:init()
 	
 	local wireCutBG = act:newImage ( "wireCutBG.jpg", { width = 320} )
+	wireCutBG.y = act.yCenter + 10
 	local wirePlaceholder = act:newImage ( "wiresPlaceholder.png", { width = 320} )
+	wirePlaceholder.y = act.yCenter + 10
 
 end
 

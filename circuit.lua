@@ -19,6 +19,7 @@ local largeBG
 local wrenchTurns = 0
 local lastAngle = 360  -- saves the last angle the wrench was at
 local wrenchRotation = 0 -- the actual angle of the wrench
+local offset = 0         -- saves an offset value for moving the panel
 
 -- function to remove everything when the toolbox closes
 local function toolBoxClose ()
@@ -89,14 +90,11 @@ local function turnWrench ( event )
 		wrenchRotation = wrench.rotation + 360
 	end
 	-- adds 1 to turn wrech upon a 360 degree rotation
-	if lastAngle < 5 then
+	if lastAngle < 20 then
 		lastAngle = 360
 		wrenchTurns = wrenchTurns + 1
 	end
 	-- back the wrench up if its moving in the wrong direction otherwise let it move counterclockwise
-	print("R " .. wrenchRotation)
-	print("A " .. lastAngle)
-	print (" ")
 	if wrenchRotation + 20  < lastAngle then
 		wrench.rotation = lastAngle
 	elseif wrenchRotation > lastAngle then
@@ -106,12 +104,11 @@ local function turnWrench ( event )
 		nutRotate(event.x, event.y)  -- rotate the nut too
 	end
 	-- if the wrench turns a certin amount then remove the nut
-	if wrenchTurns > 2 then
+	if wrenchTurns > 1 then
 		wrench:removeEventListener( "touch", turnWrench )
 		activeNut:removeSelf()
 		activeNut = nil
 		nutsRemoved = nutsRemoved + 1
-		print(nutsRemoved)
 		-- if all the nuts have been removed remove the wrench as well
 		if nutsRemoved == 4 then
 			wrench:removeSelf()
@@ -145,13 +142,16 @@ end
 
 -- function to remove the panel when all the nuts are removed
 local function removePanel ( event )
+	
 	if nutsRemoved == 4 then
 		if event.phase == "began" then
+			offset = panel.x - event.x
 			panelLoose = true
 		end
 		if (event.phase == "moved") and (panelLoose == true ) then
-			panel.x = event.x
-			if panel.x < act.xMin + 10 or panel.x > act.xMax - 10 then
+			
+			panel.x = event.x + offset
+			if panel.x < act.xMin or panel.x > act.xMax then
 				---- TODO Should have something before it jumps to next scene=======================================================================
 				game.gotoAct( "wireCut" )
 				--==================================================================================================================================
@@ -168,6 +168,15 @@ local function bgTouch (event)
 			toolBoxClose()
 		end
 	end
+end
+
+-- function to remove the Large background after the zoom
+local function removeBG ( event )
+	if largeBG then   -- make sure that it is still there
+		largeBG:removeSelf( )  -- remove it
+		largeBG = nil
+	end
+	return true -- prevents other things in the image from being touched
 end
 
 -- Init the act
@@ -225,14 +234,7 @@ function act:init()
 	nut.BR.y = act.yCenter + 158
 	nut.BR:addEventListener( "touch", nutTouch )
 
-	-- function to remove the Large background after the zoom
-	local function removeBG ( event )
-		if largeBG then   -- make sure that it is still there
-			largeBG:removeSelf( )  -- remove it
-			largeBG = nil
-		end
-		return true -- prevents other things in the image from being touched
-	end
+	
 
 	-- Draws the large background (NEEDS TO BE LAST THING DRAWN)
 	largeBG = act:newImage ( "backgroundLarge.jpg", { width = 480 / 1.5} )
