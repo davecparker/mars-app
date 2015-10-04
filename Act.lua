@@ -45,14 +45,14 @@ function Act:newImage( filename, options )
     -- Get default values for options
     options = options or {}
     local parent = options.parent or self.group
-    local folder = options.folder or "media/" .. self.name .. "/"
+    local folder = options.folder or "media/" .. self.name 
     local x = options.x or self.xCenter
     local y = options.y or self.yCenter
     local width = options.width
     local height = options.height
 
     -- Determine file path
-    local path = folder .. filename
+    local path = folder .. "/".. filename
 
     -- Do we need to calculate width or height from the original image size?
     if not width or not height then
@@ -91,8 +91,9 @@ function Act:newGroup( parent )
 	return g
 end 
 
--- Make a background title bar for a game view with the given title string (default empty)
-function Act:makeTitleBar( title )
+-- Make a background title bar for a game view with the given title string (default empty).
+-- If backListener is passed, include a back button and call backListener when pressed.
+function Act:makeTitleBar( title, backListener )
     -- Background for the whole view
     local bg = display.newRect( self.group, self.xCenter, self.yCenter, self.width, self.height )
     bg:setFillColor( 1 )   -- white
@@ -109,6 +110,14 @@ function Act:makeTitleBar( title )
                         self.xCenter, self.yMin + self.dyTitleBar / 2, 
                         native.systemFontBold, 18 )
     self.title:setFillColor( 1 )   -- white
+
+    -- Back button if requested
+    if backListener then
+        local bb = self:newImage( "back.png", { folder = "media/game", height = self.dyTitleBar * 0.6 } )
+        bb.x = self.xMin + 15
+        bb.y = self.yMin + self.dyTitleBar / 2
+        bb:addEventListener( "tap", backListener )
+    end
 end
 
 

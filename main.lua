@@ -43,9 +43,9 @@ act.scene    -- composer scene associated with the act
 act.name     -- act module name
 
 -- Methods in the act table you can use (see Act.lua for details):
-act:newImage( filename, options )    -- make a new imageRect display object
-act:newGroup( parent )               -- make a new display (sub-)group
-act:makeTitleBar( title )            -- make standard view background and title bar
+act:newImage( filename, options )        -- make a new imageRect display object
+act:newGroup( parent )                   -- make a new display (sub-)group
+act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
 
 -----------------------------------------------------------------------------------------
 How to define an activity:
