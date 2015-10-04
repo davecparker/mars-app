@@ -91,7 +91,7 @@ function Act:newGroup( parent )
 	return g
 end 
 
--- Make a background title bar for a game view with the given title string
+-- Make a background title bar for a game view with the given title string (default empty)
 function Act:makeTitleBar( title )
     -- Background for the whole view
     local bg = display.newRect( self.group, self.xCenter, self.yCenter, self.width, self.height )
@@ -104,10 +104,11 @@ function Act:makeTitleBar( title )
     bar:setFillColor( 0.5, 0, 0 )   -- dark red
 
     -- Title bar text
-    local title = display.newText( self.group, title, 
+    title = title or ""
+    self.title = display.newText( self.group, title, 
                         self.xCenter, self.yMin + self.dyTitleBar / 2, 
                         native.systemFontBold, 18 )
-    title:setFillColor( 1 )   -- white
+    self.title:setFillColor( 1 )   -- white
 end
 
 
@@ -162,7 +163,12 @@ function game.newAct()
     function scene:show( event )
         -- When the scene is on-screen and ready to go...
         local act = self.act
-        if event.phase == "did" then
+        if event.phase == "will" then
+           -- Call the act prepare function, if any
+            if act.prepare then 
+                act:prepare()
+            end            
+        elseif event.phase == "did" then
             -- Add an enterFrame listener for the act object
             Runtime:addEventListener( "enterFrame", act )
 

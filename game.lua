@@ -10,9 +10,11 @@
 
 -- The game object where game global data and functions are stored
 local game = {
+    openDoc = nil,  -- name of the currently open doc in Documents view or nil if none
+
     -- The saveState table is saved to a file between runs
     saveState = {
-        docs = { "SampleDoc1", "SampleDoc2" },          -- list of document ids that user had found
+        docs = {},    -- list of document filenames that user had found
     },     
 }
 

@@ -18,6 +18,9 @@ local act = game.newAct()
 function act:init()
 	-- Title bar for the view
 	act:makeTitleBar( "Resources" )
+
+	-- Post a new document (TODO: Temporary)
+	game.foundDocument( "Resource Management" )
 end
 
 
