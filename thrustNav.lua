@@ -23,10 +23,12 @@ local ufo       	-- flying UFO object
 local mars           -- planet mars
 local earth         -- earth
 
+
 -- Create control buttons, background, etc.
 local buttonTurnRight = display.newImageRect("media/thrustNav/arrow-button.png",30,30)
 local buttonTurnLeft = display.newImageRect("media/thrustNav/arrow-button.png",30,30)
 local buttonForward = display.newImageRect("media/thrustnav/arrow-button.png",30,30)
+local ship = display.newImageRect( "media/thrustNav/shipconcepts.png", 30, 30 )
 
 -- Make a small red circle centered at the given location
 local function makeRedCircle( x, y )
@@ -50,7 +52,7 @@ end
 function act:init()
 	
 		-- Background image with touch listener
-	local bg = act:newImage( "starrynight.png", { parent = act.group, x = act.xMin, y = act.yMin, width = act.width } )
+	local bg = act:newImage( "starrynight.png", { parent = act.group, x = act.xMin, y = act.yMin, width = 2*act.width } )
 	bg:addEventListener( "touch", touched )
 
 	
@@ -84,6 +86,7 @@ function act:init()
     -- earth = act:ImageRect( "earth.png", 20, 20 )
     earth.x = act.xMin
     earth.y = act.yMin - 200
+    
 
   
     act.group.x = act.width / 2 
@@ -101,9 +104,12 @@ function act:init()
 	local dx = 20
 	display.newLine( act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
 	display.newLine( act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
-	
-    -- Set up buttons
 
+	-- place ship at center of lines
+	ship.x = act.yCenter
+	ship.y = act.xCenter
+
+    -- Set up buttons
 	buttonTurnLeft.x = act.xMin + (act.xMax - act.xMin) / 5
 	buttonTurnLeft.y = act.yMax - (act.yMax - act.yMin) / 20
 	buttonTurnLeft.isVisible = true
@@ -115,10 +121,12 @@ function act:init()
 	buttonForward.x = (act.xMax - act.xMin ) / 2
 	buttonForward.y = act.yMax - (act.yMax - act.yMin) / 10 
 	buttonForward.isVisible = true
-	
+
 	buttonTurnRight:addEventListener( "touch", buttonTurnRight )
 	buttonTurnLeft:addEventListener( "touch", buttonTurnLeft )
 	buttonForward:addEventListener( "touch", buttonForward )
+
+
 end
 
 function buttonTurnRight:touch (event)
