@@ -1,8 +1,10 @@
+
 -----------------------------------------------------------------------------------------
 --
--- resources.lua
+-- wireCut.lua
 --
--- The resources view for the Mars App.
+-- Second Part to the circut activity 
+-- Joe Cracchiolo
 -----------------------------------------------------------------------------------------
 
 -- Get local reference to the game globals
@@ -16,11 +18,10 @@ local act = game.newAct()
 
 -- Init the act
 function act:init()
-	-- Title bar for the view
-	act:makeTitleBar( "Resources" )
+	
+	local wireCutBG = act:newImage ( "wireCutBG.jpg", { width = 320} )
+	local wirePlaceholder = act:newImage ( "wiresPlaceholder.png", { width = 320} )
 
-	-- Post a new document (TODO: Temporary)
-	game.foundDocument( "Resource Management" )
 end
 
 

@@ -11,12 +11,8 @@ local game = globalGame
 -- Corona modules needed
 local widget = require( "widget" )
 
-
--- Handle tab bar button events
-local function handleTabBarEvent( event )
-    local tab = event.target._id
-    game.gotoAct( tab )     -- button id is the Lua module name to run
-end
+-- The tab bar widget
+local tabBar
 
 -- The tab bar buttons
 local buttons = {
@@ -27,37 +23,76 @@ local buttons = {
     { id = "menu",       defaultFile = "media/game/menu.png", selected = true, },
 }
 
--- Assign properties common to all buttons
-local dxyIcon = game.dyTabBar - 10
-for i = 1, #buttons do
-    local b = buttons[i]
-    b.onPress = handleTabBarEvent
-    b.overFile = b.defaultFile
-    b.width = dxyIcon
-    b.height = dxyIcon
+
+-- Handle tab bar button events
+local function handleTabBarEvent( event )
+    local tab = event.target._id
+    game.gotoAct( tab )     -- button id is the Lua module name to run
 end
 
--- Create the tab bar widget
-local tabBar = widget.newTabBar
-{
-	left = game.xMin,
-    top = game.yMax - game.dyTabBar,
-    width = game.width,
-    height = game.dyTabBar,
-    backgroundFile = "media/game/redGradient.png",
-    tabSelectedLeftFile = "media/game/darkRed.png",
-    tabSelectedRightFile = "media/game/darkRed.png",
-    tabSelectedMiddleFile = "media/game/darkRed.png",
-    tabSelectedFrameWidth = 10,
-    tabSelectedFrameHeight = game.dyTabBar - 10,
-    buttons = buttons,
-}
+-- Initialize the app tab bar on the bottom of the screen
+function initTabBar()
+    -- Assign properties common to all buttons
+    local dxyIcon = game.dyTabBar - 10
+    for i = 1, #buttons do
+        local b = buttons[i]
+        b.onPress = handleTabBarEvent
+        b.overFile = b.defaultFile
+        b.width = dxyIcon
+        b.height = dxyIcon
+    end
+
+    -- Create the tab bar widget
+    tabBar = widget.newTabBar
+    {
+    	left = game.xMin,
+        top = game.yMax - game.dyTabBar,
+        width = game.width,
+        height = game.dyTabBar,
+        backgroundFile = "media/game/redGradient.png",
+        tabSelectedLeftFile = "media/game/darkRed.png",
+        tabSelectedRightFile = "media/game/darkRed.png",
+        tabSelectedMiddleFile = "media/game/darkRed.png",
+        tabSelectedFrameWidth = 10,
+        tabSelectedFrameHeight = game.dyTabBar - 10,
+        buttons = buttons,
+    }
+end
 
 -- Select the given tab (1 = main tab) on the tab bar, and press it if press is true
 function game.selectGameTab( index, press )
     tabBar:setSelected( index, press )
 end
 
+-- Create and return a new item indicator badge at the given screen position, initially hidden
+function game.createBadge( x, y )
+    local badge = display.newCircle( x, y, 5)
+    badge:setFillColor( 1, 1, 0 ) -- yellow fill
+    badge:setStrokeColor( 0 )     -- black frame
+    badge.strokeWidth = 1
+    badge.alpha = 0
+    badge.showing = false
+    return badge
+end
 
--- Return the tab bar in case the caller needs it
+-- Show the given badge if it is not already showing
+function game.showBadge( badge )
+    assert( badge )
+    if not badge.showing then
+        transition.fadeIn( badge, { time = 200 } )
+        badge.showing = true
+    end
+end
+
+-- Hide the given badge if it exists and is showing
+function game.hideBadge( badge )
+    if badge and badge.showing then
+        transition.fadeOut( badge, { time = 200 } )
+        badge.showing = false
+    end
+end
+
+
+-- Init and return the tab bar
+initTabBar()
 return tabBar
