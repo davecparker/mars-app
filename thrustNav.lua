@@ -11,6 +11,7 @@ local game = globalGame
 -- Create the act object
 local act = game.newAct()
 
+
 -- try image.fill to change images...
 --  create a rect then fill with image
 
@@ -22,11 +23,13 @@ local xyCenterText	-- text display object for touch location relative to center
 local ufo       	-- flying UFO object
 local mars           -- planet mars
 local earth         -- earth
+-- works: local buttonTurnRight = display.newImageRect( "media/thrustNav/arrow-button.png", 30, 30 )
+-- fails: local buttonTurnRight = display.newImageRect( act.group, "media/thrustNav/arrow-button.png", 30, 30 )
 
--- Create control buttons, background, etc.
-local buttonTurnRight = display.newImageRect("media/thrustNav/arrow-button.png",30,30)
-local buttonTurnLeft = display.newImageRect("media/thrustNav/arrow-button.png",30,30)
-local buttonForward = display.newImageRect("media/thrustnav/arrow-button.png",30,30)
+ -- button on left side that when pressed turns ship right
+local buttonTurnLeft   -- button on right side that when pressed turns ship left
+local buttonForward  -- button in center that when pressed thrusts forward
+local spaceGroup    -- group for rotating space background
 
 -- Make a small red circle centered at the given location
 local function makeRedCircle( x, y )
@@ -46,12 +49,32 @@ local function touched( event )
 	xyCenterText.text = string.format( "Center + (%d, %d)", x - act.xCenter, y - act.yCenter )
 end
 
+
+
 -- Init the act
 function act:init()
+	-- create group for rotating background space objects
+	spaceGroup = act:newGroup()
+	--- local buttonTurnRight = act:newImage( "arrow-button.png" )
+	
+	-- Create control buttons, background, etc.
+	-- Button for left arrow rocket that turns ship right
+	-- buttonTurnRight = act:newImage( "media/thrustNav/arrow-button.png", { width = 30, height = 30 } )
+	-- buttonTurnRight = display.newImageRect( "arrow-button.png", 30, 30 )
+    local buttonTurnRight = display.newImageRect( act.group, "media/thrustNav/arrow-button.png", 30, 30 )
+	if (buttonTurnRight == nil ) then
+		print("Problems for buttonTurnRight")
+	end
+
+	-- Button for right arrow rocket that turns ship left
+	buttonTurnLeft = display.newImageRect( act.group, "media/thrustNav/arrow-button.png", 30, 30)
+	-- Button for forward ship motion
+	buttonForward = display.newImageRect( act.group, "media/thrustnav/arrow-button.png", 30, 30)  
 	
 		-- Background image with touch listener
-	local bg = act:newImage( "starrynight.png", { parent = act.group, x = act.xMin, y = act.yMin, width = act.width } )
+	local bg = act.newImage( "starrynight.png", { parent = spaceGroup, x = act.xMin, y = act.yMin, width = 3*act.width } )
 	bg:addEventListener( "touch", touched )
+	print("bg=" .. bg )
 
 	
 	-- Small red circles at the corners
@@ -61,39 +84,40 @@ function act:init()
 	-- makeRedCircle( act.xMax, act.yMax )
 
 	-- Touch location text display objects
-	local yText = act.yMin + 15   -- relative to actual top of screen
-	xyText = display.newText( act.group, "", act.width / 3, yText, native.systemFont, 14 )
-	xyCenterText = display.newText( act.group, "", act.width * 2 / 3, yText, native.systemFont, 14 )
+	--local yText = act.yMin + 15   -- relative to actual top of screen
+	--xyText = display.newText( act.group, "", act.width / 3, yText, native.systemFont, 14 )
+	--xyCenterText = display.newText( act.group, "", act.width * 2 / 3, yText, native.systemFont, 14 )
 
 	-- Flying UFO
-	local xStart = act.xMin - 100       -- start off screen to the left
-	local yStart = act.yCenter - 142    -- height from center is consistent relative to background image
+	-- local xStart = act.xMin - 100       -- start off screen to the left
+	-- local yStart = act.yCenter - 142    -- height from center is consistent relative to background image
 	-- ufo = act:newImage( "ufo.png", { x = xStart, y = yStart, height = 25 } )
     
     --act.group.x = act.width / 2
-    act.group.y = act.height / 2 - 100
+    spaceGroup.y = act.height / 2 - 100
 	-- act.group.anchorX = 1
     -- act.group.anchorY = 0.5
 
-    mars = display.newImageRect( act.group, "media/thrustNav/mars.png", 30, 30 )
+    mars = display.newImageRect( spaceGroup, "media/thrustNav/mars.png", 30, 30 )
     -- mars.x = act.xCenter 
     -- mars.y = act.yMin + 40
     mars.x = act.xMin
     mars.y = -act.yMin +100 
-    earth = display.newImageRect( act.group, "media/thrustNav/earth.png", 20, 20 )
+
+    earth = display.newImageRect( spaceGroup, "media/thrustNav/earth.png", 20, 20 )
     -- earth = act:ImageRect( "earth.png", 20, 20 )
     earth.x = act.xMin
     earth.y = act.yMin - 200
 
   
-    act.group.x = act.width / 2 
+    spaceGroup.x = act.width / 2 
     -- act.group.anchorX = 500
 
-    physics.start()
+    --- physics.start()
     
-    physics.addBody ( act.group, "dynamic" )
-    act.group.gravityScale = 0         -- makes object float
-	act.group:applyAngularImpulse ( 1000 )
+    -- physics.addBody ( act.group, "dynamic" )
+    --- act.group.gravityScale = 0         -- makes object float
+	-- act.group:applyAngularImpulse ( 1000 )
     -- act.group.angularvelocity = 500
     
     -- Crosshair in the center
@@ -125,7 +149,7 @@ function buttonTurnRight:touch (event)
 	if event.phase == "began" then
 		-- print( "Touch even began on: " .. self.id )
 		print("Turn Right Button")
-		act.group:applyAngularImpulse( -100 )
+		-- act.group:applyAngularImpulse( -100 )
 	end
 	return true
 end
@@ -134,7 +158,7 @@ function buttonTurnLeft:touch (event)
 	if event.phase == "began" then
 		-- print( "Touch even began on: " .. self.id )
 		print("Turn Left Button")
-		act.group:applyAngularImpulse( 100 )
+		spaceGroup:applyAngularImpulse( 100 )
 	end
 	return true
 end
@@ -142,11 +166,11 @@ end
 function buttonForward:touch (event)
 	if event.phase == "began" then
 		-- print( "Touch even began on: " .. self.id )
-		print("Forward Button - Rotation = " .. act.group.rotation)
-		if  act.group.rotation > 90  then
-			act.group:applyLinearImpulse(0, 0.1, act.group.x, act.group.y )
+		print("Forward Button - Rotation = " .. spaceGroup.rotation)
+		if  spaceGroup.rotation > 90  then
+			spaceGroup:applyLinearImpulse(0, 0.1, spaceGroup.x, spaceGroup.y )
 		else
-			act.group:applyLinearImpulse(0, -0.1, act.group.x, act.group.y )
+			spaceGroup:applyLinearImpulse(0, -0.1, spaceGroup.x, spaceGroup.y )
 		end
 	end
 	return true
