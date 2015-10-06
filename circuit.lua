@@ -4,15 +4,17 @@
 --
 -- Joe Cracchiolo
 -----------------------------------------------------------------------------------------
+------------------------- OverHead ---------------------------------------------------------
 
 -- Get local reference to the game globals
 local game = globalGame
 
 -- Create the act object
 local act = game.newAct()
-
-------------------------- Start of Activity --------------------------------
 local widget = require( "widget" )  -- need to make buttons
+
+------------------------- Variables ---------------------------------------------------------
+
 local nutsRemoved = 0    -- the number of nuts that have been removed
 local panel
 local largeBG
@@ -20,6 +22,8 @@ local wrenchTurns = 0
 local lastAngle -- saves the last angle the wrench was at
 local wrenchRotation = 0 -- the actual angle of the wrench
 local offset = 0         -- saves an offset value for moving the panel
+
+------------------------- Functions -------------------------------------------------------
 
 -- function to remove everything when the toolbox closes
 local function toolBoxClose ()
@@ -180,6 +184,13 @@ local function removeBG ( event )
 	return true -- prevents other things in the image from being touched
 end
 
+-- function to send you back when you press the back button
+local function backButtonPress ( event )
+	game.gotoAct ( "mainAct" )
+end
+
+------------------------- Start of Activity ----------------------------------------------------
+
 -- Init the act
 function act:init()
 	
@@ -204,6 +215,19 @@ function act:init()
 	toolbox.x = act.xMax - 30
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
+
+	-- back button
+	local backButton = act:newImage( "backButton.png", { width = 40 } )
+	backButton.x = act.xMin + 30
+	backButton.y = act.yMin + 30
+	backButton.button = widget.newButton 
+	{
+		 x = act.xMin + 30,
+		 y = act.yMin + 30,
+		 width = 50, 
+		 height = 50,
+		 onPress = backButtonPress 
+	}
 
 	-- panel
 	local panelLoose = false
@@ -246,7 +270,7 @@ function act:init()
 	timer.performWithDelay( 2500, removeBG )  -- 2500 (2.5 seconds)  is the delay amount. Needs to be equal or greater to the transistion time
 end
 
-------------------------- End of Activity --------------------------------
+------------------------- End of Activity ----------------------------------------------------------------------------------------
 
 -- Corona needs the scene object returned from the act file
 return act.scene
