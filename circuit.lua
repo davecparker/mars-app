@@ -17,7 +17,7 @@ local nutsRemoved = 0    -- the number of nuts that have been removed
 local panel
 local largeBG
 local wrenchTurns = 0
-local lastAngle = 360  -- saves the last angle the wrench was at
+local lastAngle -- saves the last angle the wrench was at
 local wrenchRotation = 0 -- the actual angle of the wrench
 local offset = 0         -- saves an offset value for moving the panel
 
@@ -135,6 +135,7 @@ local function nutTouch ( event )
 			wrench.x = event.target.x  -- refrences the targets x that was touched
 			wrench.y = event.target.y  -- same thing buy y cord
 			wrench:addEventListener( "touch", turnWrench )
+			wrench:rotate( 45 )
 			wrenchTurns = 0
 		end
 	end
@@ -152,9 +153,8 @@ local function removePanel ( event )
 			
 			panel.x = event.x + offset
 			if panel.x < act.xMin or panel.x > act.xMax then
-				---- TODO Should have something before it jumps to next scene=======================================================================
-				game.gotoAct( "wireCut" )
-				--==================================================================================================================================
+				-- move panel off screen and transition to the next part of the game
+				transition.to( panel, { time = 500, x = 500, onComplete = game.gotoAct( "wireCut", "fade" ) } )
 			end
 		end
 		return true
@@ -195,9 +195,7 @@ function act:init()
 	wires.y = act.yCenter + 15
 
 	-- background
-	local bg = act:newImage ( "backgroundLarge.jpg", { width = 480 } )
-	--bg.x = act.xCenter
-	--bg.y = act.yCenter
+	local bg = act:newImage ( "background.jpg", { width = 480 / 1.5 } )
 	bg:addEventListener( "touch", bgTouch )
 
 	-- toolbox icon
@@ -218,6 +216,7 @@ function act:init()
 	nut.TL.x = act.xCenter - 94
 	nut.TL.y = act.yCenter - 122
 	nut.TL:addEventListener( "touch", nutTouch )
+	nut.TL.angle = 45
 	-- top right
 	nut.TR = act:newImage( "nut.png", { width = 20 } )
 	nut.TR.x = act.xCenter + 101
