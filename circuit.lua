@@ -82,6 +82,7 @@ local function turnWrench ( event )
 		local dx = event.x - wrench.x
 		local dy = event.y - wrench.y
 		wrench.rotation = (math.atan2(dy, dx) * 180 / math.pi)
+		print(wrench.rotation)
 	end
 	-- saves the angle of the wrench
 	if wrench.rotation > 0 then
@@ -104,7 +105,7 @@ local function turnWrench ( event )
 		nutRotate(event.x, event.y)  -- rotate the nut too
 	end
 	-- if the wrench turns a certin amount then remove the nut
-	if wrenchTurns > 1 then
+	if wrenchTurns > 2 then
 		wrench:removeEventListener( "touch", turnWrench )
 		activeNut:removeSelf()
 		activeNut = nil
@@ -121,7 +122,7 @@ end
 -- function for touching the nuts (lol)
 local function nutTouch ( event )
 	activeNut = event.target
-	lastAngle = 360
+	lastAngle = activeNut.angle
 	if event.phase == "began" then
 		-- remove any  wrench that is on the screen
 		if wrench then
@@ -134,8 +135,8 @@ local function nutTouch ( event )
 			wrench.anchorX = 0.13
 			wrench.x = event.target.x  -- refrences the targets x that was touched
 			wrench.y = event.target.y  -- same thing buy y cord
+			wrench:rotate (activeNut.angle)
 			wrench:addEventListener( "touch", turnWrench )
-			wrench:rotate( 45 )
 			wrenchTurns = 0
 		end
 	end
@@ -222,17 +223,19 @@ function act:init()
 	nut.TR.x = act.xCenter + 101
 	nut.TR.y = act.yCenter - 124
 	nut.TR:addEventListener( "touch", nutTouch )
+	nut.TR.angle = 135
 	-- bottom left
 	nut.BL = act:newImage( "nut.png", { width = 20 } )
 	nut.BL.x = act.xCenter - 95
 	nut.BL.y = act.yCenter + 159
 	nut.BL:addEventListener( "touch", nutTouch )
+	nut.BL.angle = 315
 	-- bottom right
 	nut.BR = act:newImage( "nut.png", { width = 20 } )
 	nut.BR.x = act.xCenter + 102
 	nut.BR.y = act.yCenter + 158
 	nut.BR:addEventListener( "touch", nutTouch )
-
+	nut.BR.angle = 225
 	
 
 	-- Draws the large background (NEEDS TO BE LAST THING DRAWN)
