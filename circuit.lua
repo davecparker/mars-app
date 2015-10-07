@@ -90,12 +90,12 @@ local function turnWrench ( event )
 	end
 	-- saves the angle of the wrench
 	if wrench.rotation > 0 then
-		wrenchRotation = wrench.rotation		
+		wrenchRotation = wrench.rotation
 	else
 		wrenchRotation = wrench.rotation + 360
 	end
 	-- adds 1 to turn wrech upon a 360 degree rotation
-	if lastAngle < 20 then
+	if lastAngle < activeNut.angle then
 		lastAngle = 360
 		wrenchTurns = wrenchTurns + 1
 	end
