@@ -36,7 +36,7 @@ end
 local function touchDot( event )
 	if event.phase == "began" then
 		-- Zoom map
-		game.mapZoom = true
+		game.mapZoomName = "sampleRoom"
 		game.gotoAct( "mapZoom", { effect = "crossFade", time = 250 } )
 	end
 	return true
@@ -59,7 +59,7 @@ end
 -- Prepare the view before it shows
 function act:prepare()
 	-- If map is currently zoomed then go to zoomed view
-	if game.mapZoom then 
+	if game.mapZoomName then 
 		game.gotoAct( "mapZoom" )
 		return
 	end
