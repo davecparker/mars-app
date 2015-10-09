@@ -18,15 +18,92 @@ local act = game.newAct()
 
 ------------------------- Start of Activity --------------------------------
 
--- File local variables
-local toolbar   -- toolbar to hold the controls on the bottom of the screen
-local doneBtn   -- Load/Done button in the top bar
-local textEdit  -- native text edit control in the top bar
-local map       -- table for current map being edited or nil if none
-local mapName   -- name of map being edited or nil if none
-local mapImage  -- image object for map background or nil if none loaded
-local mapData   -- data table for the current map or nil if none loaded
+-- Constants
+local SELECT = "^"    -- label for the select tool
+local DELETE = "X"   -- label for the delete tool
 
+-- File local variables
+local toolbar     -- toolbar to hold the controls on the bottom of the screen
+local segControl  -- segmented control in the toolbar
+local doneBtn     -- Load/Done button in the top bar
+local textEdit    -- native text edit control in the top bar
+local map         -- table for current map being edited or nil if none
+local mapName     -- name of map being edited or nil if none
+local mapImage    -- image object for map background or nil if none loaded
+local mapData     -- data table for the current map or nil if none loaded
+local icons       -- display group for map icons
+local iconSel     -- currently selectec map icon or nil if none
+
+
+-- Select the icon, which can be nil for no selection
+local function selectIcon( icon )
+	-- Deselect previous icon, if any
+	if iconSel then
+		iconSel:setStrokeColor( 0 )  -- black
+		textEdit.text = ""
+	end
+
+	-- Select and highlight new icon
+	iconSel = icon
+	if icon then
+		icon:setStrokeColor( 0.25, 0.5, 1 )  -- blue
+		textEdit.text = icon.name  -- put icon name in the text edit control
+	end
+end
+
+-- Handle touches on a map icon
+local function touchedIcon( icon, event )
+	-- Icons are positioned with respect to the act center
+	local x = event.x - act.xCenter
+	local y = event.y - act.yCenter
+
+	if event.phase == "began" then
+		-- If delete tool is selected then delete the icon
+		if segControl.segmentLabel == DELETE then
+			selectIcon( nil )
+			icon:removeSelf()
+			segControl:setActiveSegment( 1 )  -- select
+		else
+			-- Start dragging an icon to move it
+			selectIcon( icon )
+			display.getCurrentStage():setFocus( icon )
+		end
+	elseif event.phase == "moved" then
+		-- Drag icon to new location
+		icon.x = x
+		icon.y = y
+	else
+		-- End drag (leave it selected)
+		display.getCurrentStage():setFocus( nil )
+	end
+	return true
+end
+
+	-- Handle touches on the map background image
+local function touchedMap( event )
+	-- Icons are positioned with respect to the act center
+	local x = event.x - act.xCenter
+	local y = event.y - act.yCenter
+
+	if event.phase == "began" then
+		local tool = segControl.segmentLabel
+		if tool == SELECT then
+			-- Clicked on background, so deselect any current icon
+			selectIcon( nil )
+		elseif tool ~= DELETE then
+			-- A placement tool is selected so start placing a new map icon
+			local icon = act:newMapIcon( icons, { type = tool, name = "", x = x, y = y } )
+			if icon then
+				selectIcon( icon )
+				icon.touch = touchedIcon
+				icon:addEventListener( "touch", icon )
+				display.getCurrentStage():setFocus( icon )
+				segControl:setActiveSegment( 1 )  -- select
+			end
+		end
+	end
+	return true
+end
 
 -- Attempt to load the map with the given name (name is without extension).
 -- Return true if successfully loaded.
@@ -50,6 +127,12 @@ local function loadMap( name )
 	end
 	mapImage:toBack()
 	mapName = name
+	mapImage:addEventListener( "touch", touchedMap )
+
+	-- Create display group for map icons centered on the view
+	icons = act:newGroup()
+	icons.x = act.xCenter
+	icons.y = act.yCenter
 
 	-- Try to load data file for this map
 	-- TODO
@@ -64,19 +147,35 @@ local function doneButton()
 			mapImage:removeSelf()
 			mapImage = nil
 		end
+		if icons then
+			icons:removeSelf()
+			icons = nil
+		end
 		mapName = nil
 		mapData = nil
-		doneBtn:setLabel( "Load" )  -- text edit can now load a new map 
+
+		-- The text edit can now load a new map
+		textEdit.text = "" 
+		textEdit.placeholder = "Map filename"
+		doneBtn:setLabel( "Load" )  
 	else
 		-- Load: load the map named in the edit control
 		if loadMap( textEdit.text ) then
 			doneBtn:setLabel( "Done" )  -- Change button to Done to close and finish
+			textEdit.text = ""
+			textEdit.placeholder = nil
 		end
 	end
 end
 
 -- Handle changes to the text edit
 function textEditListener( event )
+	if event.phase == "editing" then
+		-- If an icon is selected then modify its name 
+		if iconSel then
+			iconSel.name = event.text
+		end
+	end
 end
 
 -- Init the act
@@ -89,15 +188,15 @@ function act:init()
 					act.width * 0.8, act.dyTitleBar )
 	bg.anchorX = 0
 	bg.anchorY = 0
-	local sc = widget.newSegmentedControl
+	segControl = widget.newSegmentedControl
 	{
 	    left = act.xMin + 5,
 	    top = act.yMax + 7,
-	    segmentWidth = 50,
-	    segments = { "Item", "Doc", "Act", "Del"  },
-	    defaultSegment = 2,
+	    segmentWidth = 45,
+	    segments = { SELECT, "item", "doc", "act", DELETE  },
+	    defaultSegment = 1,
 	}
-	toolbar:insert( sc )
+	toolbar:insert( segControl )
 
 	-- Create the topBar for text edit and a Done button in the title bar area
 	local topBar = act:newGroup()
