@@ -49,7 +49,8 @@ end
 
 -- Init the act
 function act:init()
-	-- Title bar for the view
+	-- Background and title bar for the view
+	act:whiteBackground()
 	act:makeTitleBar( "Documents" )
 
 	-- Make the TableView to list the documents

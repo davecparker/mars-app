@@ -62,7 +62,8 @@ end
 
 -- Init the act
 function act:init()
-	-- Title bar for the view
+	-- Background and title bar for the view
+	act:whiteBackground()
 	act:makeTitleBar( "Debug Menu" )
 
 	-- Create the tableView widget to list the debug activities

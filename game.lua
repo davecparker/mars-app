@@ -10,8 +10,8 @@
 
 -- The game object where game global data and functions are stored
 local game = {
-    mapZoom = false,  -- currently just true if map view is zoomed
-    openDoc = nil,    -- name of the currently open doc in Documents view or nil if none
+    mapZoomName = false,  -- name of currently zoomed map view or nil if not zoomed
+    openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
 
     -- The saveState table is saved to a file between runs
     saveState = {
