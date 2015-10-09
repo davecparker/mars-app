@@ -4,19 +4,26 @@
 --
 -- Joe Cracchiolo
 -----------------------------------------------------------------------------------------
+------------------------- OverHead ---------------------------------------------------------
 
 -- Get local reference to the game globals
 local game = globalGame
 
 -- Create the act object
 local act = game.newAct()
-
-------------------------- Start of Activity --------------------------------
 local widget = require( "widget" )  -- need to make buttons
+
+------------------------- Variables ---------------------------------------------------------
+
 local nutsRemoved = 0    -- the number of nuts that have been removed
 local panel
-local adjustment = 0   -- used for rotation of the wrench
 local largeBG
+local wrenchTurns = 0
+local lastAngle -- saves the last angle the wrench was at
+local wrenchRotation = 0 -- the actual angle of the wrench
+local offset = 0         -- saves an offset value for moving the panel
+
+------------------------- Functions -------------------------------------------------------
 
 -- function to remove everything when the toolbox closes
 local function toolBoxClose ()
@@ -45,8 +52,13 @@ end
 local function toolboxTouch (event) 
 	if event.phase == "began" then
 		if toolWindow == nil then
+			if wrench then      --- remove the wrech if there is already one on screen
+				wrench:removeSelf()
+				wrench = nil
+			end
 			toolWindow = display.newRect( act.group, act.xCenter, act.yCenter, 300, 300 )
-			wrench = act:newImage( "wrench.png",  { width = 100 } )
+			wrench = act:newImage( "wrench.png",  { width = 120 } )
+			wrench.rotation = 45
 			wrench.x = act.xCenter - 80
 			wrench.y = act.yCenter - 80
 			wrench.button = widget.newButton { width = 100, height = 100, onEvent = wrenchTouch }
@@ -61,7 +73,6 @@ local function nutRotate (fx, fy)
 	local dx = fx - activeNut.x
 	local dy = fy - activeNut.y
 	activeNut.rotation = (math.atan2(dy, dx) * 180 / math.pi)
-	--print (nut.TL.rotation)
 end
 
 -- function for turning wrench
@@ -70,38 +81,52 @@ local function turnWrench ( event )
 	if event.phase == "began" then
 		local dx = event.x - wrench.x
 		local dy = event.y - wrench.y
-		adjustment = math.atan2(dy, dx) * 180 / math.pi - wrench.rotation
 	end
 	if event.phase == "moved" then
 		local dx = event.x - wrench.x
 		local dy = event.y - wrench.y
-		wrench.rotation = (math.atan2(dy, dx) * 180 / math.pi) - adjustment
-		nutRotate(event.x, event.y)
+		wrench.rotation = (math.atan2(dy, dx) * 180 / math.pi)
+		print(wrench.rotation)
+	end
+	-- saves the angle of the wrench
+	if wrench.rotation > 0 then
+		wrenchRotation = wrench.rotation		
+	else
+		wrenchRotation = wrench.rotation + 360
+	end
+	-- adds 1 to turn wrech upon a 360 degree rotation
+	if lastAngle < 20 then
+		lastAngle = 360
 		wrenchTurns = wrenchTurns + 1
 	end
-	-- if the wrench turns a bit then remove the nut
-	if wrenchTurns > 200 then
+	-- back the wrench up if its moving in the wrong direction otherwise let it move counterclockwise
+	if wrenchRotation + 20  < lastAngle then
+		wrench.rotation = lastAngle
+	elseif wrenchRotation > lastAngle then
+		wrench.rotation = lastAngle
+	else
+		lastAngle = wrenchRotation
+		nutRotate(event.x, event.y)  -- rotate the nut too
+	end
+	-- if the wrench turns a certin amount then remove the nut
+	if wrenchTurns > 2 then
 		wrench:removeEventListener( "touch", turnWrench )
 		activeNut:removeSelf()
 		activeNut = nil
 		nutsRemoved = nutsRemoved + 1
-		print(nutsRemoved)
 		-- if all the nuts have been removed remove the wrench as well
 		if nutsRemoved == 4 then
 			wrench:removeSelf()
 			wrench = nil
-			---- TODO Should have something before it jumps to next scene=======================================================================
-			game.gotoAct( "wireCut" )
-			--==================================================================================================================================
 		end
 	end
-
 	return true
 end
 
 -- function for touching the nuts (lol)
 local function nutTouch ( event )
 	activeNut = event.target
+	lastAngle = activeNut.angle
 	if event.phase == "began" then
 		-- remove any  wrench that is on the screen
 		if wrench then
@@ -111,10 +136,10 @@ local function nutTouch ( event )
 		-- create a wrench on the selected nut and reset the wrenchturns
 		if wrenchSelected then
 			wrench = act:newImage( "wrench.png",  { width = 130 } )
-			wrench.anchorX = 0.2
-			wrench.anchorY = 0.2
+			wrench.anchorX = 0.13
 			wrench.x = event.target.x  -- refrences the targets x that was touched
 			wrench.y = event.target.y  -- same thing buy y cord
+			wrench:rotate (activeNut.angle)
 			wrench:addEventListener( "touch", turnWrench )
 			wrenchTurns = 0
 		end
@@ -123,12 +148,19 @@ end
 
 -- function to remove the panel when all the nuts are removed
 local function removePanel ( event )
+	
 	if nutsRemoved == 4 then
 		if event.phase == "began" then
+			offset = panel.x - event.x
 			panelLoose = true
 		end
 		if (event.phase == "moved") and (panelLoose == true ) then
-			panel.x = event.x
+			
+			panel.x = event.x + offset
+			if panel.x < act.xMin or panel.x > act.xMax then
+				-- move panel off screen and transition to the next part of the game
+				transition.to( panel, { time = 500, x = 500, onComplete = game.gotoAct( "wireCut", "fade" ) } )
+			end
 		end
 		return true
 	end
@@ -142,6 +174,22 @@ local function bgTouch (event)
 		end
 	end
 end
+
+-- function to remove the Large background after the zoom
+local function removeBG ( event )
+	if largeBG then   -- make sure that it is still there
+		largeBG:removeSelf( )  -- remove it
+		largeBG = nil
+	end
+	return true -- prevents other things in the image from being touched
+end
+
+-- function to send you back when you press the back button
+local function backButtonPress ( event )
+	game.gotoAct ( "mainAct" )
+end
+
+------------------------- Start of Activity ----------------------------------------------------
 
 -- Init the act
 function act:init()
@@ -159,9 +207,7 @@ function act:init()
 	wires.y = act.yCenter + 15
 
 	-- background
-	local bg = act:newImage ( "backgroundLarge.jpg", { width = 480 } )
-	--bg.x = act.xCenter
-	--bg.y = act.yCenter
+	local bg = act:newImage ( "background.jpg", { width = 480 / 1.5 } )
 	bg:addEventListener( "touch", bgTouch )
 
 	-- toolbox icon
@@ -170,44 +216,51 @@ function act:init()
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
 
+	-- back button
+	local backButton = act:newImage( "backButton.png", { width = 40 } )
+	backButton.x = act.xMin + 30
+	backButton.y = act.yMin + 30
+	backButton.button = widget.newButton 
+	{
+		 x = act.xMin + 30,
+		 y = act.yMin + 30,
+		 width = 50, 
+		 height = 50,
+		 onPress = backButtonPress 
+	}
+
 	-- panel
 	local panelLoose = false
-	panel = act:newImage( "panel.png", { width = 280 } )
-	panel.x = act.xCenter
-	panel.y = act.yCenter + 20
+	panel = act:newImage( "panel.png", { width = 480 / 1.5 } )
 	panel:addEventListener( "touch", removePanel )
 
 	-- nuts
 	local nut = {}
 	-- top left
-	nut.TL = act:newImage( "nut.png", { width = 30 } )
-	nut.TL.x = act.xCenter - 110
-	nut.TL.y = act.yCenter - 135
+	nut.TL = act:newImage( "nut.png", { width = 20 } )
+	nut.TL.x = act.xCenter - 94
+	nut.TL.y = act.yCenter - 122
 	nut.TL:addEventListener( "touch", nutTouch )
+	nut.TL.angle = 45
 	-- top right
-	nut.TR = act:newImage( "nut.png", { width = 30 } )
-	nut.TR.x = act.xCenter + 110
-	nut.TR.y = act.yCenter - 135
+	nut.TR = act:newImage( "nut.png", { width = 20 } )
+	nut.TR.x = act.xCenter + 101
+	nut.TR.y = act.yCenter - 124
 	nut.TR:addEventListener( "touch", nutTouch )
+	nut.TR.angle = 135
 	-- bottom left
-	nut.BL = act:newImage( "nut.png", { width = 30 } )
-	nut.BL.x = act.xCenter - 110
-	nut.BL.y = act.yCenter + 170
+	nut.BL = act:newImage( "nut.png", { width = 20 } )
+	nut.BL.x = act.xCenter - 95
+	nut.BL.y = act.yCenter + 159
 	nut.BL:addEventListener( "touch", nutTouch )
+	nut.BL.angle = 315
 	-- bottom right
-	nut.BR = act:newImage( "nut.png", { width = 30 } )
-	nut.BR.x = act.xCenter + 110
-	nut.BR.y = act.yCenter + 170
+	nut.BR = act:newImage( "nut.png", { width = 20 } )
+	nut.BR.x = act.xCenter + 102
+	nut.BR.y = act.yCenter + 158
 	nut.BR:addEventListener( "touch", nutTouch )
-
-	-- function to remove the Large background after the zoom
-	local function removeBG ( event )
-		if largeBG then   -- make sure that it is still there
-			largeBG:removeSelf( )  -- remove it
-			largeBG = nil
-		end
-		return true -- prevents other things in the image from being touched
-	end
+	nut.BR.angle = 225
+	
 
 	-- Draws the large background (NEEDS TO BE LAST THING DRAWN)
 	largeBG = act:newImage ( "backgroundLarge.jpg", { width = 480 / 1.5} )
@@ -217,7 +270,7 @@ function act:init()
 	timer.performWithDelay( 2500, removeBG )  -- 2500 (2.5 seconds)  is the delay amount. Needs to be equal or greater to the transistion time
 end
 
-------------------------- End of Activity --------------------------------
+------------------------- End of Activity ----------------------------------------------------------------------------------------
 
 -- Corona needs the scene object returned from the act file
 return act.scene
