@@ -11,6 +11,7 @@ local game = globalGame
 
 -- Load Corona modules needed
 local widget = require( "widget" )
+local json = require( "json" )
 
 -- Create the act object
 local act = game.newAct()
@@ -19,8 +20,9 @@ local act = game.newAct()
 ------------------------- Start of Activity --------------------------------
 
 -- Constants
-local SELECT = "^"    -- label for the select tool
+local SELECT = "^"   -- label for the select tool
 local DELETE = "X"   -- label for the delete tool
+local FOLDER = "media/mapZoom"   -- folder for maps and data
 
 -- File local variables
 local toolbar     -- toolbar to hold the controls on the bottom of the screen
@@ -30,7 +32,6 @@ local textEdit    -- native text edit control in the top bar
 local map         -- table for current map being edited or nil if none
 local mapName     -- name of map being edited or nil if none
 local mapImage    -- image object for map background or nil if none loaded
-local mapData     -- data table for the current map or nil if none loaded
 local icons       -- display group for map icons
 local iconSel     -- currently selectec map icon or nil if none
 
@@ -79,7 +80,18 @@ local function touchedIcon( icon, event )
 	return true
 end
 
-	-- Handle touches on the map background image
+-- Create and return new icon with the given data table (t, name, x, y)
+local function newIcon( data )
+	local icon = act:newMapIcon( icons, data )
+	if icon then
+		-- Add the touch listener
+		icon.touch = touchedIcon
+		icon:addEventListener( "touch", icon )
+	end
+	return icon
+end
+
+-- Handle touches on the map background image
 local function touchedMap( event )
 	-- Icons are positioned with respect to the act center
 	local x = event.x - act.xCenter
@@ -92,17 +104,66 @@ local function touchedMap( event )
 			selectIcon( nil )
 		elseif tool ~= DELETE then
 			-- A placement tool is selected so start placing a new map icon
-			local icon = act:newMapIcon( icons, { type = tool, name = "", x = x, y = y } )
+			local icon = newIcon{ t = tool, name = "", x = x, y = y }
 			if icon then
 				selectIcon( icon )
-				icon.touch = touchedIcon
-				icon:addEventListener( "touch", icon )
 				display.getCurrentStage():setFocus( icon )
 				segControl:setActiveSegment( 1 )  -- select
 			end
 		end
 	end
 	return true
+end
+
+-- Return the path to the data file for the given map name
+local function mapDataPath( mapName )
+	return FOLDER .. "/" .. mapName .. ".txt"
+end
+
+-- Load the map data file for the current map, 
+-- or use empty data if file not found.
+local function loadMapData()
+	-- Load the data file if found
+	local mapData = {}  -- use empty if data file not found
+	local file = io.open( mapDataPath( mapName ), "r" )
+	if file then
+		local str = file:read( "*a" )	-- Read entire file as a string (JSON encoded)
+		if str then
+			local data = json.decode( str )
+			if data then
+				mapData = data
+			end
+		end
+		io.close( file )
+	end
+
+	-- Create the icons from the data records
+	assert( type( icons ) == "table" )
+	assert( icons.numChildren == 0 )
+	for i = 1, #mapData do
+		newIcon( mapData[i] )
+	end
+end
+
+-- Load the map data file for the current map 
+local function saveMapData()
+	-- Make the map data for the current map's icons
+	local mapData = {}
+	for i = 1, icons.numChildren do
+		local icon = icons[i]
+		mapData[i] = { t = icon.t, name = icon.name, x = icon.x, y = icon.y }
+	end
+
+	-- Save the data to its file
+	local file = io.open( mapDataPath( mapName ), "w" )
+	if file then
+		local str = json.prettify( mapData ) -- json.encode( mapData )
+		if str then
+			print(str)
+			file:write( str )
+		end
+		io.close( file )
+	end
 end
 
 -- Attempt to load the map with the given name (name is without extension).
@@ -112,11 +173,11 @@ local function loadMap( name )
 	assert( mapImage == nil )
 	local imageOptions = 
 	{
-			folder = "media/mapZoom", 
-			allowFail = true, 
-			width = act.width,
-			x = act.xCenter,
-			y =  act.yCenter + act.dyTitleBar / 2, 
+		folder = FOLDER, 
+		allowFail = true, 
+		width = act.width,
+		x = act.xCenter,
+		y =  act.yCenter + act.dyTitleBar / 2, 
 	}
 	mapImage = act:newImage( name .. ".png", imageOptions)
 	if not mapImage then
@@ -126,16 +187,16 @@ local function loadMap( name )
 		return false
 	end
 	mapImage:toBack()
-	mapName = name
 	mapImage:addEventListener( "touch", touchedMap )
+	mapName = name
 
 	-- Create display group for map icons centered on the view
 	icons = act:newGroup()
 	icons.x = act.xCenter
 	icons.y = act.yCenter
 
-	-- Try to load data file for this map
-	-- TODO
+	-- Load the associated data file
+	loadMapData()
 	return true
 end
 
@@ -143,6 +204,7 @@ end
 local function doneButton()
 	if mapName then
 		-- Done: Close and save the loaded map
+		saveMapData()
 		if mapImage then
 			mapImage:removeSelf()
 			mapImage = nil
@@ -152,7 +214,6 @@ local function doneButton()
 			icons = nil
 		end
 		mapName = nil
-		mapData = nil
 
 		-- The text edit can now load a new map
 		textEdit.text = "" 

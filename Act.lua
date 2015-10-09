@@ -127,24 +127,25 @@ function Act:makeTitleBar( title, backListener )
 end
 
 -- Make a map item icon in the group with the given data table containing:
---   type       -- "item", "doc", or "act"
---   name       -- item name (e.g. "H2O"), document name, or act name
---   x, y       -- position relative to the given group
+--   t       -- "item", "doc", or "act"
+--   name    -- item name (e.g. "H2O"), document name, or act name
+--   x, y    -- position relative to the given group
 function Act:newMapIcon( group, data )
-    -- Create a circle with a black frame
+    -- Create a rotating rectangle with a black frame
     assert( type( data ) == "table" )
-    local icon = display.newCircle( group, data.x, data.y, 8 )
+    local icon = display.newRect( group, data.x, data.y, 16, 16 )
     icon:setStrokeColor( 0 )   -- black
     icon.strokeWidth = 3
+    transition.to( icon, { delta = true, rotation = 360, time = 3000, iterations = 0 })
 
     -- Store the type and name in the icon
-    icon.type = data.type
+    icon.t = data.t
     icon.name = data.name
 
     -- Set the fill color based on the icon type
-    if icon.type == "act" then
+    if icon.t == "act" then
         icon:setFillColor( 1, 0, 0 )  -- red
-    elseif icon.type == "doc" then
+    elseif icon.t == "doc" then
         icon:setFillColor( 1, 1, 0 )  -- yellow
     else
         icon:setFillColor( 0, 1, 0 )  -- green
