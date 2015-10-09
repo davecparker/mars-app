@@ -45,6 +45,7 @@ act.name     -- act module name
 -- Methods in the act table you can use (see Act.lua for details):
 act:newImage( filename, options )        -- make a new imageRect display object
 act:newGroup( parent )                   -- make a new display (sub-)group
+act:whiteBackground()                    -- make a solid white background
 act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
 
 -----------------------------------------------------------------------------------------

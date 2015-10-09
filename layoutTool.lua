@@ -29,11 +29,10 @@ local toolbar     -- toolbar to hold the controls on the bottom of the screen
 local segControl  -- segmented control in the toolbar
 local doneBtn     -- Load/Done button in the top bar
 local textEdit    -- native text edit control in the top bar
-local map         -- table for current map being edited or nil if none
 local mapName     -- name of map being edited or nil if none
 local mapImage    -- image object for map background or nil if none loaded
 local icons       -- display group for map icons
-local iconSel     -- currently selectec map icon or nil if none
+local iconSel     -- currently selected map icon or nil if none
 
 
 -- Select the icon, which can be nil for no selection
@@ -80,7 +79,7 @@ local function touchedIcon( icon, event )
 	return true
 end
 
--- Create and return new icon with the given data table (t, name, x, y)
+-- Create and return a new icon with the given data table (t, name, x, y)
 local function newIcon( data )
 	local icon = act:newMapIcon( icons, data )
 	if icon then
@@ -117,7 +116,7 @@ end
 
 -- Return the path to the data file for the given map name
 local function mapDataPath( mapName )
-	return FOLDER .. "/" .. mapName .. ".txt"
+	return system.pathForFile( FOLDER .. "/" .. mapName .. ".txt", system.ResourceDirectory )
 end
 
 -- Load the map data file for the current map, 
@@ -186,7 +185,7 @@ local function loadMap( name )
 	if not mapImage then
 		return false
 	end
-	mapImage:toBack()
+	mapImage:toBack()  -- behind top bar
 	mapImage:addEventListener( "touch", touchedMap )
 	mapName = name
 
