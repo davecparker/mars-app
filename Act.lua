@@ -36,6 +36,7 @@ end
 --    folder          -- subfolder where filename is located, default is media/actName
 --    x, y            -- initial position of the center of the object, default is act center
 --    width, height   -- display object size (default to original size/aspect)
+--    allowFail       -- set to true to just return nil if image not found instead of error
 -- If only one of width or height is included, the other is calculated to retain the aspect.
 function Act:newImage( filename, options )
     -- Check the parameter types
@@ -73,8 +74,13 @@ function Act:newImage( filename, options )
     end
 
     -- Now make the imageRect at the desired size and position
+    width = width or self.width
+    height = height or self.height
     local image = display.newImageRect( parent, path, width, height )
     if not image then
+        if options.allowFail then
+            return nil
+        end
         error( "Image not found: " .. path, 2 )  -- report runtime error at the calling location
     else
         image.x = x

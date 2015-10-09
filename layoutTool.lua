@@ -22,10 +22,61 @@ local act = game.newAct()
 local toolbar   -- toolbar to hold the controls on the bottom of the screen
 local doneBtn   -- Load/Done button in the top bar
 local textEdit  -- native text edit control in the top bar
+local map       -- table for current map being edited or nil if none
+local mapName   -- name of map being edited or nil if none
+local mapImage  -- image object for map background or nil if none loaded
+local mapData   -- data table for the current map or nil if none loaded
 
 
--- Handle press on the Done button
+-- Attempt to load the map with the given name (name is without extension).
+-- Return true if successfully loaded.
+local function loadMap( name )
+	-- Try to load the map image as png, else jpg, else fail if not found
+	assert( mapImage == nil )
+	local imageOptions = 
+	{
+			folder = "media/mapZoom", 
+			allowFail = true, 
+			width = act.width,
+			x = act.xCenter,
+			y =  act.yCenter + act.dyTitleBar / 2, 
+	}
+	mapImage = act:newImage( name .. ".png", imageOptions)
+	if not mapImage then
+		mapImage = act:newImage( name .. ".jpg", imageOptions)
+	end
+	if not mapImage then
+		return false
+	end
+	mapImage:toBack()
+	mapName = name
+
+	-- Try to load data file for this map
+	-- TODO
+	return true
+end
+
+-- Handle press on the Load/Done button
 local function doneButton()
+	if mapName then
+		-- Done: Close and save the loaded map
+		if mapImage then
+			mapImage:removeSelf()
+			mapImage = nil
+		end
+		mapName = nil
+		mapData = nil
+		doneBtn:setLabel( "Load" )  -- text edit can now load a new map 
+	else
+		-- Load: load the map named in the edit control
+		if loadMap( textEdit.text ) then
+			doneBtn:setLabel( "Done" )  -- Change button to Done to close and finish
+		end
+	end
+end
+
+-- Handle changes to the text edit
+function textEditListener( event )
 end
 
 -- Init the act
@@ -52,31 +103,32 @@ function act:init()
 	local topBar = act:newGroup()
 	local bg = display.newRect( topBar, act.xCenter, act.yMin + act.dyTitleBar / 2, 
 					act.width, act.dyTitleBar )
-	bg:setFillColor( 0.7 )  -- light gray
+	bg:setFillColor( 0.25 )  -- dark gray
 	doneBtn = widget.newButton
 	{
 	    x = act.xMax - 30,
 	    y = bg.y,
-	    label = "Done",
-	    onEvent = doneButton,
+	    label = "Load",        -- button initially used for loading map file
+	    onRelease = doneButton,
 	}
 	topBar:insert( doneBtn )
 end
 
 -- Start the act
 function act:start()
-	toolbar.isVisible = true   -- toolbar is in the global group
-	doneBtn:setLabel( "Load" )   -- button initially used for loading map file
+	toolbar.isVisible = true   -- toolbar is in the global group so must show/hide
+	toolbar:toFront()
 
 	-- Create the text edit and use the load placeholder 
 	textEdit = native.newTextField( 130, act.yMin + act.dyTitleBar / 2, 
 					250, act.dyTitleBar * 0.75 )
 	textEdit.placeholder = "Map filename"
+	textEdit:addEventListener( "userInput", textEditListener )
 end
 
 -- Stop the act
 function act:stop()
-	toolbar.isVisible = false  -- toolbar is in the global group
+	toolbar.isVisible = false  -- toolbar is in the global group so must show/hide
 	textEdit:removeSelf()
 	textEdit = nil
 end
