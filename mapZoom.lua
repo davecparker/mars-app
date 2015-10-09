@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------------------------
 --
--- resources.lua
+-- mapZoom.lua
 --
--- The resources view for the Mars App.
+-- The zoomed map view (e.g. single room) for the Mars App
 -----------------------------------------------------------------------------------------
 
 -- Get local reference to the game globals
@@ -14,13 +14,22 @@ local act = game.newAct()
 
 ------------------------- Start of Activity --------------------------------
 
+-- Handle tap on the back button
+local function backTapped()
+	-- Go back to overall map view
+	game.mapZoom = false
+	game.gotoAct( "mainAct", { effect = "crossFade", time = 250 } )
+end
+
 -- Init the act
 function act:init()
-	-- Title bar for the view
-	act:makeTitleBar( "Resources" )
+	-- Title bar
+	act:makeTitleBar( "Captain's Cabin", backTapped )
 
-	-- Post a new document (TODO: Temporary)
-	game.foundDocument( "Resource Management" )
+		-- Background image
+	local bg = act:newImage( "sampleRoom.png", { width = act.width } )
+	bg.x = act.xCenter
+	bg.y = act.yCenter + act.dyTitleBar / 2
 end
 
 
