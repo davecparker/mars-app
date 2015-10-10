@@ -26,12 +26,16 @@ local earth         -- earth
 -- works: local buttonTurnRight = display.newImageRect( "media/thrustNav/arrow-button.png", 30, 30 )
 -- fails: local buttonTurnRight = display.newImageRect( act.group, "media/thrustNav/arrow-button.png", 30, 30 )
 
-local buttonTurnRight  -- button to turn ship right
 local buttonTurnLeft   -- button to turn ship left
-local buttonForward    -- button to move ship forward
+local buttonTurnRight  -- button to turn ship right
+local buttonRollLeft   -- button to Roll ship left
+local buttonRollRight  -- button to Roll ship right
+local buttonPitchUp    -- button to pitch ship up
+local buttonPitchDown  -- button to pitch ship down
 local ship             -- ship object
 local spaceGroup    -- group for rotating space background
-local xDelta, yDelta  -- angular delta from straight to marz
+local xDelta, yDelta, rotDelta  -- positional deltas used on each enter frame
+local xDeltaInc, yDeltaInc, rotDeltaInc  -- increments for the deltas
 local navStatsText     -- text string for nav stats
 
 
@@ -53,50 +57,74 @@ local function touched( event )
 	xyCenterText.text = string.format( "Center + (%d, %d)", x - act.xCenter, y - act.yCenter )
 end
 
-function buttonTurnRightTouch (event)
-	if event.phase == "began" then
-		--transition.to( rect, { rotation=-45, time=500, transition=easing.inOutCubic } )
-		print("Turn Right Button, rotation= ", spaceGroup.rotation )
-		spaceGroup:applyAngularImpulse( -10000 )
-		--- spaceGroup:applyTorque( -10000 )
-	end
-	return true
-end
+
 
 function buttonTurnLeftTouch (event)
 	if event.phase == "began" then
 		-- print( "Touch even began on: " .. self.id )
 		print("Turn Left Button")
-		spaceGroup:applyAngularImpulse( 10000 )
+		-- spaceGroup:applyAngularImpulse( -10000 )
+		xDelta = xDelta + xDeltaInc
 	end
 	return true
 end
 
-function buttonForwardTouch (event)
+function buttonTurnRightTouch (event)
+	if event.phase == "began" then
+		--transition.to( rect, { rotation=-45, time=500, transition=easing.inOutCubic } )
+		print("Turn Right Button, rotation= ", spaceGroup.rotation )
+		-- spaceGroup:applyAngularImpulse( 10000 )
+		--- spaceGroup:applyTorque( -10000 )
+		xDelta = xDelta - xDeltaInc
+	end
+	return true
+end
+
+
+function buttonRollLeftTouch (event)
 	if event.phase == "began" then
 		-- print( "Touch even began on: " .. self.id )
-		print("Forward Button - Rotation = ", spaceGroup.rotation)
-		print("Linear damping= ", spaceGroup.linearDamping)
-		print("Linear Velocity=", spaceGroup:getLinearVelocity())
-		print("Angular Velocity= ", spaceGroup.angularvelocity)
+		print("Roll Left Button")
+		-- spaceGroup:applyAngularImpulse( -10000 )
+		rotDelta = rotDelta + rotDeltaInc
+	end
+	return true
+end
+
+function buttonRollRightTouch (event)
+	if event.phase == "began" then
+		--transition.to( rect, { rotation=-45, time=500, transition=easing.inOutCubic } )
+		print("Roll Right Button, rotation= ", spaceGroup.rotation )
+		-- spaceGroup:applyAngularImpulse( 10000 )
+		--- spaceGroup:applyTorque( -10000 )
+		rotDelta = rotDelta - rotDeltaInc
+	end
+	return true
+end
+
+function buttonPitchUpTouch (event)
+	if event.phase == "began" then
+		-- print( "Touch even began on: " .. self.id )
+		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		--- if  spaceGroup.rotation > 90  then
-		spaceGroup:applyLinearImpulse(0, 1, spaceGroup.x, spaceGroup.y )
 		--- else
 			--- spaceGroup:applyLinearImpulse(0, -0.1, spaceGroup.x, spaceGroup.y )
 		---end
+		yDelta = yDelta + yDeltaInc
 	end
 	return true
 end
 
-function buttonBackTouch (event)
+function buttonPitchDownTouch (event)
 	if event.phase == "began" then
 		-- print( "Touch even began on: " .. self.id )
-		print("Back Button - Rotation = ", spaceGroup.rotation)
+		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		--- if  spaceGroup.rotation > 90  then
 			---spaceGroup:applyLinearImpulse(0, 0.1, spaceGroup.x, spaceGroup.y )
 		---else
-			spaceGroup:applyLinearImpulse(0, -1, spaceGroup.x, spaceGroup.y )
+			-- spaceGroup:applyLinearImpulse(0, -1, spaceGroup.x, spaceGroup.y )
 		-- end
+		yDelta = yDelta - yDeltaInc
 	end
 	return true
 end
@@ -109,11 +137,15 @@ function act:init()
 	spaceGroup = act:newGroup()
 
 	-- Create control buttons, background, etc.
-	buttonTurnRight = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
 	buttonTurnLeft = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
-	buttonForward = display.newImageRect(act.group, "media/thrustnav/arrow-button.png",30,30)
-	buttonBack = display.newImageRect(act.group, "media/thrustnav/arrow-button.png",30,30)
-	buttonBack.rotation = 180
+	buttonTurnLeft.rotation = -90
+	buttonTurnRight = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
+	buttonTurnRight.rotation = 90
+	buttonRollLeft = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
+	buttonRollRight = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
+	buttonPitchUp = display.newImageRect(act.group, "media/thrustnav/arrow-button.png",30,30)
+	buttonPitchDown = display.newImageRect(act.group, "media/thrustnav/arrow-button.png",30,30)
+	buttonPitchDown.rotation = 180
 
 		-- Background image with touch listener
 	--- local bg = act.newImage( "starrynight.png", { parent = spaceGroup, x = act.xMin, y = act.yMin, width = 3*act.width } )
@@ -157,11 +189,17 @@ function act:init()
     spaceGroup.y = act.yCenter
     spaceGroup.anchorY =spaceGroup.y
 
-	physics.start()   --- physics.start()
-    physics.addBody ( spaceGroup, "dynamic" )
-    spaceGroup.gravityScale = 0         -- makes object float
-	spaceGroup:applyAngularImpulse( 100000 )
-	spaceGroup.isSleepingAllowed = false
+	-- physics.start()   --- physics.start()
+    -- physics.addBody ( spaceGroup, "dynamic" )
+    -- spaceGroup.gravityScale = 0         -- makes object float
+	-- spaceGroup:applyAngularImpulse( 100000 )
+	-- spaceGroup.isSleepingAllowed = false
+	xDelta = 0
+	yDelta = 0
+	rotDelta = 0
+	xDeltaInc = 0.1
+	yDeltaInc = 0.1
+	rotDeltaInc = 0.01
 
 	-- Could try transition with iterations=-1 for continuous
 	--- transition.to(fuseObj, { iterations=-1,rotation=-360,time=250})
@@ -178,27 +216,36 @@ function act:init()
 	ship.y = act.xCenter
 
     -- Set up buttons
-	buttonTurnLeft.x = act.xMin + (act.xMax - act.xMin) / 5
-	buttonTurnLeft.y = act.yMax - (act.yMax - act.yMin) / 20
+	buttonTurnLeft.x = act.xCenter - (act.xMax - act.xMin) / 15
+	buttonTurnLeft.y = act.yMax - (act.yMax - act.yMin) / 15
 	buttonTurnLeft.isVisible = true
 
-	buttonTurnRight.x = act.xMax - (act.xMax - act.xMin) / 5
-	buttonTurnRight.y = act.yMax - (act.yMax - act.yMin) / 20
+	buttonTurnRight.x = act.xCenter + (act.xMax - act.xMin) / 15
+	buttonTurnRight.y = act.yMax - (act.yMax - act.yMin) / 15
 	buttonTurnRight.isVisible = true
 
-	buttonForward.x = (act.xMax - act.xMin ) / 2
-	buttonForward.y = act.yMax - (act.yMax - act.yMin) / 10 
-	buttonForward.isVisible = true
+	buttonRollLeft.x = act.xMax - (act.xMax - act.xMin) / 8
+	buttonRollLeft.y = act.yMax - (act.yMax - act.yMin) / 20
+	buttonRollLeft.isVisible = true
 
-	buttonBack.x = (act.xMax - act.xMin ) / 2
-	buttonBack.y = act.yMax - (act.yMax - act.yMin) / 20 
-	buttonBack.isVisible = true
+	buttonRollRight.x = act.xMin + (act.xMax - act.xMin) / 5
+	buttonRollRight.y = act.yMax - (act.yMax - act.yMin) / 20
+	buttonRollRight.isVisible = true
 
+	buttonPitchUp.x = (act.xMax - act.xMin ) / 2
+	buttonPitchUp.y = act.yMax - (act.yMax - act.yMin) / 10 
+	buttonPitchUp.isVisible = true
 
-	buttonTurnRight:addEventListener( "touch", buttonTurnRightTouch )
+	buttonPitchDown.x = (act.xMax - act.xMin ) / 2
+	buttonPitchDown.y = act.yMax - (act.yMax - act.yMin) / 30 
+	buttonPitchDown.isVisible = true
+
 	buttonTurnLeft:addEventListener( "touch", buttonTurnLeftTouch )
-	buttonForward:addEventListener( "touch", buttonForwardTouch )
-	buttonBack:addEventListener( "touch", buttonBackTouch )
+	buttonTurnRight:addEventListener( "touch", buttonTurnRightTouch )
+	buttonRollLeft:addEventListener( "touch", buttonRollLeftTouch )
+	buttonRollRight:addEventListener( "touch", buttonRollRightTouch )
+	buttonPitchUp:addEventListener( "touch", buttonPitchUpTouch )
+	buttonPitchDown:addEventListener( "touch", buttonPitchDownTouch )
 
 end
 
@@ -208,30 +255,46 @@ function updateNavStats()
 	local yOnTarget = ""
 
 	--- impulses stop working properly if it body falls asleep (ie. not awake)
-	if spaceGroup.isAwake then 
-		awake = "true" 
-	else 
-		awake="false" 
-		print("Impulse forces stop working when bodies fall asleep")
-	end  
+	-- if spaceGroup.isAwake then 
+		-- awake = "true" 
+	-- else 
+		--- awake="false" 
+		--- print("Impulse forces stop working when bodies fall asleep")
+
+	-- end  
+
+	if ( spaceGroup.x > 262 and spaceGroup.x < 286 ) then
+		xOnTarget = "ON TARGET"
+	end
 
 	if ( spaceGroup.y > 262 and spaceGroup.y < 286 ) then
 		yOnTarget = "ON TARGET"
 	end
 
 	navStatsText.text = "xDelta=" .. spaceGroup.x .. "yDelta=" .. spaceGroup.y
-	navStatsText.text = string.format("%s  %4.0f\n%s  %4.0f  %s\n%s  %4.0f\n",  
-		"xDelta=", spaceGroup.x, 
-		"yDelta=", spaceGroup.y, yOnTarget,
-		"rotation=", spaceGroup.rotation )
+	navStatsText.text = string.format("%s  %5.1f  %s  %5.1f\n%s  %4.0f  %s  %5.1f\n%s  %5.1f  %5.3f\n",  
+		"xDelta=", spaceGroup.x, xOnTarget, spaceGroup.anchorX,
+		"yDelta=", spaceGroup.y, yOnTarget, spaceGroup.anchorY,
+		"rotation=", spaceGroup.rotation, rotDelta )
 
 
 end
+
+function updatePosition()
+	spaceGroup.x = spaceGroup.x + xDelta
+	spaceGroup.y = spaceGroup.y + yDelta
+	spaceGroup.rotation = spaceGroup.rotation + rotDelta 
+end
+
 
 -- Handle enterFrame events
 function act:enterFrame( event )
 	if( navStatsText ) then
 		updateNavStats()
+	end
+
+	if ( xDelta and yDelta and rotDelta ) then
+		updatePosition()
 	end
 
 	-- Move UFO to the right and wrap around exactly at screen edges
