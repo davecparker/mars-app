@@ -46,7 +46,8 @@ local spaceGroup    	-- group for rotating space background
 local xDelta, yDelta, rotDelta  -- positional deltas used on each enter frame
 local xDeltaInc, yDeltaInc, rotDeltaInc  -- increments for the deltas
 local navStatsText     -- text string for nav stats
-
+local targetRect       -- Rectangle target area
+local arrow        		-- directional arrow toward mars
 
 -- Make a small red circle centered at the given location
 local function makeRedCircle( x, y )
@@ -71,6 +72,7 @@ function buttonTurnLeftTouch (event)
 	if event.phase == "began" then
 		print("Turn Left Button")
 		xDelta = xDelta + xDeltaInc
+		printPositions()
 	end
 	return true
 end
@@ -80,6 +82,7 @@ function buttonTurnRightTouch (event)
 	if event.phase == "began" then
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
 		xDelta = xDelta - xDeltaInc
+		printPositions()
 	end
 	return true
 end
@@ -89,6 +92,7 @@ function buttonRollLeftTouch (event)
 	if event.phase == "began" then
 		print("Roll Left Button")
 		rotDelta = rotDelta + rotDeltaInc
+		printPositions()
 	end
 	return true
 end
@@ -98,6 +102,7 @@ function buttonRollRightTouch (event)
 	if event.phase == "began" then
 		print("Roll Right Button, rotation= ", spaceGroup.rotation )
 		rotDelta = rotDelta - rotDeltaInc
+		printPositions()
 	end
 	return true
 end
@@ -107,6 +112,7 @@ function buttonPitchUpTouch (event)
 	if event.phase == "began" then
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		yDelta = yDelta + yDeltaInc
+		printPositions()
 	end
 	return true
 end
@@ -116,8 +122,28 @@ function buttonPitchDownTouch (event)
 	if event.phase == "began" then
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		yDelta = yDelta - yDeltaInc
+		printPositions()
 	end
 	return true
+end
+
+-- Could use math.abs(bird.y-food.y) < slop to achieve similar result
+--rectangle-based collision detection (found in doc)
+local function hasCollided( obj1, obj2 )
+	-- -- print ("In hasCollided")
+   if ( obj1 == nil ) then  --make sure the first object exists
+      return false
+   end
+   if ( obj2 == nil ) then  --make sure the other object exists
+      return false
+   end
+
+   local left = obj1.contentBounds.xMin <= obj2.contentBounds.xMin and obj1.contentBounds.xMax >= obj2.contentBounds.xMin
+   local right = obj1.contentBounds.xMin >= obj2.contentBounds.xMin and obj1.contentBounds.xMin <= obj2.contentBounds.xMax
+   local up = obj1.contentBounds.yMin <= obj2.contentBounds.yMin and obj1.contentBounds.yMax >= obj2.contentBounds.yMin
+   local down = obj1.contentBounds.yMin >= obj2.contentBounds.yMin and obj1.contentBounds.yMin <= obj2.contentBounds.yMax
+
+   return (left or right) and (up or down)
 end
 
 -- Init the act
@@ -172,10 +198,11 @@ function act:init()
     spaceGroup.anchorX = spaceGroup.x
     spaceGroup.y = act.yCenter
     spaceGroup.anchorY =spaceGroup.y
+    spaceGroup.rotation = 10
 
 	xDelta = 0
 	yDelta = 0
-	rotDelta = 0
+	rotDelta = 0.02
 	xDeltaInc = 0.1
 	yDeltaInc = 0.1
 	rotDeltaInc = 0.01
@@ -188,7 +215,7 @@ function act:init()
 	local dx = 20
 	display.newLine( act.group, act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
 	display.newLine( act.group, act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
-
+	targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
 
     -- Set up buttons
 	buttonTurnLeft.x = act.xCenter - (act.xMax - act.xMin) / 15
@@ -224,33 +251,54 @@ function act:init()
 
 end
 
+-- draw arrow toward mars
+function updateArrow()
+	local marsCenterX = (mars.contentBounds.xMax + mars.contentBounds.xMin)/2 
+	local marsCenterY = (mars.contentBounds.yMax + mars.contentBounds.yMin)/2 
+	if ( arrow ~= nil) then
+		arrow:removeSelf()
+		arrow = nil
+	end
+	arrow = display.newLine( act.group, act.xCenter, act.yCenter, marsCenterX, marsCenterY )
+	-- print("xc=", marsCenterX, "  yc=", marsCenterY )
+end
+
+
+-- Update on screen stats for users reference
 function updateNavStats()
-	local awake
 	local xOnTarget = ""
 	local yOnTarget = ""
 
-	if ( spaceGroup.x > 150 and spaceGroup.x < 170 ) then
-		xOnTarget = "ON TARGET"
-	end
-
-	if ( spaceGroup.y > 262 and spaceGroup.y < 286 ) then
+	-- special treatment for mars
+   	if( hasCollided( mars, targetRect ) ) then
+   		xOnTarget = "ON TARGET"
 		yOnTarget = "ON TARGET"
 	end
 
-	navStatsText.text = "xDelta=" .. spaceGroup.x .. "yDelta=" .. spaceGroup.y
-	navStatsText.text = string.format("%s  %5.1f  %s  %5.1f\n%s  %4.0f  %s  %5.1f\n%s  %5.1f  %5.3f\n",  
-		"xDelta=", spaceGroup.x, xOnTarget, spaceGroup.anchorX,
-		"yDelta=", spaceGroup.y, yOnTarget, spaceGroup.anchorY,
-		"rotation=", spaceGroup.rotation, rotDelta )
-
+	if( hasCollided( earth, targetRect ) ) then
+		navStatsText.text = "Where are you going?  Home?"	
+	else
+		navStatsText.text = string.format("%s  %5.1f   %s  %5.1f\n%s  %4.0f  %s  %5.1f\n%s  %5.1f  %5.3f\n",  
+		"xDelta=", ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter , xOnTarget, spaceGroup.anchorX,
+		"yDelta=", (mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter , yOnTarget, spaceGroup.anchorY,
+		"rotation=", spaceGroup.rotation % 360, rotDelta )
+	end
 end
 
+--  Move and update space background 
 function updatePosition()
 	spaceGroup.x = spaceGroup.x + xDelta
 	spaceGroup.y = spaceGroup.y + yDelta
 	spaceGroup.rotation = spaceGroup.rotation + rotDelta 
 end
 
+-- print debug positon information to console
+function printPositions()
+	print("Mars  x=", mars.x, "  y=", mars.y, "  ax=", mars.anchorX, "  ay=", mars.anchorY )
+	print("Mars  contentBounds.xMin=", mars.contentBounds.xMin )
+	print("Space x=", spaceGroup.x, "  y=", spaceGroup.y, "  ax=", spaceGroup.anchorX, "  ay=", spaceGroup.anchorY )
+	print("Earth x=", earth.x, "  y=", earth.y, "  ax=", earth.anchorX, "  ay=", earth.anchorY )
+end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
@@ -261,6 +309,7 @@ function act:enterFrame( event )
 	if ( xDelta and yDelta and rotDelta ) then
 		updatePosition()
 	end
+	updateArrow()
 
 end
 
