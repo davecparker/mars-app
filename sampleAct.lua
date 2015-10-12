@@ -75,6 +75,10 @@ function act:enterFrame( event )
 	ufo.x = ufo.x + 3
 	if ufo.x > act.xMax + ufo.width / 2 then
 		ufo.x = act.xMin - ufo.width / 2
+
+		-- Use some energy for each UFO pass
+		game.addEnergy( -5 )
+
 		game.sendMessage( "ufo" )  -- TODO: Temporary
 	end
 end

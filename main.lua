@@ -10,6 +10,10 @@
 
 -- Game functions defined in game.lua:
 game.pinValue( value, min, max )      -- Constrain a value to a range
+game.addOxygen( liters )              -- Add or subtract oxygen
+game.addWater( liters )               -- Add or subtract water
+game.addEnergy( kWh )                 -- Add or subtract energy
+game.addFood( kg )                    -- Add or subtract food
 
 -- Game functions defined in Act.lua
 game.gotoAct( name, options )         -- Run a given activity/view
