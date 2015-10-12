@@ -18,10 +18,16 @@ game.newAct()                         -- Create a new activity
 
 -- Game functions defined in tabBar.lua:
 game.selectGameTab( index, press )    -- Select one of the tab bar tabs
+game.createBadge( x, y )              -- Create a new item indicator badge
+game.showBadge( badge )               -- show an indicator badge
+game.hideBadge( badge )               -- hide an indicator badge
 
 -- Game functions defined in messages.lua:
 game.sendMessage( id )                -- Add message to messages view
 game.sendMessages( id1, id2, ... )    -- Add multiple messages to messages view
+
+-- Game functions defined in documents.lua:
+game.foundDocument( filename )        -- Add document to user's list of found docs
 
 -- Variables in the act table you can use:
 act.width    -- width of the activiy area 
@@ -37,24 +43,29 @@ act.scene    -- composer scene associated with the act
 act.name     -- act module name
 
 -- Methods in the act table you can use (see Act.lua for details):
-act:newImage( filename, options )    -- make a new imageRect display object
-act:newGroup( parent )               -- make a new display (sub-)group
-act:makeTitleBar( title )            -- make standard view background and title bar
+act:newImage( filename, options )        -- make a new imageRect display object
+act:newGroup( parent )                   -- make a new display (sub-)group
+act:whiteBackground()                    -- make a solid white background
+act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
 
 -----------------------------------------------------------------------------------------
 How to define an activity:
-   * For now, use mainAct.lua for your activity source file.
+   * Create a Lua file named with the name of your activity in the main project folder.
+   * Start with the code in blank.act as an initial template.
+   * Add your activity name to the debugActs array in debugMenu.lua.
    * Create your display objects in act:init() and put them all in act.group.
+   * If you define act:prepare() it will be called before the transition into the act.
    * If you define act:start() it will be called when the activity starts/resumes.
    * If you define act:stop() it will be called when the activity suspends/ends.
    * If you define act:destroy() it will be called when the activity is destroyed.
    * If you define act:enterFrame() it will be called before every animation frame.
+   * Store your graphics and other media in media/yourActName (See act:newImage())
 
 -----------------------------------------------------------------------------------------
 Some activity rules and hints:
    * Do not add Runtime enterFrame listeners. Define act:enterFrame() instead. 
-   * Do not use Runtime tap/touch listeners. Attach them to display objects.
--  * Do not use global variables. Use (file) local myVar, game.myVar, or act.myVar.
+   * Do not use Runtime tap/touch listeners. Attach them to display objects (background?).
+   * Do not use global variables. Use (file) local myVar, game.myVar, or act.myVar.
 -----------------------------------------------------------------------------------------
 
 --]]-------------------------------------------------------------------------------------
@@ -70,6 +81,7 @@ local json = require( "json" )
 -- Load required game modules
 require( "Act" )
 require( "tabBar" )
+require( "documents" )
 require( "messages" )
 
 
@@ -95,7 +107,7 @@ end
 local function loadGameState()
 	local file = io.open( dataFilePath(), "r" )
 	if file then
-		local str = file:read( "*a" )	-- Read entile file as a string (JSON encoded)
+		local str = file:read( "*a" )	-- Read entire file as a string (JSON encoded)
 		if str then
 			local saveState = json.decode( str )
 			if saveState then
@@ -130,5 +142,5 @@ end
 -- Start the game
 initGame()
 
--- Start in the preferred view
+-- Start in the debug menu view for now
 game.gotoAct( "debugMenu" )

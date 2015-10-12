@@ -21,10 +21,8 @@ local Act = {
 -- Create a new instance of the Act class
 function Act:new()
     local act = {}
-
-	setmetatable(act, self)
+	setmetatable( act, self )
 	self.__index = self
-
     return act
 end
 
@@ -36,6 +34,7 @@ end
 --    folder          -- subfolder where filename is located, default is media/actName
 --    x, y            -- initial position of the center of the object, default is act center
 --    width, height   -- display object size (default to original size/aspect)
+--    allowFail       -- set to true to just return nil if image not found instead of error
 -- If only one of width or height is included, the other is calculated to retain the aspect.
 function Act:newImage( filename, options )
     -- Check the parameter types
@@ -45,14 +44,14 @@ function Act:newImage( filename, options )
     -- Get default values for options
     options = options or {}
     local parent = options.parent or self.group
-    local folder = options.folder or "media/" .. self.name .. "/"
+    local folder = options.folder or "media/" .. self.name 
     local x = options.x or self.xCenter
     local y = options.y or self.yCenter
     local width = options.width
     local height = options.height
 
     -- Determine file path
-    local path = folder .. filename
+    local path = folder .. "/".. filename
 
     -- Do we need to calculate width or height from the original image size?
     if not width or not height then
@@ -73,8 +72,13 @@ function Act:newImage( filename, options )
     end
 
     -- Now make the imageRect at the desired size and position
+    width = width or self.width
+    height = height or self.height
     local image = display.newImageRect( parent, path, width, height )
     if not image then
+        if options.allowFail then
+            return nil
+        end
         error( "Image not found: " .. path, 2 )  -- report runtime error at the calling location
     else
         image.x = x
@@ -91,23 +95,73 @@ function Act:newGroup( parent )
 	return g
 end 
 
--- Make a background title bar for a game view with the given title string
-function Act:makeTitleBar( title )
+-- Make and return a solid white background for the act.
+function Act:whiteBackground()
     -- Background for the whole view
     local bg = display.newRect( self.group, self.xCenter, self.yCenter, self.width, self.height )
-    bg:setFillColor( 1 )   -- white
+    bg:setFillColor( 1 )  -- white
+    return bg
+end    
 
-    -- Title bar
-    local bar = display.newRect( self.group, self.xMin, self.yMin, self.width, self.dyTitleBar )
+-- Make a background title bar for a game view with the given title string (default empty).
+-- If backListener is passed, include a back button and call backListener when pressed.
+-- Return a display group containing all the title bar elements.
+function Act:makeTitleBar( title, backListener )
+    -- Make a display group to hold all the title bar elements
+    local group = self:newGroup()
+
+    -- Colored bar
+    local bar = display.newRect( group, self.xMin, self.yMin, self.width, self.dyTitleBar )
     bar.anchorX = 0
     bar.anchorY = 0
     bar:setFillColor( 0.5, 0, 0 )   -- dark red
 
     -- Title bar text
-    local title = display.newText( self.group, title, 
+    title = title or ""
+    self.title = display.newText( group, title, 
                         self.xCenter, self.yMin + self.dyTitleBar / 2, 
                         native.systemFontBold, 18 )
-    title:setFillColor( 1 )   -- white
+    self.title:setFillColor( 1 )   -- white
+
+    -- Back button if requested
+    if backListener then
+        local bb = self:newImage( "back.png", { 
+            parent = group, 
+            folder = "media/game", 
+            height = self.dyTitleBar * 0.6 
+        } )
+        bb.x = self.xMin + 15
+        bb.y = self.yMin + self.dyTitleBar / 2
+        bb:addEventListener( "tap", backListener )
+    end
+    return group
+end
+
+-- Make a map item icon in the group with the given data table containing:
+--   t       -- "item", "doc", or "act"
+--   name    -- item name (e.g. "H2O"), document name, or act name
+--   x, y    -- position relative to the given group
+function Act:newMapIcon( group, data )
+    -- Create a rotating rectangle with a black frame
+    assert( type( data ) == "table" )
+    local icon = display.newRect( group, data.x, data.y, 16, 16 )
+    icon:setStrokeColor( 0 )   -- black
+    icon.strokeWidth = 3
+    transition.to( icon, { delta = true, rotation = 360, time = 3000, iterations = 0 })
+
+    -- Store the type and name in the icon
+    icon.t = data.t
+    icon.name = data.name
+
+    -- Set the fill color based on the icon type
+    if icon.t == "act" then
+        icon:setFillColor( 1, 0, 0 )  -- red
+    elseif icon.t == "doc" then
+        icon:setFillColor( 1, 1, 0 )  -- yellow
+    else
+        icon:setFillColor( 0, 1, 0 )  -- green
+    end
+    return icon
 end
 
 
@@ -162,7 +216,12 @@ function game.newAct()
     function scene:show( event )
         -- When the scene is on-screen and ready to go...
         local act = self.act
-        if event.phase == "did" then
+        if event.phase == "will" then
+            -- Call the act prepare function, if any
+            if act.prepare then 
+                act:prepare()
+            end            
+        elseif event.phase == "did" then
             -- Add an enterFrame listener for the act object
             Runtime:addEventListener( "enterFrame", act )
 

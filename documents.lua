@@ -17,6 +17,10 @@ local act = game.newAct()
 
 ------------------------- Start of Activity --------------------------------
 
+-- Act variables
+local tableView     -- TableView widget to display list of documents
+local badge         -- tab bar badge for new document indicator
+
 
 -- Draw a row in the tableView
 local function onRowRender( event )
@@ -35,19 +39,22 @@ local function onRowRender( event )
 end
 
 -- Handle touch on a row
-function onRowTouch( event )
+local function onRowTouch( event )
 	if event.phase == "tap" or event.phase == "release" then
-		-- TODO: Open selected doc
+		-- Set name of doc to open and switch to document view
+		game.openDoc = game.saveState.docs[event.row.index]
+		game.gotoAct( "document", { effect = "slideLeft", time = 300 } )
 	end
 end
 
 -- Init the act
 function act:init()
-	-- Title bar for the view
+	-- Background and title bar for the view
+	act:whiteBackground()
 	act:makeTitleBar( "Documents" )
 
-	-- A tableView widget to list the documents
-	local tableView = widget.newTableView
+	-- Make the TableView to list the documents
+	tableView = widget.newTableView
 	{
 	    left = act.xMin,
 	    top = act.yMin + act.dyTitleBar,
@@ -57,12 +64,48 @@ function act:init()
 	    onRowTouch = onRowTouch,
 	}
 	act.group:insert(tableView)
+end
 
-	-- Insert the rows
+-- Prepare the view before it shows
+function act:prepare()
+	-- If a document is open then go to single document view
+	if game.openDoc then 
+		game.gotoAct( "document" )
+		return
+	end
+
+	-- Make sure that there are enough rows for the list of found docs
+	-- (Note that documents never get deleted so the list never shrinks)
 	local docs = game.saveState.docs
-	for i = 1, #docs do
+	while tableView:getNumRows() < #docs do
 	    tableView:insertRow{}
 	end
+end
+
+-- Start the act
+function act:start()
+	-- Hide the new document badge if showing
+	game.hideBadge( badge )
+end
+
+-- Add the document with the given filename to the user's found documents
+function game.foundDocument( filename )
+    -- Do nothing if the user already has this document
+    local docs = game.saveState.docs
+    for i = 1, #docs do
+        if docs[i] == filename then
+            return
+        end
+    end
+
+    -- Add the new document to the end of the list
+    docs[#docs + 1] = filename
+
+    -- Create new document badge if necessary, and show it
+	if not badge then
+		badge = game.createBadge( act.xMin + act.width * 0.55, act.yMax + 15 )
+	end
+	game.showBadge( badge )
 end
 
 
