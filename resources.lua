@@ -16,7 +16,8 @@ local act = game.newAct()
 
 -- Init the act
 function act:init()
-	-- Title bar for the view
+	-- Background and title bar for the view
+	act:whiteBackground()
 	act:makeTitleBar( "Resources" )
 
 	-- Post a new document (TODO: Temporary)
