@@ -10,14 +10,26 @@
 
 -- The game object where game global data and functions are stored
 local game = {
-    mapZoom = false,  -- currently just true if map view is zoomed
-    openDoc = nil,    -- name of the currently open doc in Documents view or nil if none
+    mapZoomName = false,  -- name of currently zoomed map view or nil if not zoomed
+    openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
 
     -- The saveState table is saved to a file between runs
     saveState = {
-        docs = {},    -- list of document filenames that user had found
+        -- The user's current resource levels (and starting values)
+        resources = {
+            o2 = 100,     -- oxygen in liters
+            h2o = 100,    -- water in liters
+            kWh = 100,    -- energy in kWh
+            food = 100,   -- food in kg
+        },
+
+        -- List of document filenames that user has found
+        docs = {},
     },     
 }
+
+-- Shortcuts to access parts of the game data in this module
+local res = game.saveState.resources
 
 
 ------------------------- Utility Functions  --------------------------------
@@ -30,6 +42,41 @@ function game.pinValue( value, min, max )
         return max
     end
     return value
+end
+
+
+-------------------------- Resource use   ---------------------------------
+
+-- Add to or subtract from the oxygen supply by the given amount in liters
+function game.addOxygen( liters )
+    res.o2 = res.o2 + liters
+    if res.o2 < 0 then
+        res.o2 = 0    -- TODO: Initiate emergency statis or something
+    end
+end
+
+-- Add to or subtract from the water supply by the given amount in liters
+function game.addWater( liters )
+    res.h2o = res.h2o + liters
+    if res.h2o < 0 then
+        res.h2o = 0   -- TODO: Initiate emergency statis or something
+    end
+end
+
+-- Add to or subtract from the energy supply by the given amount in kWh
+function game.addEnergy( kWh )
+    res.kWh = res.kWh + kWh
+    if res.kWh < 0 then
+        res.kWh = 0   -- TODO: Initiate emergency statis or something
+    end
+end
+
+-- Add to or subtract from the food supply by the given amount in kg
+function game.addFood( kg )
+    res.food = res.food + kg
+    if res.food < 0 then
+        res.food = 0   -- TODO: Initiate emergency statis or something
+    end
 end
 
 

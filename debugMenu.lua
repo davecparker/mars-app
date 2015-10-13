@@ -19,12 +19,14 @@ local act = game.newAct()
 
 -- List of activities that can be run directly from the debug menu
 local debugActs = {
+	"layoutTool",
 	"sampleAct",
 	"blankAct",
 	"circuit",
 	"doorLock",
 	"wireCut",
 	"thrustNav",
+	"drillScan"
 }
 
 ------------------------- Start of Activity --------------------------------
@@ -61,7 +63,8 @@ end
 
 -- Init the act
 function act:init()
-	-- Title bar for the view
+	-- Background and title bar for the view
+	act:whiteBackground()
 	act:makeTitleBar( "Debug Menu" )
 
 	-- Create the tableView widget to list the debug activities
@@ -70,7 +73,7 @@ function act:init()
 	    left = act.xMin,
 	    top = act.yMin + act.dyTitleBar,
 	    height = act.height - act.dyTitleBar,
-	    width = act.width - 12,   -- try to visually balance the widget's left margin
+	    width = act.width,
 	    onRowRender = onRowRender,
 	    onRowTouch = onRowTouch,
 	}

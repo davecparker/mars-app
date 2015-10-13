@@ -31,7 +31,8 @@ end
 
 -- Init the act
 function act:init()
-	-- Title bar for the view with back button
+	-- Background and title bar for the view with back button
+	act:whiteBackground()
 	act:makeTitleBar( "", backTapped )
 
 	-- Text area

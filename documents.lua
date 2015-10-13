@@ -49,7 +49,8 @@ end
 
 -- Init the act
 function act:init()
-	-- Title bar for the view
+	-- Background and title bar for the view
+	act:whiteBackground()
 	act:makeTitleBar( "Documents" )
 
 	-- Make the TableView to list the documents
@@ -58,7 +59,7 @@ function act:init()
 	    left = act.xMin,
 	    top = act.yMin + act.dyTitleBar,
 	    height = act.height - act.dyTitleBar,
-	    width = act.width - 12,   -- try to visually balance the widget's left margin
+	    width = act.width,
 	    onRowRender = onRowRender,
 	    onRowTouch = onRowTouch,
 	}
