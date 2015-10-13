@@ -73,7 +73,6 @@ function act:init()
 	    left = act.xMin,
 	    top = act.yMin + act.dyTitleBar,
 	    height = act.height - act.dyTitleBar,
-	    width = act.width - 12,   -- try to visually balance the widget's left margin
 	    onRowRender = onRowRender,
 	    onRowTouch = onRowTouch,
 	}
