@@ -1,8 +1,20 @@
 -----------------------------------------------------------------------------------------
 --
--- mainAct.lua
+-- thrustNav.lua
 --
--- The main activity (map, etc.) the Mars App
+-- Mini game for:
+--  1) Stop spinning ship and navigate toward Mars
+--  2) Enter orbit around mars
+--  3) Land the ship
+-- 
+-- Rocket controls act as if they are attached to nose of ship 
+-- Things to solve:
+--    How to make space continuous for 360 degrees?
+--    How to locate mars and put an arrow towards it
+--    How to locate earth when it is targetted and say something funny
+--    Where to put sun, venus, ..
+--    Need little retro rocket image for buttons when pressed
+
 -----------------------------------------------------------------------------------------
 
 -- Get local reference to the game globals
@@ -11,24 +23,31 @@ local game = globalGame
 -- Create the act object
 local act = game.newAct()
 
+
 -- try image.fill to change images...
---  create a rect then fill with image
+--  create a rect then fill with image.fill
 
 ------------------------- Start of Activity --------------------------------
 
 -- File local variables
-local xyText		-- text display object for touch location 
-local xyCenterText	-- text display object for touch location relative to center
-local ufo       	-- flying UFO object
-local mars           -- planet mars
-local earth         -- earth
-
-
--- Create control buttons, background, etc.
-local buttonTurnRight = display.newImageRect("media/thrustNav/arrow-button.png",30,30)
-local buttonTurnLeft = display.newImageRect("media/thrustNav/arrow-button.png",30,30)
-local buttonForward = display.newImageRect("media/thrustnav/arrow-button.png",30,30)
-local ship = display.newImageRect( "media/thrustNav/shipconcepts.png", 30, 30 )
+local xyText			-- text display object for touch location 
+local xyCenterText		-- text display object for touch location relative to center
+local ufo       		-- flying UFO object
+local mars           	-- planet mars
+local earth         	-- earth
+local buttonTurnLeft   	-- button to turn ship left
+local buttonTurnRight  	-- button to turn ship right
+local buttonRollLeft   	-- button to Roll ship left
+local buttonRollRight  	-- button to Roll ship right
+local buttonPitchUp    	-- button to pitch ship up
+local buttonPitchDown  	-- button to pitch ship down
+local ship             	-- ship object
+local spaceGroup    	-- group for rotating space background
+local xDelta, yDelta, rotDelta  -- positional deltas used on each enter frame
+local xDeltaInc, yDeltaInc, rotDeltaInc  -- increments for the deltas
+local navStatsText     -- text string for nav stats
+local targetRect       -- Rectangle target area
+local arrow        		-- directional arrow toward mars
 
 -- Make a small red circle centered at the given location
 local function makeRedCircle( x, y )
@@ -48,125 +67,249 @@ local function touched( event )
 	xyCenterText.text = string.format( "Center + (%d, %d)", x - act.xCenter, y - act.yCenter )
 end
 
+-- Turn left button 
+function buttonTurnLeftTouch (event)
+	if event.phase == "began" then
+		print("Turn Left Button")
+		xDelta = xDelta + xDeltaInc
+		printPositions()
+	end
+	return true
+end
+
+-- Turn Right button 
+function buttonTurnRightTouch (event)
+	if event.phase == "began" then
+		print("Turn Right Button, rotation= ", spaceGroup.rotation )
+		xDelta = xDelta - xDeltaInc
+		printPositions()
+	end
+	return true
+end
+
+--  Roll Left button
+function buttonRollLeftTouch (event)
+	if event.phase == "began" then
+		print("Roll Left Button")
+		rotDelta = rotDelta + rotDeltaInc
+		printPositions()
+	end
+	return true
+end
+
+-- Roll RIght Button
+function buttonRollRightTouch (event)
+	if event.phase == "began" then
+		print("Roll Right Button, rotation= ", spaceGroup.rotation )
+		rotDelta = rotDelta - rotDeltaInc
+		printPositions()
+	end
+	return true
+end
+
+-- Pitch Up Button
+function buttonPitchUpTouch (event)
+	if event.phase == "began" then
+		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
+		yDelta = yDelta + yDeltaInc
+		printPositions()
+	end
+	return true
+end
+
+-- Pitch Down Button
+function buttonPitchDownTouch (event)
+	if event.phase == "began" then
+		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
+		yDelta = yDelta - yDeltaInc
+		printPositions()
+	end
+	return true
+end
+
+-- Could use math.abs(bird.y-food.y) < slop to achieve similar result
+--rectangle-based collision detection (found in doc)
+local function hasCollided( obj1, obj2 )
+	-- -- print ("In hasCollided")
+   if ( obj1 == nil ) then  --make sure the first object exists
+      return false
+   end
+   if ( obj2 == nil ) then  --make sure the other object exists
+      return false
+   end
+
+   local left = obj1.contentBounds.xMin <= obj2.contentBounds.xMin and obj1.contentBounds.xMax >= obj2.contentBounds.xMin
+   local right = obj1.contentBounds.xMin >= obj2.contentBounds.xMin and obj1.contentBounds.xMin <= obj2.contentBounds.xMax
+   local up = obj1.contentBounds.yMin <= obj2.contentBounds.yMin and obj1.contentBounds.yMax >= obj2.contentBounds.yMin
+   local down = obj1.contentBounds.yMin >= obj2.contentBounds.yMin and obj1.contentBounds.yMin <= obj2.contentBounds.yMax
+
+   return (left or right) and (up or down)
+end
+
 -- Init the act
 function act:init()
+	-- create group for rotating background space objects
+	spaceGroup = act:newGroup()
+
+	-- Create control buttons, background, etc.
+	buttonTurnLeft = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
+	buttonTurnLeft.rotation = -90
+	buttonTurnRight = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
+	buttonTurnRight.rotation = 90
+	buttonRollLeft = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
+	buttonRollRight = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
+	buttonPitchUp = display.newImageRect(act.group, "media/thrustnav/arrow-button.png",30,30)
+	print( "buttonPitchUp=",buttonPitchUp )
+	buttonPitchDown = display.newImageRect(act.group, "media/thrustnav/arrow-button.png",30,30)
+	print( "buttonPitchDown=",buttonPitchDown )
+	buttonPitchDown.rotation = 180
+
+	local bg = display.newImageRect( spaceGroup, "media/thrustNav/starrynight.png", 5*act.width, 5*act.height )
+	-- bg:addEventListener( "touch", touched )
+	print("bg=", bg )
+
+	local yText = act.yMin + 30
+	navStatsText = display.newText( act.group, "Hello", act.width / 3, yText, native.systemFont, 14 )
+	print( "navStatsText=" , navStatsText )
 	
-		-- Background image with touch listener
-	local bg = act:newImage( "starrynight.png", { parent = act.group, x = act.xMin, y = act.yMin, width = 2*act.width } )
-	bg:addEventListener( "touch", touched )
-
+	spaceGroup.y = act.height / 2 - 100
 	
-	-- Small red circles at the corners
-	-- makeRedCircle( act.xMin, act.yMin )
-	-- makeRedCircle( act.xMin, act.yMax )
-	--  makeRedCircle( act.xMax, act.yMin )
-	-- makeRedCircle( act.xMax, act.yMax )
-
-	-- Touch location text display objects
-	local yText = act.yMin + 15   -- relative to actual top of screen
-	xyText = display.newText( act.group, "", act.width / 3, yText, native.systemFont, 14 )
-	xyCenterText = display.newText( act.group, "", act.width * 2 / 3, yText, native.systemFont, 14 )
-
-	-- Flying UFO
-	local xStart = act.xMin - 100       -- start off screen to the left
-	local yStart = act.yCenter - 142    -- height from center is consistent relative to background image
-	-- ufo = act:newImage( "ufo.png", { x = xStart, y = yStart, height = 25 } )
-    
-    --act.group.x = act.width / 2
-    act.group.y = act.height / 2 - 100
-	-- act.group.anchorX = 1
-    -- act.group.anchorY = 0.5
-
-    mars = display.newImageRect( act.group, "media/thrustNav/mars.png", 30, 30 )
-    -- mars.x = act.xCenter 
-    -- mars.y = act.yMin + 40
+	-- ship = display.newImageRect(spaceGroup, "media/thrustNav/shipconcepts.png", 30, 30 )
+	
+    mars = display.newImageRect( spaceGroup, "media/thrustNav/mars.png", 30, 30 )
+    print("act.xMin=",act.xMin, " act.yMin=", act.yMin)
     mars.x = act.xMin
-    mars.y = -act.yMin +100 
-    earth = display.newImageRect( act.group, "media/thrustNav/earth.png", 20, 20 )
-    -- earth = act:ImageRect( "earth.png", 20, 20 )
+    mars.y = act.yMin + 100
+    print("Mars anchorX=", mars.anchorX, "anchorY=", mars.anchorY )
+    print("Mars is placed at ", mars.x, ",", mars.y , " in spaceGroup before move") 
+
+    earth = display.newImageRect( spaceGroup, "media/thrustNav/earth.png", 20, 20 )
     earth.x = act.xMin
-    earth.y = act.yMin - 200
-    
+    earth.y = act.yMax - 100
+    print("Earth anchorX=", earth.anchorX, "anchorY=", earth.anchorY )
+    print("Earth is placed at ", earth.x, ",", earth.y , " in spaceGroup before move") 
 
+	-- place ship at center of lines
+	-- ship.x = 0
+	-- ship.y = 0
   
-    act.group.x = act.width / 2 
-    -- act.group.anchorX = 500
+  	-- Fix anchors to be at cross hairs for start
+    spaceGroup.x = act.xCenter 
+    spaceGroup.anchorX = spaceGroup.x
+    spaceGroup.y = act.yCenter
+    spaceGroup.anchorY =spaceGroup.y
+    spaceGroup.rotation = 10
 
-    physics.start()
-    
-    physics.addBody ( act.group, "dynamic" )
-    act.group.gravityScale = 0         -- makes object float
-	act.group:applyAngularImpulse ( 1000 )
-    -- act.group.angularvelocity = 500
-    
+	xDelta = 0
+	yDelta = 0
+	rotDelta = 0.02
+	xDeltaInc = 0.1
+	yDeltaInc = 0.1
+	rotDeltaInc = 0.01
+
+	-- Could try transition with iterations=-1 for continuous
+	--- transition.to(fuseObj, { iterations=-1,rotation=-360,time=250})
+
     -- Crosshair in the center
 	local dy = 200
 	local dx = 20
-	display.newLine( act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
-	display.newLine( act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
-
-	-- place ship at center of lines
-	ship.x = act.yCenter
-	ship.y = act.xCenter
+	display.newLine( act.group, act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
+	display.newLine( act.group, act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
+	targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
 
     -- Set up buttons
-	buttonTurnLeft.x = act.xMin + (act.xMax - act.xMin) / 5
-	buttonTurnLeft.y = act.yMax - (act.yMax - act.yMin) / 20
+	buttonTurnLeft.x = act.xCenter - (act.xMax - act.xMin) / 15
+	buttonTurnLeft.y = act.yMax - (act.yMax - act.yMin) / 15
 	buttonTurnLeft.isVisible = true
 
-	buttonTurnRight.x = act.xMax - (act.xMax - act.xMin) / 5
-	buttonTurnRight.y = act.yMax - (act.yMax - act.yMin) / 20
+	buttonTurnRight.x = act.xCenter + (act.xMax - act.xMin) / 15
+	buttonTurnRight.y = act.yMax - (act.yMax - act.yMin) / 15
 	buttonTurnRight.isVisible = true
 
-	buttonForward.x = (act.xMax - act.xMin ) / 2
-	buttonForward.y = act.yMax - (act.yMax - act.yMin) / 10 
-	buttonForward.isVisible = true
+	buttonRollLeft.x = act.xMax - (act.xMax - act.xMin) / 8
+	buttonRollLeft.y = act.yMax - (act.yMax - act.yMin) / 20
+	buttonRollLeft.isVisible = true
 
-	buttonTurnRight:addEventListener( "touch", buttonTurnRight )
-	buttonTurnLeft:addEventListener( "touch", buttonTurnLeft )
-	buttonForward:addEventListener( "touch", buttonForward )
+	buttonRollRight.x = act.xMin + (act.xMax - act.xMin) / 5
+	buttonRollRight.y = act.yMax - (act.yMax - act.yMin) / 20
+	buttonRollRight.isVisible = true
 
+	buttonPitchUp.x = (act.xMax - act.xMin ) / 2
+	buttonPitchUp.y = act.yMax - (act.yMax - act.yMin) / 10 
+	buttonPitchUp.isVisible = true
+
+	buttonPitchDown.x = (act.xMax - act.xMin ) / 2
+	buttonPitchDown.y = act.yMax - (act.yMax - act.yMin) / 30 
+	buttonPitchDown.isVisible = true
+
+	buttonTurnLeft:addEventListener( "touch", buttonTurnLeftTouch )
+	buttonTurnRight:addEventListener( "touch", buttonTurnRightTouch )
+	buttonRollLeft:addEventListener( "touch", buttonRollLeftTouch )
+	buttonRollRight:addEventListener( "touch", buttonRollRightTouch )
+	buttonPitchUp:addEventListener( "touch", buttonPitchUpTouch )
+	buttonPitchDown:addEventListener( "touch", buttonPitchDownTouch )
 
 end
 
-function buttonTurnRight:touch (event)
-	if event.phase == "began" then
-		-- print( "Touch even began on: " .. self.id )
-		print("Turn Right Button")
-		act.group:applyAngularImpulse( -100 )
+-- draw arrow toward mars
+function updateArrow()
+	local marsCenterX = (mars.contentBounds.xMax + mars.contentBounds.xMin)/2 
+	local marsCenterY = (mars.contentBounds.yMax + mars.contentBounds.yMin)/2 
+	if ( arrow ~= nil) then
+		arrow:removeSelf()
+		arrow = nil
 	end
-	return true
+	arrow = display.newLine( act.group, act.xCenter, act.yCenter, marsCenterX, marsCenterY )
+	-- print("xc=", marsCenterX, "  yc=", marsCenterY )
 end
 
-function buttonTurnLeft:touch (event)
-	if event.phase == "began" then
-		-- print( "Touch even began on: " .. self.id )
-		print("Turn Left Button")
-		act.group:applyAngularImpulse( 100 )
+
+-- Update on screen stats for users reference
+function updateNavStats()
+	local xOnTarget = ""
+	local yOnTarget = ""
+
+	-- special treatment for mars
+   	if( hasCollided( mars, targetRect ) ) then
+   		xOnTarget = "ON TARGET"
+		yOnTarget = "ON TARGET"
 	end
-	return true
+
+	if( hasCollided( earth, targetRect ) ) then
+		navStatsText.text = "Where are you going?  Home?"	
+	else
+		navStatsText.text = string.format("%s  %5.1f   %s  %5.1f\n%s  %4.0f  %s  %5.1f\n%s  %5.1f  %5.3f\n",  
+		"xDelta=", ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter , xOnTarget, spaceGroup.anchorX,
+		"yDelta=", (mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter , yOnTarget, spaceGroup.anchorY,
+		"rotation=", spaceGroup.rotation % 360, rotDelta )
+	end
 end
 
-function buttonForward:touch (event)
-	if event.phase == "began" then
-		-- print( "Touch even began on: " .. self.id )
-		print("Forward Button - Rotation = " .. act.group.rotation)
-		if  act.group.rotation > 90  then
-			act.group:applyLinearImpulse(0, 0.1, act.group.x, act.group.y )
-		else
-			act.group:applyLinearImpulse(0, -0.1, act.group.x, act.group.y )
-		end
-	end
-	return true
+--  Move and update space background 
+function updatePosition()
+	spaceGroup.x = spaceGroup.x + xDelta
+	spaceGroup.y = spaceGroup.y + yDelta
+	spaceGroup.rotation = spaceGroup.rotation + rotDelta 
+end
+
+-- print debug positon information to console
+function printPositions()
+	print("Mars  x=", mars.x, "  y=", mars.y, "  ax=", mars.anchorX, "  ay=", mars.anchorY )
+	print("Mars  contentBounds.xMin=", mars.contentBounds.xMin )
+	print("Space x=", spaceGroup.x, "  y=", spaceGroup.y, "  ax=", spaceGroup.anchorX, "  ay=", spaceGroup.anchorY )
+	print("Earth x=", earth.x, "  y=", earth.y, "  ax=", earth.anchorX, "  ay=", earth.anchorY )
 end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
-	-- Move UFO to the right and wrap around exactly at screen edges
-	-- ufo.x = ufo.x + 1
-	--- if ufo.x > act.xMax + ufo.width / 2 then
-		--- ufo.x = act.xMin - ufo.width / 2
-	-- end
+	if( navStatsText ) then
+		updateNavStats()
+	end
+
+	if ( xDelta and yDelta and rotDelta ) then
+		updatePosition()
+	end
+	updateArrow()
 
 end
 
