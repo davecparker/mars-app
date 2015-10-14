@@ -53,9 +53,10 @@ end
 
 -- Handle touches on a map icon
 local function touchedIcon( icon, event )
-	-- Icons are positioned with respect to the act center
-	local x = event.x - act.xCenter
-	local y = event.y - act.yCenter
+	-- Icons are positioned with respect to the icons group (image center)
+	assert( icons ) 
+	local x = event.x - icons.x
+	local y = event.y - icons.y
 
 	if event.phase == "began" then
 		-- If delete tool is selected then delete the icon
@@ -69,9 +70,11 @@ local function touchedIcon( icon, event )
 			display.getCurrentStage():setFocus( icon )
 		end
 	elseif event.phase == "moved" then
-		-- Drag icon to new location
-		icon.x = x
-		icon.y = y
+		-- If this icon is selected then drag it to new location
+		if icon == iconSel then
+			icon.x = x
+			icon.y = y
+		end
 	else
 		-- End drag (leave it selected)
 		display.getCurrentStage():setFocus( nil )
@@ -92,9 +95,13 @@ end
 
 -- Handle touches on the map background image
 local function touchedMap( event )
-	-- Icons are positioned with respect to the act center
-	local x = event.x - act.xCenter
-	local y = event.y - act.yCenter
+	-- Icons are positioned with respect to the icons group (image center)
+	assert( icons ) 
+	local x = event.x - icons.x
+	local y = event.y - icons.y
+
+	-- Put the coordinates in the edit placeholder
+	textEdit.placeholder = string.format( "Center + (%d, %d)", x, y )
 
 	if event.phase == "began" then
 		local tool = segControl.segmentLabel
@@ -116,7 +123,7 @@ end
 
 -- Return the path to the data file for the given map name
 local function mapDataPath( mapName )
-	return system.pathForFile( FOLDER .. "/" .. mapName .. ".txt", system.ResourceDirectory )
+	return FOLDER .. "/" .. mapName .. ".txt"
 end
 
 -- Load the map data file for the current map, 
@@ -189,10 +196,10 @@ local function loadMap( name )
 	mapImage:addEventListener( "touch", touchedMap )
 	mapName = name
 
-	-- Create display group for map icons centered on the view
+	-- Create display group for map icons centered on the map image
 	icons = act:newGroup()
-	icons.x = act.xCenter
-	icons.y = act.yCenter
+	icons.x = mapImage.x
+	icons.y = mapImage.y
 
 	-- Load the associated data file
 	loadMapData()
