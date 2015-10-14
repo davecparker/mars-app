@@ -50,16 +50,19 @@ end
 local function loadMapData()
 	-- Load the data file if found
 	local mapData = {}  -- use empty if data file not found
-	local file = io.open( mapDataPath(), "r" )
-	if file then
-		local str = file:read( "*a" )	-- Read entire file as a string (JSON encoded)
-		if str then
-			local data = json.decode( str )
-			if data then
-				mapData = data
+	local path = mapDataPath()
+	if path then
+		local file = io.open( path, "r" )
+		if file then
+			local str = file:read( "*a" )	-- Read entire file as a string (JSON encoded)
+			if str then
+				local data = json.decode( str )
+				if data then
+					mapData = data
+				end
 			end
+			io.close( file )
 		end
-		io.close( file )
 	end
 
 	-- Create the icons from the data records
@@ -100,13 +103,13 @@ function act:prepare()
 		mapImage = act:newImage( game.mapZoomName .. ".jpg", imageOptions )
 	end
 
-	-- Create display group for map icons centered on the view
+	-- Create display group for map icons centered on the map image
 	if icons then
 		icons:removeSelf()   -- remove previous icons group if any
 	end
 	icons = act:newGroup()
-	icons.x = act.xCenter
-	icons.y = act.yCenter
+	icons.x = mapImage.x
+	icons.y = mapImage.y
 
 	-- Load the data file for this map
 	if mapImage then
