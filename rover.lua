@@ -44,23 +44,16 @@ local game = globalGame
 local act = game.newAct()
 
 ------------------------- Start of Activity --------------------------------
--- include Corona's "physics" library
-local physics = require "physics"
-
--- start physics, set gravity 
-physics.start()
-physics.setGravity( 0, 3.3 )
-physics.setContinuous( true )
-
 -- File local variables
 local terrain = {} -- basic terrain
-local obstacles = {} -- terrain obstacles
-local shapes = {} -- possible terrain obstacles
+local obstacle = {} -- terrain obstacles
+local shape = {} -- possible terrain obstacles
 local wheel = {} -- rover wheels
 local bg
 local rover
-local angularV = 0
-local baseHeight = 100
+local elevation = 100
+local terrainExcess = 100
+local terrainOffset = -80
 local terrainColor = { 1.0, 0.2, 0.2 }
 
 -- create new 1-corona unit wide terrain component rectangle 
@@ -120,35 +113,36 @@ local function randPoly( x, y )
 end
 
 -- function to create terrain of rectangles and randomly selected polygons
-function NewTerrain( excess, offset, nObstacles)
+function NewTerrain( nObstacles)
 
-	-- fill terrain with rectangles to span display width plus excess
-	for i = act.xMin, act.xMax + excess do
-		terrain[i] = newRectangle( i + offset, baseHeight )
+	-- fill terrain with rectangles to span display width plus terrainExcess
+	for i = 1, act.xMax + terrainExcess + ( 1 - act.xMin ) do
+		terrain[i] = newRectangle( i - 1 + terrainOffset, elevation )
 	end
 
-	-- fill shapes table with terrain shape functions
-	shapes = { randCircle, randSquare, randRoundSquare, randPoly }
+	-- fill shape table with terrain shape functions
+	shape = { randCircle, randSquare, randRoundSquare, randPoly }
 	
 	-- divide terrain into x-axis zones for even obstacle distribution
-	-- fill obstacles table with one randomly selected shape per zone
-	local zoneLength = math.floor( (act.width + excess)/nObstacles )	
+	-- fill obstacle table with one randomly selected shape per zone
+	local zoneLength = math.floor( (act.width + terrainExcess)/nObstacles )	
 	for i = 1, nObstacles do
-		local x = math.random( (i - 1) * zoneLength, i * zoneLength ) + offset
-		obstacles[i] = shapes[math.random(1, 4)]( x, act.yMax - baseHeight )
+		local x = math.random( (i - 1) * zoneLength, i * zoneLength ) + terrainOffset
+		obstacle[i] = shape[math.random(1, 4)]( x, act.yMax - elevation )
 	end
 end
 
 -- function to create the rover
-function NewRover()
+function NewRover( roverY )
 
 	local suspension = {}
 	local wheelToWheelJoint = {}
 	local wheelToBodyJoint = {}
 
 	rover = act:newImage( "rover_body.png", 
-		{ x = act.xMin + 100, y = act.yMax - 112, width = 65, height = 50 } )
+		{ x = act.xMin + 100, y = roverY, width = 65, height = 50 } )
 	rover.anchorY = 1.0
+	rover.angularV = 0
 
 	-- rover body physics: low density for minimal sway & increased stability
 	physics.addBody( rover, "dynamic", { density = 0.2, friction = 0.3, 
@@ -189,51 +183,88 @@ end
 
 -- function to adjust wheel angular velocity
 function MoveRover()
-	if angularV < 800 then -- increase initial acceleration
-		angularV = angularV + 500 
-	elseif angularV > 8000 then -- limit angular velocity (i.e. top speed)
-		angularV = 8000
+	if rover.angularV < 800 then -- increase initial acceleration
+		rover.angularV = rover.angularV + 500 
+	elseif rover.angularV > 8000 then -- limit angular velocity (i.e. top speed)
+		rover.angularV = 8000
 	else
-		angularV = angularV + 20 -- typical acceleration
+		rover.angularV = rover.angularV + 20 -- typical acceleration
 	end
 end
 
 -- function to scroll the ground to the left
-function MoveTerrain( excess, offset )
-
+function MoveTerrain()
     -- recycle terrain rectangle if sufficiently offscreen
-    for i = act.xMin, #terrain do
-		if terrain[i].contentBounds.xMax < act.xMin + offset then
-			terrain[i].x = terrain[i].x + act.width + excess
+    for i = 1, #terrain do
+		if terrain[i].contentBounds.xMax < act.xMin + terrainOffset then
+			terrain[i].x = terrain[i].x + act.width + terrainExcess
 		end
 	end
 
 	-- remove obstacle if sufficiently offscreen x left
 	-- create new obstacle at random offscreen x right
-	for i = 1, #obstacles do
-		if obstacles[i].contentBounds.xMax < act.xMin + offset then
-			local zoneLength = math.floor( (act.width + excess)/#obstacles )	
+	for i = 1, #obstacle do
+		if obstacle[i].contentBounds.xMax < act.xMin + terrainOffset then
+			local zoneLength = math.floor( (act.width + terrainExcess)/#obstacle )	
 			local x = math.random( 
-				obstacles[i].x + act.width - offset + 1, 
-				obstacles[i].x + act.width - offset + zoneLength + 1 )
-			display.remove( obstacles[i] )
-			obstacles[i] = shapes[math.random(1, 4)]( x, act.yMax - baseHeight )
+				obstacle[i].x + act.width - terrainOffset + 1, 
+				obstacle[i].x + act.width - terrainOffset + zoneLength + 1 )
+			display.remove( obstacle[i] )
+			obstacle[i] = shape[math.random(1, 4)]( x, act.yMax - elevation )
 		end
 	end
 end
 
--- Handle touch events
+-- touch event handler
 local function touched( event )
 	if event.phase == "began" then
 		MoveRover()
 	elseif event.phase == "ended" or event.phase == "cancelled" then
-		angularV = 0
+		rover.angularV = 0
 	end
+end
+
+-- reset button event handler
+local function onResetPress( event )
+	-- reposition terrain
+	for i = 1, #terrain do
+		terrain[i].x = terrain[i].x - rover.x + 100
+	end
+
+	-- reposition obstacles
+	for i = 1, #obstacle do
+		obstacle[i].x = obstacle[i].x - rover.x + 100
+	end
+
+	-- remove rover body
+	rover:removeSelf()
+	rover = nil
+
+	-- remove rover wheels
+	for i = 1, #wheel do
+		wheel[i]:removeSelf()
+		wheel[i] = nil
+	end
+
+	-- create new rover
+	NewRover( act.yMax - 111 )
+
 end
 
 -- Init the act
 function act:init()
+		-- include Corona's "physics" library
+	local physics = require "physics"
+
+	-- load widget module
+	local widget = require( "widget" )
+
+	-- start physics, set gravity 
+	physics.start()
+	physics.setGravity( 0, 3.3 )
+	physics.setContinuous( true )
 	--physics.setDrawMode( "hybrid" )
+
 	math.randomseed( os.time() )
 
 	bg = display.newRect( act.group, act.xMin, act.yMin, act.width, act.height )
@@ -244,26 +275,37 @@ function act:init()
 	-- add touch event listener to background image
 	bg:addEventListener( "touch", touched )
 
+	-- create the reset button
+	local resetButton = widget.newButton
+	{
+		x = act.xMax - 20,
+		y = act.yMax - 20,
+		width = 30,
+		height = 30,
+		defaultFile = "media/rover/reset_unpressed.png",
+		overFile = "media/rover/reset_pressed.png",
+		onPress = onResetPress
+	}
+
 	-- create the terrain and the rover
-	NewTerrain( 100, -50, 5 )
-	NewRover()
+	NewTerrain( 5 )
+	NewRover( act.yMax - 112 )
 end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
-
 	-- move the display group along the x-axis the distance the rover has moved
 	act.group.x = act.xMin + 100 - rover.x
 
 	-- recycle and regenerate the terrain
-	MoveTerrain( 100, -50 )
+	MoveTerrain()
 	
 	-- move the background (not sure why it's not moving with act.group)
 	bg.x = act.xCenter + rover.x - 100
 
 	-- rotate the rover's wheels
 	for i = 1, 4 do
-		wheel[i].angularVelocity = angularV * 10
+		wheel[i].angularVelocity = rover.angularV * 10
 	end
 end
 
