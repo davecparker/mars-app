@@ -15,6 +15,7 @@ local game = globalGame
 local act = game.newAct()
 local widget = require( "widget" )  -- need to make buttons
 -------------------------- Variables ------------------------------------------------------
+local xyText		-- text display object for touch location =======================================================================
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -22,6 +23,31 @@ local widget = require( "widget" )  -- need to make buttons
 local function backButtonPress ( event )
 	game.gotoAct ( "mainAct" )
 end
+
+-- function for cutting the wire
+local function wireTouch ( event )
+	if event.phase == "began" then
+		print ("touched")
+	end
+end
+
+-- function to setup common stuff in the wires
+local function wireSetup (wire)
+	wire:scale ( 0.35, 0.35 )
+	wire.isCut = false
+end
+
+-- Handle touches on the background by updating the text displays=============================================================
+local function touched( event )
+	-- Get touch location but pin to the act bounds
+	local x = game.pinValue( event.x, act.xMin, act.xMax )
+	local y = game.pinValue( event.y, act.yMin, act.yMax )
+
+	-- Update the absolute and center-relative coordinate displays
+	xyText.text = string.format( "(%d, %d)", x, y )
+	xyCenterText.text = string.format( "Center + (%d, %d)", x - act.xCenter, y - act.yCenter )
+end
+
 
 ------------------------- Start of Activity ----------------------------------------------------
 
@@ -31,8 +57,10 @@ function act:init()
 	-- background image
 	local wireCutBG = act:newImage ( "wireCutBG.jpg", { width = 320} )
 	wireCutBG.y = act.yCenter + 10
+	wireCutBG.x = act.xCenter - 4
+	wireCutBG:addEventListener( "touch", touched )--====================================================================================
 
-	-- wire1 image sheet----------------------------------------------
+	-- wire1 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire1Options =
 	{
 		width = 110,
@@ -48,11 +76,23 @@ function act:init()
 	local wire1ImageSheet = graphics.newImageSheet( "media/wireCut/wire1sheet.png", wire1Options )
 	local wire1 = display.newSprite( act.group, wire1ImageSheet, wire1Sequence )
 	wire1:setSequence( "wire1" )
-	wire1:scale ( 0.35, 0.35 )
+	wireSetup(wire1)
 	wire1.x = act.xCenter - 65
 	wire1.y = act.yCenter - 160
 
-	-- wire2 image sheet----------------------------------------------
+	-- wire1 cutting buttons 
+	local wire1Button = widget.newButton
+	{
+	    x = wire1.x,
+	    y = wire1.y,
+	    --shape = "rect",
+		--fillColor = { default={ 1, 0.2, 0.5, 0.7 }, over={ 1, 0.2, 0.5, 1 } },
+		width = wire1.width * 0.28,
+		height = wire1.height * 0.28,
+	    onEvent = wireTouch
+	}
+
+	-- wire2 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire2Options =
 	{
 		width = 630,
@@ -72,7 +112,17 @@ function act:init()
 	wire2.x = act.xCenter - 57
 	wire2.y = act.yCenter - 150
 
-	-- wire3 image sheet----------------------------------------------
+	local wire2Button = widget.newButton
+	{
+	    x = wire2.x,
+	    y = wire2.y,
+	    shape = "polygon",
+		fillColor = { default={ 0, 0, 0, 0.01 }, over={ 0, 0, 0, 0.01 } },
+		vertices = { -158, -179, 13, -175, 43, -157, 52, -117, 33, -117, 5, -157, -158, -160 },
+	    onEvent = wireTouch
+	}
+
+	-- wire3 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire3Options =
 	{
 		width = 290,
@@ -89,10 +139,10 @@ function act:init()
 	local wire3 = display.newSprite( act.group, wire3ImageSheet, wire3Sequence )
 	wire3:setSequence( "wire3" )
 	wire3:scale ( 0.35, 0.35 )
-	wire3.x = act.xCenter - 110
+	wire3.x = act.xCenter - 120
 	wire3.y = act.yCenter - 93
 
-	-- wire4 image sheet----------------------------------------------
+	-- wire4 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire4Options =
 	{
 		width = 535,
@@ -112,7 +162,7 @@ function act:init()
 	wire4.x = act.xCenter - 70
 	wire4.y = act.yCenter - 6
 
-	-- wire5 image sheet----------------------------------------------
+	-- wire5 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire5Options =
 	{
 		width = 236,
@@ -132,7 +182,7 @@ function act:init()
 	wire5.x = act.xCenter - 91
 	wire5.y = act.yCenter + 14
 
-	-- wire6 image sheet----------------------------------------------
+	-- wire6 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire6Options =
 	{
 		width = 570,
@@ -152,7 +202,7 @@ function act:init()
 	wire6.x = act.xCenter - 69
 	wire6.y = act.yCenter + 48
 
-	-- wire7 image sheet----------------------------------------------
+	-- wire7 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire7Options =
 	{
 		width = 159,
@@ -172,7 +222,7 @@ function act:init()
 	wire7.x = act.xCenter + 24
 	wire7.y = act.yCenter - 40
 
-	-- wire8 image sheet----------------------------------------------
+	-- wire8 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire8Options =
 	{
 		width = 275,
@@ -192,7 +242,7 @@ function act:init()
 	wire8.x = act.xCenter - 20
 	wire8.y = act.yCenter + 131
 
-	-- wire9 image sheet----------------------------------------------
+	-- wire9 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire9Options =
 	{
 		width = 248,
@@ -212,7 +262,7 @@ function act:init()
 	wire9.x = act.xCenter + 85
 	wire9.y = act.yCenter - 91
 
-	-- wire10 image sheet----------------------------------------------
+	-- wire10 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire10Options =
 	{
 		width = 253,
@@ -232,7 +282,7 @@ function act:init()
 	wire10.x = act.xCenter + 85
 	wire10.y = act.yCenter - 1
 
-	-- wire11 image sheet----------------------------------------------
+	-- wire11 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire11Options =
 	{
 		width = 256,
@@ -252,7 +302,7 @@ function act:init()
 	wire11.x = act.xCenter + 85
 	wire11.y = act.yCenter + 90
 
-	-- led image sheet-----------------------------------------------
+	-- led image sheet-------------------------------------------------------------------------------------------------------------------
 	local ledOptions =
 	{
 	    width = 249,
@@ -289,7 +339,7 @@ function act:init()
 	ledBottom.x = act.xMax - 31
 	ledBottom.y = act.yCenter + 90
 
-	-- or gate image sheet --------------------------------------
+	-- or gate image sheet -------------------------------------------------------------------------------------------------------
 	local orGateOptions =
 	{
 	    width = 258,
@@ -323,7 +373,7 @@ function act:init()
 	orBL.x = act.xCenter - 60
 	orBL.y = act.yCenter + 90
 
-	-- and gate image sheet ------------------------------------------------
+	-- and gate image sheet -----------------------------------------------------------------------------------------------------------------
 	local andGateOptions =
 	{
 	    width = 125,
@@ -353,6 +403,7 @@ function act:init()
 	-- background mask
 	local wireCutBGMask = act:newImage ( "wireCutBGMask.png", { width = 320 } )
 	wireCutBGMask.y = act.yCenter + 10
+	wireCutBGMask.x = act.xCenter - 4
 
 		-- back button
 	local backButton = act:newImage( "backButton.png", { width = 40 } )
@@ -366,6 +417,11 @@ function act:init()
 		 height = 50,
 		 onPress = backButtonPress 
 	}
+
+	-- Touch location text display objects==============================================================================================
+	local yText = act.yMin + 15   -- relative to actual top of screen
+	xyText = display.newText( act.group, "", act.width / 3, yText, native.systemFont, 14 )
+	xyCenterText = display.newText( act.group, "", act.width * 2 / 3, yText, native.systemFont, 14 )
 
 end
 
