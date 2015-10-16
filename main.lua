@@ -10,6 +10,8 @@
 
 -- Game functions defined in game.lua:
 game.pinValue( value, min, max )      -- Constrain a value to a range
+game.xyInRect( x, y, rect )           -- test if point is in rect
+game.xyHitTest( x1, y1, x2, y2, dxy ) -- x, y hit test
 game.addOxygen( liters )              -- Add or subtract oxygen
 game.addWater( liters )               -- Add or subtract water
 game.addEnergy( kWh )                 -- Add or subtract energy

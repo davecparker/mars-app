@@ -45,6 +45,8 @@ local act = game.newAct()
 
 ------------------------- Start of Activity --------------------------------
 -- File local variables
+local staticGrp -- display group for foreground static objects
+local dynamicGrp -- display group for dynamic objects
 local terrain = {} -- basic terrain
 local obstacle = {} -- terrain obstacles
 local shape = {} -- possible terrain obstacles
@@ -59,7 +61,7 @@ local terrainColor = { 1.0, 0.2, 0.2 }
 -- create new 1-corona unit wide terrain component rectangle 
 -- accepts x-coord & height, returns rectangle display object
 local function newRectangle( x, h )
-	local rect = display.newRect( act.group, x, act.yMax, 1, h )
+	local rect = display.newRect( dynamicGrp, x, act.yMax, 1, h )
 	rect:setFillColor( unpack(terrainColor) )
 	rect.anchorY = 1
 	physics.addBody( rect, "static", { friction = 1.0 } )
@@ -71,7 +73,7 @@ end
 local function randCircle( x, y )
 	local radius = math.random( 3, 10 ) -- random radius
 	local yDev = math.random( radius/2, radius*0.6 ) -- randomly vary y coord w/radius
-	local circle = display.newCircle( act.group, x, y + 0.5*radius, radius )
+	local circle = display.newCircle( dynamicGrp, x, y + 0.5*radius, radius )
 	circle:setFillColor( unpack(terrainColor)  )
 	physics.addBody( circle, "static", { friction = 1.0 } )
 	return circle
@@ -81,7 +83,7 @@ end
 -- accepts square x, y coordinates, returns square display object
 local function randSquare( x, y )
 	local side = math.random( 5, 10 )
-	local square = display.newRect( act.group, x, y + 1, side, side )
+	local square = display.newRect( dynamicGrp, x, y + 1, side, side )
 	square.rotation = math.random( 30, 60 ) -- random rotation for variation
 	square:setFillColor( unpack(terrainColor)  )
 	physics.addBody( square, "static", { friction = 1.0 } )
@@ -92,7 +94,7 @@ end
 -- accepts square x, y coordinates, returns rounded square display object
 local function randRoundSquare( x, y )
 	local side = math.random( 5, 10 )
-	local square = display.newRoundedRect( act.group, x, y + 1, side, side, side/4 )
+	local square = display.newRoundedRect( dynamicGrp, x, y + 1, side, side, side/4 )
 	square.rotation = math.random( 30, 60 )
 	square:setFillColor( unpack(terrainColor)  )
 	physics.addBody( square, "static", { friction = 1.0 } )
@@ -104,7 +106,7 @@ end
 local function randPoly( x, y )
 	local s = math.random( 4, 10 )
 	local vertices = { x, y, x + s, y - s, x + 2 * s, y - s, x + 3 * s, y }
-	local poly = display.newPolygon( act.group, 0, 0, vertices )
+	local poly = display.newPolygon( dynamicGrp, 0, 0, vertices )
 	poly.x = x
 	poly.y = y - 1
 	poly:setFillColor( unpack(terrainColor)  )
@@ -114,7 +116,6 @@ end
 
 -- function to create terrain of rectangles and randomly selected polygons
 function NewTerrain( nObstacles)
-
 	-- fill terrain with rectangles to span display width plus terrainExcess
 	for i = 1, act.xMax + terrainExcess + ( 1 - act.xMin ) do
 		terrain[i] = newRectangle( i - 1 + terrainOffset, elevation )
@@ -140,7 +141,7 @@ function NewRover( roverY )
 	local wheelToBodyJoint = {}
 
 	rover = act:newImage( "rover_body.png", 
-		{ x = act.xMin + 100, y = roverY, width = 65, height = 50 } )
+		{ parent = dynamicGrp, x = act.xMin + 100, y = roverY, width = 65, height = 50 } )
 	rover.anchorY = 1.0
 	rover.angularV = 0
 
@@ -151,7 +152,7 @@ function NewRover( roverY )
 	-- create 4 wheels
 	for i = 1, 4 do
 		wheel[i] = act:newImage( "tonka_wheel.png", 
-			{ x = rover.x - 27 + (i - 1) * 18 , y = rover.y + 5, width = 15, height = 15 } )
+			{ parent = dynamicGrp, x = rover.x - 27 + (i - 1) * 18 , y = rover.y + 5, width = 15, height = 15 } )
 
 		-- wheel physics: lower density decreases translation in violent events but also
 		-- decreases stability & increases acceleration response. 0.5-1.5 seems to give the
@@ -267,7 +268,10 @@ function act:init()
 
 	math.randomseed( os.time() )
 
-	bg = display.newRect( act.group, act.xMin, act.yMin, act.width, act.height )
+	staticGrp = act:newGroup() -- display group for static foreground objects
+	dynamicGrp = act:newGroup() -- display group for dynamic objects
+
+	bg = display.newRect( dynamicGrp, act.xMin, act.yMin, act.width, act.height )
 	bg.x = act.xCenter
 	bg.y = act.yCenter
 	bg:setFillColor( 0.5, 0.5, 0.5 )
@@ -290,23 +294,26 @@ function act:init()
 	-- create the terrain and the rover
 	NewTerrain( 5 )
 	NewRover( act.yMax - 112 )
+	staticGrp:insert( resetButton )
 end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
-	-- move the display group along the x-axis the distance the rover has moved
-	act.group.x = act.xMin + 100 - rover.x
+	-- move dynamicGrp along the x-axis the distance the rover has moved
+	dynamicGrp.x = act.xMin + 100 - rover.x
 
 	-- recycle and regenerate the terrain
 	MoveTerrain()
 	
-	-- move the background (not sure why it's not moving with act.group)
+	-- move the background along the x-axis the distance the rover has moved
 	bg.x = act.xCenter + rover.x - 100
 
 	-- rotate the rover's wheels
 	for i = 1, 4 do
 		wheel[i].angularVelocity = rover.angularV * 10
 	end
+	-- move the static group to the foreground
+	staticGrp:toFront()
 end
 
 ------------------------- End of Activity --------------------------------
