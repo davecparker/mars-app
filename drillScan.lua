@@ -204,7 +204,8 @@ function transitionDrill()
 
 	-- Move game to Water Drilling game automatically. Will need to use Act transition
 
+	game.gotoAct( "drill", { effect = "zoomInOutFade", time = 333 })
+
 end
 
---initGame()
 return act.scene
