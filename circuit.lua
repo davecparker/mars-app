@@ -107,7 +107,7 @@ local function turnWrench ( event )
 	-- back the wrench up if its moving in the wrong direction otherwise let it move counterclockwise
 	if wrenchRotation + 20  < lastAngle then
 		wrench.rotation = lastAngle
-	elseif wrenchRotation > lastAngle + 5 then
+	elseif wrenchRotation > lastAngle then
 		wrench.rotation = lastAngle
 	else
 		lastAngle = wrenchRotation
