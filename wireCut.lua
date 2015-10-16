@@ -16,6 +16,7 @@ local act = game.newAct()
 local widget = require( "widget" )  -- need to make buttons
 -------------------------- Variables ------------------------------------------------------
 local xyText		-- text display object for touch location =======================================================================
+local wire5
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -27,14 +28,22 @@ end
 -- function for cutting the wire
 local function wireTouch ( event )
 	if event.phase == "began" then
-		print ("touched")
+		if self.wire.isCut == false then
+			self.wire:setFrame( 2 )
+			self.wire.isCut = true
+		else
+			self.wire:setFrame( 1 )
+			self.wire.isCut = false
+		end
 	end
 end
 
--- function to setup common stuff in the wires
-local function wireSetup (wire)
-	wire:scale ( 0.35, 0.35 )
-	wire.isCut = false
+local function wireButtonCreator ( obj, xPos, yPos )
+	self = display.newRect( act.group, xPos, yPos, 20, 20 )
+	self.alpha = 0.5
+	self:addEventListener( "touch", wireTouch )
+	self.wire = obj
+
 end
 
 -- Handle touches on the background by updating the text displays=============================================================
@@ -61,26 +70,16 @@ function act:init()
 	wireCutBG:addEventListener( "touch", touched )--====================================================================================
 
 	-- wire1 image sheet---------------------------------------------------------------------------------------------------------------
-	local wire1Options =
-	{
-		width = 110,
-		height = 404,
-		numFrames = 2,
-	}
-	local wire1Sequence =
-	{
-		name = wire1,
-		start = 1,
-		count = 2,
-	}
+	local wire1Options = { width = 110, height = 404, numFrames = 2 }
+	local wire1Sequence = { start = 1, count = 2 }
 	local wire1ImageSheet = graphics.newImageSheet( "media/wireCut/wire1sheet.png", wire1Options )
 	local wire1 = display.newSprite( act.group, wire1ImageSheet, wire1Sequence )
 	wire1:setSequence( "wire1" )
-	wireSetup(wire1)
+	wire1:scale ( 0.35, 0.35 )
 	wire1.x = act.xCenter - 65
 	wire1.y = act.yCenter - 160
 
-	-- wire1 cutting buttons 
+	-- wire cutting buttons 
 	local wire1Button = widget.newButton
 	{
 	    x = wire1.x,
@@ -142,6 +141,16 @@ function act:init()
 	wire3.x = act.xCenter - 120
 	wire3.y = act.yCenter - 93
 
+	--[[local wire3Button = widget.newButton
+	{
+	    x = wire3.x,
+	    y = wire3.y,
+	    shape = "polygon",
+		fillColor = { default={ 0, 0, 0, 0.01 }, over={ 0, 0, 0, 0.01 } },
+		vertices = { -40, -4, 35, -4, 35, 12, -40, 12 },
+	    onEvent = wireTouch
+	}]]
+
 	-- wire4 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire4Options =
 	{
@@ -161,6 +170,21 @@ function act:init()
 	wire4:scale ( 0.35, 0.35 )
 	wire4.x = act.xCenter - 70
 	wire4.y = act.yCenter - 6
+	
+
+	--[[ wire cutting buttons 
+	local wire4Button = widget.newButton
+	{
+	    x = wire4.x - 5,
+	    y = wire4.y - 10,
+	    shape = "polygon",
+		fillColor = { default={ 0, 0, 0, 0.01 }, over={ 0, 0, 0, 0.01 } },
+		vertices = { -160, -6, -73, -6, -36, -18, -21, -38, -21, -68, -35, -83, -35, -99, 
+					  -5, -84, 18, -96, 18, -82, 
+					   5, -70, -3, -33, -15, -14, -28, -2, 
+					  -51, 11, -45, 64, -65, 64, -65, 39, -86, 15, -160, 12 },
+	    onEvent = wireTouch
+	}]]
 
 	-- wire5 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire5Options =
@@ -176,12 +200,17 @@ function act:init()
 		count = 2,
 	}
 	local wire5ImageSheet = graphics.newImageSheet( "media/wireCut/wire5sheet.png", wire5Options )
-	local wire5 = display.newSprite( act.group, wire5ImageSheet, wire5Sequence )
+	wire5 = display.newSprite( act.group, wire5ImageSheet, wire5Sequence )
 	wire5:setSequence( "wire5" )
 	wire5:scale ( 0.35, 0.35 )
 	wire5.x = act.xCenter - 91
 	wire5.y = act.yCenter + 14
+	wire5.isCut = false
 
+
+	--wire cutting buttons 
+	wire5.button1 = wireButtonCreator ( wire5, act.xCenter - 62, act.yCenter - 58)
+	
 	-- wire6 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire6Options =
 	{
@@ -201,6 +230,9 @@ function act:init()
 	wire6:scale ( 0.35, 0.35 )
 	wire6.x = act.xCenter - 69
 	wire6.y = act.yCenter + 48
+
+	-- wire cutting buttons 
+	
 
 	-- wire7 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire7Options =
@@ -222,6 +254,9 @@ function act:init()
 	wire7.x = act.xCenter + 24
 	wire7.y = act.yCenter - 40
 
+	-- wire cutting buttons 
+	
+
 	-- wire8 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire8Options =
 	{
@@ -241,6 +276,9 @@ function act:init()
 	wire8:scale ( 0.35, 0.35 )
 	wire8.x = act.xCenter - 20
 	wire8.y = act.yCenter + 131
+
+	-- wire cutting buttons 
+	
 
 	-- wire9 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire9Options =
@@ -262,6 +300,9 @@ function act:init()
 	wire9.x = act.xCenter + 85
 	wire9.y = act.yCenter - 91
 
+	-- wire cutting buttons 
+	
+
 	-- wire10 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire10Options =
 	{
@@ -282,6 +323,9 @@ function act:init()
 	wire10.x = act.xCenter + 85
 	wire10.y = act.yCenter - 1
 
+	-- wire cutting buttons 
+	
+
 	-- wire11 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire11Options =
 	{
@@ -301,6 +345,17 @@ function act:init()
 	wire11:scale ( 0.35, 0.35 )
 	wire11.x = act.xCenter + 85
 	wire11.y = act.yCenter + 90
+
+	-- wire cutting buttons 
+	local wire11Button = widget.newButton
+	{
+	    x = wire11.x,
+	    y = wire11.y,
+	    shape = "polygon",
+		fillColor = { default={ 1, 1, 1, 0.51 }, over={ 0, 0, 0, 0.01 } },
+		vertices = { -20, -10, 20, -10, 20, 10 },
+	    onEvent = wireTouch
+	}
 
 	-- led image sheet-------------------------------------------------------------------------------------------------------------------
 	local ledOptions =
