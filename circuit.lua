@@ -81,21 +81,26 @@ local function turnWrench ( event )
 	if event.phase == "began" then
 		local dx = event.x - wrench.x
 		local dy = event.y - wrench.y
+		display.getCurrentStage():setFocus( event.wrench )
 	end
 	if event.phase == "moved" then
 		local dx = event.x - wrench.x
 		local dy = event.y - wrench.y
 		wrench.rotation = (math.atan2(dy, dx) * 180 / math.pi)
-		print(wrench.rotation)
+
+	elseif event.phase == "ended" or event.phase == "cancelled" then
+		display.getCurrentStage():setFocus(nil)
 	end
+
 	-- saves the angle of the wrench
 	if wrench.rotation > 0 then
-		wrenchRotation = wrench.rotation		
+		wrenchRotation = math.floor(wrench.rotation)
 	else
-		wrenchRotation = wrench.rotation + 360
+		wrenchRotation = math.floor(wrench.rotation + 360)
 	end
+	print (lastAngle .. "  " .. wrenchRotation)
 	-- adds 1 to turn wrech upon a 360 degree rotation
-	if lastAngle < 20 then
+	if math.floor(lastAngle) < 20 then
 		lastAngle = 360
 		wrenchTurns = wrenchTurns + 1
 	end
