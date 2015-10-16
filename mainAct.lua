@@ -15,9 +15,10 @@ local act = game.newAct()
 ------------------------- Start of Activity --------------------------------
 
 -- Act variables
-local shipGroup      -- display group centered on ship
+local shipGroup        -- display group centered on ship
 local walkSpeed = 0.1  -- user's walking speed factor
-local dot            -- user's position dot on map
+local dot              -- user's position dot on map
+local roomInside       -- room the user is inside or nil if none
 
 -- Main Ship coordinates
 local ship = {
@@ -75,6 +76,34 @@ local function constrainToHalls( x, y )
 	return x, y
 end
 
+-- Walk the dot to the given position
+local function walkTo( x, y )
+	-- Compute distance from current location to destination
+	local d = math.sqrt((x - dot.x)^2 + (y - dot.y)^2)
+
+	-- Move dot to destination with time proportional to distance (approx constant speed)
+	transition.cancel( dot )  -- stop previous movement if any
+	transition.to( dot, { x = x, y = y, time = d / walkSpeed, transition = easing.inOutSin } )
+
+	-- Use a little o2, h2o, and food proportional to the walking distance
+	game.addOxygen( -0.02 * d )
+	game.addWater( -0.001 * d )
+	game.addFood( -0.0002 * d )
+end
+
+-- Change to the zoomed view for the given room
+local function zoomToRoom( room )
+	-- Animate the dot walking into the room
+	local x = room.x + (room.dx or 0)
+	local y = room.y + (room.dy or 0)
+	walkTo( x, y, 700 )
+	roomInside = room
+
+	-- Change to the zoomed map view for the named room
+	game.mapZoomName = room.name
+	game.gotoAct( "mapZoom", { effect = "crossFade", time = 500 } )
+end
+
 -- Handle touch event on the map
 local function touchMap( event )
 	if event.phase == "began" then
@@ -87,27 +116,15 @@ local function touchMap( event )
 			if game.xyHitTest( dot.x, dot.y, room.x, room.y, 10 ) then
 				-- print( "Near door: " .. room.name )
 				if game.xyInRect( x, y, room ) then
-					-- Go into zoomed view for the room
-					game.mapZoomName = room.name
-					game.gotoAct( "mapZoom", { effect = "crossFade", time = 250 } )
+					zoomToRoom( room )
+					return
 				end
 			end
 		end
 
-		-- Constrain position to walkable portion of the ship
+		-- Constrain position to walkable portion of the ship and walk there
 		x, y = constrainToHalls( x, y )
-
-		-- Compute distance from current location to destination
-		local d = math.sqrt((x - dot.x)^2 + (y - dot.y)^2)
-
-		-- Move dot to destination with time proportional to distance (approx constant speed)
-		transition.cancel( dot )  -- stop previous movement if any
-		transition.to( dot, { x = x, y = y, time = d / walkSpeed, transition = easing.inOutSin } )
-
-		-- Use a little o2, h2o, and food proportional to the walking distance
-		game.addOxygen( -0.02 * d )
-		game.addWater( -0.001 * d )
-		game.addFood( -0.0002 * d )
+		walkTo( x, y )
 	end
 	return true
 end
@@ -152,6 +169,12 @@ function act:prepare()
 	if game.mapZoomName then 
 		game.gotoAct( "mapZoom" )
 		return
+	end
+
+	-- If the dot is currently inside a room then walk back out
+	if roomInside then
+		walkTo( roomInside.x, roomInside.y, 700 )  -- to just outside door
+		roomInside = nil
 	end
 end
 
