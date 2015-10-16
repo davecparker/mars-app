@@ -28,6 +28,11 @@ local function touchMap( event )
 		-- Move dot to touch position with time proportional to distance (approx constant speed)
 		transition.to( dot, { x = event.x, y = event.y, 
 				time = d * walkSpeed, transition = easing.inOutSin } )
+
+		-- Use a little o2, h2o, and food proportional to the walking distance
+		game.addOxygen( -0.02 * d )
+		game.addWater( -0.001 * d )
+		game.addFood( -0.0002 * d )
 	end
 	return true
 end
