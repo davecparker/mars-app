@@ -19,23 +19,83 @@ local numPic = {}
 local numberCreate = {}
 local numberDisplay = {}
 
-	-- Numbers
-	local options =
-	{
-	    width = 25,
-	    height = 50,
-	    numFrames = 10,
-	    sheetContentWidth = 250,  --width of original 1x size of entire sheet
-	    sheetContentHeight = 50  --height of original 1x size of entire sheet
-	}
-	local number = graphics.newImageSheet( "media/doorLock/numbers.png", options )
+local backTapped
+local passKey = "1234"
+local keyedCorrectly
+local numberLocation
+local refreshScreen
+local clearScreen
+local keyPressed
 
-local function backTapped()
+-- When the Back Button is Pushed
+function backTapped()
 	game.gotoAct( "mainAct", { effect = "slideUp", time = 800 } )
 end
 
+-- Checks to see if the numbers entered match the passKey
+function checkKey()
+	if table.maxn(numberDisplay) < 4 then
+		return false
+	else
+		local keyEntered = numberDisplay[1]..numberDisplay[2]..numberDisplay[3]..numberDisplay[4]
+		if keyEntered == passKey then
+			return true
+		else
+			return false
+		end
+	end
+end
+
+-- Numbers
+local options =
+{
+    width = 25,
+    height = 50,
+    numFrames = 10,
+    sheetContentWidth = 250,  --width of original 1x size of entire sheet
+    sheetContentHeight = 50  --height of original 1x size of entire sheet
+}
+local number = graphics.newImageSheet( "media/doorLock/numbers.png", options ) -- Red Number Sheet
+local numberG = graphics.newImageSheet( "media/doorLock/numbers2.png", options ) -- Green Number Sheet
+
+-- Flash Green Numbers if keyedCorrectly returns true
+function flashGreen()
+	local greenNumbers = display.newGroup()
+	local counter = 0
+
+	-- Draws Green Numbers
+	for i = 1, #numberDisplay, 1 do
+		local newNumber = display.newImage(greenNumbers, numberG, numberDisplay[i]+1)
+		newNumber.x = numberLocation( i )
+		newNumber.y = screen.y
+		table.insert( numberCreate, newNumber )
+	end
+
+	local function flashOn()
+		greenNumbers.isVisible = true
+		--timer.performWithDelay( 500, flashOff, 1 ) -- TODO: Get the Timer working correctly
+		keyedCorrectly = nil
+		refreshScreen()
+	end
+
+	local function flashOff()
+		greenNumbers.isVisible = false
+		if counter <= 5 then
+			timer.performWithDelay( 500, flashOn, 1 )
+			counter = counter + 1
+		end
+	end
+		
+	timer.performWithDelay( 500, flashOff, 1 )
+end
+
+-- Flash Red Numbers if keyedCorrectly returns false
+function flashRed()
+
+end
+
 -- Returns the X Position of Each Number Location
-local function numberLocation( idx )
+function numberLocation( idx )
 	if idx == 1 then
 		return screen.x - 60
 	elseif idx ==  2 then
@@ -47,31 +107,66 @@ local function numberLocation( idx )
 	end
 end
 
-
-local function refreshScreen( )
+-- Refresh the Screen every time the table is affected
+function refreshScreen( )
 --	Remove All Exiting Number Objects
 	for i = #numberCreate, 1, -1 do
 		display.remove(numberCreate[i])
 		table.remove(numberCreate, i)
 	end
 
---	Create Brand New Numbers from the outputDisplay Table
-	for i = 1, #numberDisplay, 1 do
-		local newNumber = display.newImage(act.group, number, numberDisplay[i])
-		newNumber.x = numberLocation( i )
-		newNumber.y = screen.y
-		table.insert( numberCreate, newNumber )
+	if keyedCorrectly == true then
+		flashGreen()
+	elseif keyedCorrectly == false then
+		keyedCorrectly = nil
+		refreshScreen()
+		--flashRed() -- TODO: Add content to flashRed Function
+	else
+		--	Create Brand New Numbers from the outputDisplay Table
+		for i = 1, #numberDisplay, 1 do
+			local newNumber = display.newImage(act.group, number, numberDisplay[i]+1)
+			newNumber.x = numberLocation( i )
+			newNumber.y = screen.y
+			table.insert( numberCreate, newNumber )
+		end
 	end
 end
 
+-- Clears the Screen
+function clearScreen()
+	for i = #numberDisplay, 1, -1 do
+		table.remove( numberDisplay, i )
+	end
+end
 
-local function keyPressed( event )
+-- The Listener for the Buttons
+function keyPressed( event )
 	print(event.target.name)
-	if #numberDisplay >= 4 then
-		table.remove( numberDisplay, 1 )
+
+	local key = event.target.name
+
+	if key == "clr" then
+		clearScreen()
 	end
 
-	table.insert( numberDisplay, event.target.name + 1 )
+	if key == "ent" then
+		if checkKey() then
+			keyedCorrectly = true
+			print("Correct Key")
+		else
+			keyedCorrectly = false
+			print("Incorrect Key")
+		end
+	end
+
+	if #numberDisplay >= 4 then
+		--table.remove( numberDisplay, 1 ) -- Add If screen should wrap
+	else
+		if key ~= "clr" and key ~= "ent" then
+			table.insert( numberDisplay, key ) -- Remove else statement if screen should wrap
+		end
+	end
+
 	refreshScreen()
 end
 
@@ -82,19 +177,7 @@ function act:init()
 	act:makeTitleBar( "Door", backTapped )
 
 	-- Background
-	local background = display.newRect( act.group, act.xCenter, act.yCenter+20, act.width, act.height-40 )
-	background:setFillColor( 0, 0, 0 )
-
-	-- -- Numbers
-	-- local options =
-	-- {
-	--     width = 25,
-	--     height = 50,
-	--     numFrames = 10,
-	--     sheetContentWidth = 250,  --width of original 1x size of entire sheet
-	--     sheetContentHeight = 50  --height of original 1x size of entire sheet
-	-- }
-	-- local number = graphics.newImageSheet( "media/doorLock/numbers.png", options )
+	--...
 
 	-- Screen
 	screen = act:newImage( "screen.png", { width=200 })
