@@ -50,7 +50,7 @@ local dynamicGrp -- display group for dynamic objects
 local terrain = {} -- basic terrain
 local obstacle = {} -- terrain obstacles
 local shape = {} -- possible terrain obstacles
-local wheel = {} -- rover wheels
+local wheelSprite = {} -- rover wheels
 local bg
 local rover
 local elevation = 100
@@ -115,9 +115,9 @@ local function randPoly( x, y )
 end
 
 -- function to create terrain of rectangles and randomly selected polygons
-function NewTerrain( nObstacles)
+local function NewTerrain( nObstacles)
 	-- fill terrain with rectangles to span display width plus terrainExcess
-	for i = 1, act.xMax + terrainExcess + ( 1 - act.xMin ) do
+	for i = 1, act.width + terrainExcess + ( 1 - act.xMin ) do
 		terrain[i] = newRectangle( i - 1 + terrainOffset, elevation )
 	end
 
@@ -134,7 +134,7 @@ function NewTerrain( nObstacles)
 end
 
 -- function to create the rover
-function NewRover( roverY )
+local function NewRover( roverY )
 
 	local suspension = {}
 	local wheelToWheelJoint = {}
@@ -144,31 +144,49 @@ function NewRover( roverY )
 		{ parent = dynamicGrp, x = act.xMin + 100, y = roverY, width = 65, height = 50 } )
 	rover.anchorY = 1.0
 	rover.angularV = 0
+	rover.accelerate = false
 
 	-- rover body physics: low density for minimal sway & increased stability
 	physics.addBody( rover, "dynamic", { density = 0.2, friction = 0.3, 
 		bounce = 0.2, isSensor = false } )
 
-	-- create 4 wheels
-	for i = 1, 4 do
-		wheel[i] = act:newImage( "tonka_wheel.png", 
-			{ parent = dynamicGrp, x = rover.x - 27 + (i - 1) * 18 , y = rover.y + 5, width = 15, height = 15 } )
+	-- create an image sheet for rover wheel sprites
+	local options = {
+		width = 175,
+		height = 175,
+		numFrames = 7
+	}
 
-		-- wheel physics: lower density decreases translation in violent events but also
-		-- decreases stability & increases acceleration response. 0.5-1.5 seems to give the
-		-- best results. Increased friction also increases acceleration response. 
-		physics.addBody( wheel[i], "dynamic", { density = 1.0, friction = 0.5, 
+	local wheelSheet = graphics.newImageSheet( 'media/rover/tonka_wheel_sheet.png', options )
+
+	local sequenceData = {
+		name = "wheelSequence",
+		start = 1,
+		count = 7,
+	}
+
+	-- create 4 wheel sprites
+	for i = 1, 4 do
+		wheelSprite[i] = display.newSprite( dynamicGrp, wheelSheet, sequenceData )
+		wheelSprite[i].x = rover.x - 27 + (i - 1) * 18
+		wheelSprite[i].y = rover.y + 5
+		wheelSprite[i]:scale( 0.1, 0.1 )
+
+		-- wheel physics: lower density decreases translation & increases acceleration
+		-- response but also decreases stability. 0.5-1.5 seems to give the best results.
+		-- Increased friction increases acceleration response and decreases stability.
+		physics.addBody( wheelSprite[i], "dynamic", { density = 1.0, friction = 1.0, 
 			bounce = 0.2, isSensor = false, radius = 7.5 } )
 
 		-- xAxis & yAxis values influence wheel translation; 25-50 y-axis gives best results
-		suspension[i] = physics.newJoint( "wheel", rover, wheel[i], 
-			wheel[i].x, wheel[i].y, 1, 30 )
+		suspension[i] = physics.newJoint( "wheel", rover, wheelSprite[i], 
+			wheelSprite[i].x, wheelSprite[i].y, 1, 30 )
 	end
 
 	-- wheel-to-wheel distance joints to moderate wheel translation 
 	for i = 1, 3 do
-		wheelToWheelJoint[i] = physics.newJoint( 'distance', wheel[i], wheel[i+1],
-			wheel[i].x, wheel[i].y, wheel[i+1].x, wheel[i+1].y )
+		wheelToWheelJoint[i] = physics.newJoint( 'distance', wheelSprite[i], wheelSprite[i+1],
+			wheelSprite[i].x, wheelSprite[i].y, wheelSprite[i+1].x, wheelSprite[i+1].y )
 	end
 --[[
 	-- wheel-to-body distance joints to reduce wheel translation
@@ -182,19 +200,51 @@ function NewRover( roverY )
 --]]
 end
 
--- function to adjust wheel angular velocity
-function MoveRover()
-	if rover.angularV < 800 then -- increase initial acceleration
-		rover.angularV = rover.angularV + 500 
-	elseif rover.angularV > 8000 then -- limit angular velocity (i.e. top speed)
-		rover.angularV = 8000
+-- function to adjust and apply rover wheel angular velocity
+local function MoveRover()
+	-- if accelerate, increase wheel angular velocity
+	if rover.accelerate then
+		if rover.angularV <= 150 then -- higher initial acceleration
+			rover.angularV = rover.angularV + 50 
+		elseif rover.angularV + 20 > 8000 then -- limit angular velocity (i.e. top speed)
+			rover.angularV = 8000
+		else
+			rover.angularV = rover.angularV + 20 -- typical acceleration
+		end
+	-- else diminish angular velocity to 0
+	elseif rover.angularV > 100 then
+		rover.angularV = rover.angularV * 0.99
+	elseif rover.angularV - 1 > 0 then
+		rover.angularV = rover.angularV - 1
 	else
-		rover.angularV = rover.angularV + 20 -- typical acceleration
+		rover.angularV = 0
+	end
+
+	-- apply the angular velocity to the wheels	
+	for i = 1, 4 do
+		wheelSprite[i].angularVelocity = rover.angularV
+		
+		-- set sprite frame according to wheel angular velocity
+		if rover.angularV > 700 then
+			wheelSprite[i]:setFrame( 7 )
+		elseif rover.angularV > 600 then
+			wheelSprite[i]:setFrame( 6 )
+		elseif rover.angularV > 500 then
+			wheelSprite[i]:setFrame( 5 )
+		elseif rover.angularV > 400 then
+			wheelSprite[i]:setFrame( 4 )
+		elseif rover.angularV > 300 then
+			wheelSprite[i]:setFrame( 3 )
+		elseif rover.angularV > 200 then
+			wheelSprite[i]:setFrame( 2 )
+		else 
+			wheelSprite[i]:setFrame( 1 )
+		end
 	end
 end
 
--- function to scroll the ground to the left
-function MoveTerrain()
+-- function to scroll the terrain to the left
+local function MoveTerrain()
     -- recycle terrain rectangle if sufficiently offscreen
     for i = 1, #terrain do
 		if terrain[i].contentBounds.xMax < act.xMin + terrainOffset then
@@ -219,9 +269,9 @@ end
 -- touch event handler
 local function touched( event )
 	if event.phase == "began" then
-		MoveRover()
+		rover.accelerate = true
 	elseif event.phase == "ended" or event.phase == "cancelled" then
-		rover.angularV = 0
+		rover.accelerate = false
 	end
 end
 
@@ -242,9 +292,9 @@ local function onResetPress( event )
 	rover = nil
 
 	-- remove rover wheels
-	for i = 1, #wheel do
-		wheel[i]:removeSelf()
-		wheel[i] = nil
+	for i = 1, #wheelSprite do
+		wheelSprite[i]:removeSelf()
+		wheelSprite[i] = nil
 	end
 
 	-- create new rover
@@ -263,14 +313,16 @@ function act:init()
 	-- start physics, set gravity 
 	physics.start()
 	physics.setGravity( 0, 3.3 )
-	physics.setContinuous( true )
+	--physics.setContinuous( true )
 	--physics.setDrawMode( "hybrid" )
 
 	math.randomseed( os.time() )
 
-	staticGrp = act:newGroup() -- display group for static foreground objects
-	dynamicGrp = act:newGroup() -- display group for dynamic objects
+	-- create display groups for dynamic objects & static foreground objects
+	staticGrp = act:newGroup()
+	dynamicGrp = act:newGroup()
 
+	-- set background
 	bg = display.newRect( dynamicGrp, act.xMin, act.yMin, act.width, act.height )
 	bg.x = act.xCenter
 	bg.y = act.yCenter
@@ -299,19 +351,18 @@ end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
+	-- adjust and apply rover wheel angular velocity
+	MoveRover() 
+
 	-- move dynamicGrp along the x-axis the distance the rover has moved
 	dynamicGrp.x = act.xMin + 100 - rover.x
 
-	-- recycle and regenerate the terrain
+	-- recycle and generate the terrain
 	MoveTerrain()
 	
 	-- move the background along the x-axis the distance the rover has moved
 	bg.x = act.xCenter + rover.x - 100
 
-	-- rotate the rover's wheels
-	for i = 1, 4 do
-		wheel[i].angularVelocity = rover.angularV * 10
-	end
 	-- move the static group to the foreground
 	staticGrp:toFront()
 end
