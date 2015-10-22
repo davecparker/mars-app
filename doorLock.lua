@@ -24,8 +24,11 @@ local passKey = "1234"
 local keyedCorrectly
 local numberLocation
 local refreshScreen
-local clearScreen
+local clearKeyPad
 local keyPressed
+
+local colorNumbers = display.newGroup()
+
 
 -- When the Back Button is Pushed
 function backTapped()
@@ -46,55 +49,65 @@ function checkKey()
 	end
 end
 
--- Numbers
+-- Number Spritesheet Options
 local options =
 {
     width = 25,
     height = 50,
     numFrames = 10,
-    sheetContentWidth = 250,  --width of original 1x size of entire sheet
-    sheetContentHeight = 50  --height of original 1x size of entire sheet
+    sheetContentWidth = 250,
+    sheetContentHeight = 50
 }
+
+-- Normal, Green, & Red Numbers
 local number = graphics.newImageSheet( "media/doorLock/numbers.png", options ) -- Red Number Sheet
+local numberR = graphics.newImageSheet( "media/doorLock/numbers.png", options ) -- Red Number Sheet
 local numberG = graphics.newImageSheet( "media/doorLock/numbers2.png", options ) -- Green Number Sheet
 
--- Flash Green Numbers if keyedCorrectly returns true
-function flashGreen()
-	local greenNumbers = display.newGroup()
-	local counter = 0
+-- Calls the Blink Function Stored in Each Number Object
+function flashTheNumbers()
+	for i = 1, #colorNumbers, 1 do
+		colorNumbers[i].blink( colorNumbers[i] )
+	end
+end
 
-	-- Draws Green Numbers
+-- Destroys the Number Objects
+function removeFlashedNumbers()
+	for i = #colorNumbers, 1, -1 do
+		display.remove( colorNumbers[i] )
+		table.remove( colorNumbers[i] )
+	end
+	clearKeyPad() -- Remove Previously Typed Numbers
+end
+
+-- Creates New Number Objects of the Requested Color
+function colorToFlash( flashColor )
 	for i = 1, #numberDisplay, 1 do
-		local newNumber = display.newImage(greenNumbers, numberG, numberDisplay[i]+1)
+		local newNumber
+		if flashColor == "Green" then
+			newNumber = display.newImage( colorNumbers, numberG, numberDisplay[i]+1 )
+		else
+			newNumber = display.newImage( colorNumbers, numberR, numberDisplay[i]+1 )
+		end
 		newNumber.x = numberLocation( i )
 		newNumber.y = screen.y
-		table.insert( numberCreate, newNumber )
-	end
-
-	local function flashOn()
-		greenNumbers.isVisible = true
-		--timer.performWithDelay( 500, flashOff, 1 ) -- TODO: Get the Timer working correctly
-		keyedCorrectly = nil
-		refreshScreen()
-	end
-
-	local function flashOff()
-		greenNumbers.isVisible = false
-		if counter <= 5 then
-			timer.performWithDelay( 500, flashOn, 1 )
-			counter = counter + 1
+		newNumber.blink = function( self )
+			if self.isVisible then
+				self.isVisible = false
+			else 
+				self.isVisible = true
+			end
 		end
+		table.insert( colorNumbers, newNumber )
 	end
-		
-	timer.performWithDelay( 500, flashOff, 1 )
+
+	-- Blink the Numbers and then Destroy
+	timer.performWithDelay( 400, flashTheNumbers, 4 )
+	timer.performWithDelay( 2000, removeFlashedNumbers )
 end
 
--- Flash Red Numbers if keyedCorrectly returns false
-function flashRed()
 
-end
-
--- Returns the X Position of Each Number Location
+-- Returns the X Value for the Display Position 
 function numberLocation( idx )
 	if idx == 1 then
 		return screen.x - 60
@@ -109,31 +122,39 @@ end
 
 -- Refresh the Screen every time the table is affected
 function refreshScreen( )
---	Remove All Exiting Number Objects
+
+--	Remove All Existing Number Objects
 	for i = #numberCreate, 1, -1 do
 		display.remove(numberCreate[i])
 		table.remove(numberCreate, i)
 	end
 
-	if keyedCorrectly == true then
-		flashGreen()
-	elseif keyedCorrectly == false then
+	if keyedCorrectly == true then 			-- Create Green Numbers if Correct
 		keyedCorrectly = nil
-		refreshScreen()
-		--flashRed() -- TODO: Add content to flashRed Function
-	else
-		--	Create Brand New Numbers from the outputDisplay Table
+		colorToFlash( "Green" )
+	elseif keyedCorrectly == false then 	-- Create Red Numbers if Wrong
+		keyedCorrectly = nil
+		colorToFlash( "Red" )
+	else 									--	Else Create Normal Numbers
 		for i = 1, #numberDisplay, 1 do
-			local newNumber = display.newImage(act.group, number, numberDisplay[i]+1)
+			local newNumber = display.newImage( act.group, number, numberDisplay[i]+1)
 			newNumber.x = numberLocation( i )
 			newNumber.y = screen.y
+			newNumber.blink = function( self )
+				if self.isVisible then
+					self.isVisible = false
+				else 
+					self.isVisible = true
+				end
+			end
 			table.insert( numberCreate, newNumber )
 		end
 	end
+
 end
 
 -- Clears the Screen
-function clearScreen()
+function clearKeyPad()
 	for i = #numberDisplay, 1, -1 do
 		table.remove( numberDisplay, i )
 	end
@@ -141,30 +162,23 @@ end
 
 -- The Listener for the Buttons
 function keyPressed( event )
-	print(event.target.name)
 
 	local key = event.target.name
 
 	if key == "clr" then
-		clearScreen()
+		clearKeyPad()
 	end
 
 	if key == "ent" then
 		if checkKey() then
 			keyedCorrectly = true
-			print("Correct Key")
 		else
 			keyedCorrectly = false
-			print("Incorrect Key")
 		end
 	end
 
-	if #numberDisplay >= 4 then
-		--table.remove( numberDisplay, 1 ) -- Add If screen should wrap
-	else
-		if key ~= "clr" and key ~= "ent" then
-			table.insert( numberDisplay, key ) -- Remove else statement if screen should wrap
-		end
+	if key ~= "clr" and key ~= "ent" then
+		table.insert( numberDisplay, key ) -- Remove else statement if screen should wrap
 	end
 
 	refreshScreen()
