@@ -40,6 +40,11 @@ local ship = {
 			left = 23, top = -125, right = 136, bottom = -85, 
 			x = 12, y = -92, dx = 30 
 		},
+		{
+			name = "Engineering",
+			left = -94, top = 166, right = 19, bottom = 236, 
+			x = 0, y = 153, dy = 30 
+		},
 	},
 }
 
