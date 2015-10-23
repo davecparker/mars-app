@@ -98,14 +98,10 @@ local function turnWrench ( event )
 	else
 		wrenchRotation = math.floor(wrench.rotation + 360)
 	end
-	print (lastAngle .. "  " .. wrenchRotation)
-	-- adds 1 to turn wrech upon a 360 degree rotation
-	if math.floor(lastAngle) < 20 then
-		lastAngle = 360
-		wrenchTurns = wrenchTurns + 1
-	end
+	print (lastAngle .. "  " .. wrenchRotation .. "  " .. activeNut.angle )
+
 	-- back the wrench up if its moving in the wrong direction otherwise let it move counterclockwise
-	if wrenchRotation + 20  < lastAngle then
+	if wrenchRotation + 30 < lastAngle then
 		wrench.rotation = lastAngle
 	elseif wrenchRotation > lastAngle then
 		wrench.rotation = lastAngle
@@ -113,12 +109,21 @@ local function turnWrench ( event )
 		lastAngle = wrenchRotation
 		nutRotate(event.x, event.y)  -- rotate the nut too
 	end
+
+	-- adds 1 to turn wrech upon a 360 degree rotation=========================================================================================
+	if math.floor(lastAngle) < 20 then
+		lastAngle = 360
+		wrenchTurns = wrenchTurns + 1
+	end
+	
 	-- if the wrench turns a certin amount then remove the nut
 	if wrenchTurns > 2 then
-		wrench:removeEventListener( "touch", turnWrench )
-		activeNut:removeSelf()
-		activeNut = nil
-		nutsRemoved = nutsRemoved + 1
+		if (wrenchRotation > activeNut.angle - 5) and (wrenchRotation < activeNut.angle + 5) then
+			wrench:removeEventListener( "touch", turnWrench )
+			activeNut:removeSelf()
+			activeNut = nil
+			nutsRemoved = nutsRemoved + 1
+		end
 		-- if all the nuts have been removed remove the wrench as well
 		if nutsRemoved == 4 then
 			wrench:removeSelf()
