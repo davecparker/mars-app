@@ -19,6 +19,7 @@ local shipGroup        -- display group centered on ship
 local walkSpeed = 0.1  -- user's walking speed factor
 local dot              -- user's position dot on map
 local roomInside       -- room the user is inside or nil if none
+local clickWav		   -- click sound
 
 -- Main Ship coordinates
 local ship = {
@@ -112,6 +113,9 @@ end
 -- Handle touch event on the map
 local function touchMap( event )
 	if event.phase == "began" then
+		-- Temp click sound (TODO)
+		audio.play( clickWav )
+
 		-- Get tap position in shipGroup coords
 		local x, y = shipGroup:contentToLocal( event.x, event.y )
 
@@ -136,6 +140,9 @@ end
 
 -- Init the act
 function act:init()
+	-- Load temp click sound (TODO)
+	clickWav = act:loadSound( "Click6.wav" )
+
 	-- Map background with touch listener
 	local map = act:newImage( "shipPlan.png", { width = act.width } )
 	map:addEventListener( "touch", touchMap )
