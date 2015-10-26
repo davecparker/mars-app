@@ -158,6 +158,10 @@ function act:init()
 	drillButton.x = W + 2
 	drillButton.y = YC + 210
 
+	act.group:insert( scanButton )
+	act.group:insert( drillButton )
+	act.group:insert( textGroup )
+
 end
 
 function act:prepare()
@@ -235,8 +239,8 @@ function waterSpotStats( event )
 		currentLiters = t.liters
 		currentCost = t.energyCost
 
-		t:removeEventListener( "touch", waterSpotStats )
-		t:addEventListener( "touch", waterSpotStatsHide )
+--		t:removeEventListener( "touch", waterSpotStats )
+--		t:addEventListener( "touch", waterSpotStatsHide )
 
 	end
 
