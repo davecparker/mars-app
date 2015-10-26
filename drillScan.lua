@@ -30,6 +30,7 @@ local scan
 local scanActivate
 local finishScan
 local waterSpotStats
+local waterSpotStatsHide
 local transitionDrill
 local backButton
 
@@ -51,6 +52,8 @@ local contamText
 local freezeText
 local litersText
 local energyText
+local scanButton
+local drillButton
 local currentLiters = 0
 local currentCost = 0
 
@@ -65,15 +68,33 @@ function act:init()
 	marsSurface.anchorX = 1
 	marsSurface.anchorY = 1
 
+	-- Create the water spots
+
 	for i = 1, 3 do
+		
 		waterSpot[i] = display.newCircle( act.group, math.random( 10, 3 * W / 4 - 10 ), math.random( 10, 4 * H / 5 - 10 ), 10 )
 		waterSpot[i].fill = { 0, 0, 1, 0.5 }
 		waterSpot[i].isVisible = false
 		waterSpot[i].contamination = math.random( 0, 100 )
 		waterSpot[i].frigidity = 100 - waterSpot[i].contamination
 		waterSpot[i].liters = 50 + waterSpot[i].contamination * 2
-		waterSpot[i].energyCost = waterSpot[i].contamination / 5 + waterSpot[i].frigidity / 10
+		waterSpot[i].energyCost =  -( waterSpot[i].contamination / 5 + waterSpot[i].frigidity / 10 )
 		waterSpot[i].group = display.newGroup( )
+		waterSpot[i].group.x, waterSpot[i].group.y = waterSpot[i].x, waterSpot[i].y
+		act.group:insert( waterSpot[i].group )
+
+	end
+
+	-- Create the water spots' info bubbles
+
+	for i = 1, 3 do
+
+		waterSpot[i].infoBox = display.newRoundedRect( waterSpot[i].group, 0, 0, 40, 60, 10 )
+		waterSpot[i].infoBox.fill = { 0, 0, 0, 0.5 }
+		waterSpot[i].group.xScale = 0.1
+		waterSpot[i].group.yScale = 0.1
+		waterSpot[i].group.isVisible = false
+
 	end
 
 	scanCircle = display.newCircle( act.group, XC, YC, 50 )
@@ -93,7 +114,6 @@ function act:init()
 	textGroup = display.newGroup( )
 	textGroup.x = XC
 	textGroup.y = YC + 185
-	act.group:insert( textGroup )
 
 	contamOrigin = 0
 	contamText = display.newText( textGroup, contamOrigin .. "% Contaminated", -150, 0, native.systemFont, 17 )
@@ -126,20 +146,31 @@ function act:init()
 
 	local buttonSheet = graphics.newImageSheet( "media/drillScan/Button.png", options )
 
-	local scanButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Scan", onPress = scanActivate }
+	scanButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Scan", onPress = scanActivate }
 
 	scanButton.anchorX = 1
 	scanButton.x = W + 2
 	scanButton.y = YC - 170
 
-	local drillButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Drill", onPress = transitionDrill }
+	drillButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Drill", onPress = transitionDrill }
 
 	drillButton.anchorX = 1
 	drillButton.x = W + 2
-	drillButton.y = YC + 50
+	drillButton.y = YC + 210
 
-	act.group:insert( scanButton )
-	act.group:insert( drillButton )
+end
+
+function act:prepare()
+
+end
+
+function act:stop()
+
+	for i = 1, 3 do
+
+		waterSpot[i]:removeSelf()
+
+	end
 
 end
 
@@ -192,15 +223,51 @@ function waterSpotStats( event )
 
 		local t = event.target
 
+		t.group.isVisible = true
+
+		transition.to( t.group, { time = 333, x = t.group.x + 35, xScale = 1, yScale = 1 } )
+
 		contamText.text = t.contamination .. "% Contaminated"
 		freezeText.text = t.frigidity .. "% Frozen"
 		litersText.text = t.liters .. " Liters"
-		energyText.text = "Energy Cost: " .. string.format( "%2.0f", math.floor( t.energyCost ) ) .. " kWh"
+		energyText.text = "Energy Cost: " .. string.format( "%2.0f", math.floor( -t.energyCost ) ) .. " kWh"
 
 		currentLiters = t.liters
 		currentCost = t.energyCost
 
---		print( t.contamination .. "% Contaminated, " .. t.frigidity .. "% Frozen, " .. t.liters .. " Liters" )
+		t:removeEventListener( "touch", waterSpotStats )
+		t:addEventListener( "touch", waterSpotStatsHide )
+
+	end
+
+	return true
+
+end
+
+function hideGroup( obj )
+
+	obj.isVisible = false
+
+end
+
+function waterSpotStatsHide( event )
+
+	if event.phase == "began" then
+
+		local t = event.target
+
+		transition.to( t.group, { time = 333, x = t.group.x - 35, xScale = 0.1, yScale = 0.1, onComplete = hideGroup } )
+
+		contamText.text = "0% Contaminated"
+		freezeText.text = "0% Frozen"
+		litersText.text = "0 Liters"
+		energyText.text = "Energy Cost: 0 kWh"
+
+		currentLiters = 0
+		currentCost = 0
+
+		t:removeEventListener( "touch", waterSpotStatsHide )
+		t:addEventListener( "touch", waterSpotStats )
 
 	end
 
@@ -214,7 +281,10 @@ function transitionDrill()
 
 	-- Move game to Water Drilling game automatically. Will need to use Act transition
 
-	game.gotoAct( "drill", { effect = "zoomInOutFade", time = 333 })
+	game.addWater( currentLiters )
+	game.addEnergy( currentCost )
+
+	game.gotoAct( "drill", { effect = "zoomInOutFade", time = 333 } )
 
 end
 
