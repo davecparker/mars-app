@@ -54,6 +54,12 @@ function game.xyHitTest( x1, y1, x2, y2, dxy )
     return math.abs( x1 - x2 ) <= dxy and math.abs( y1 - y2 ) <= dxy
 end
 
+-- Return true to eat a touch or tap event
+function game.eatTouch()
+    return true
+end
+
+
 -------------------------- Resource use   ---------------------------------
 
 -- Add to or subtract from the oxygen supply by the given amount in liters
