@@ -10,17 +10,18 @@ display.setStatusBar( display.HiddenStatusBar )
 
 widget = require( "widget" )
 
--- Constant declaration
-
-local H = display.contentHeight
-local W = display.contentWidth
-local XC = display.contentCenterX
-local YC = display.contentCenterY
-
 -- Declare access to game and act variables
 
 local game = globalGame
 local act = game.newAct()
+
+
+-- Constant declaration
+
+local W = act.width
+local H = act.height
+local XC = act.xCenter
+local YC = act.yCenter
 
 -- Function declaration
 
@@ -50,6 +51,8 @@ local contamText
 local freezeText
 local litersText
 local energyText
+local currentLiters = 0
+local currentCost = 0
 
 -- Array declaration
 
@@ -70,6 +73,7 @@ function act:init()
 		waterSpot[i].frigidity = 100 - waterSpot[i].contamination
 		waterSpot[i].liters = 50 + waterSpot[i].contamination * 2
 		waterSpot[i].energyCost = waterSpot[i].contamination / 5 + waterSpot[i].frigidity / 10
+		waterSpot[i].group = display.newGroup( )
 	end
 
 	scanCircle = display.newCircle( act.group, XC, YC, 50 )
@@ -86,30 +90,28 @@ function act:init()
 	scanConsole.anchorX = 0
 	scanConsole.anchorY = 1
 
---	display.newImageRect( [parentGroup,], filename, [baseDir,], width, height )
-
 	textGroup = display.newGroup( )
 	textGroup.x = XC
-	textGroup.y = YC + 170
+	textGroup.y = YC + 185
 	act.group:insert( textGroup )
 
 	contamOrigin = 0
-	contamText = display.newText( textGroup, contamOrigin .. "% Contaminated", -150, 0, native.systemFontBold, 17 )
+	contamText = display.newText( textGroup, contamOrigin .. "% Contaminated", -150, 0, native.systemFont, 17 )
 	contamText.fill = { 0 }
 	contamText.anchorX = 0
 
 	freezeOrigin = 0
-	freezeText = display.newText( textGroup, freezeOrigin .. "% Frozen", -150, 25, native.systemFontBold, 17 )
+	freezeText = display.newText( textGroup, freezeOrigin .. "% Frozen", -150, 17, native.systemFont, 17 )
 	freezeText.fill = { 0 }
 	freezeText.anchorX = 0
 
 	litersOrigin = 0
-	litersText = display.newText( textGroup, litersOrigin .. " Liters", -150, 50, native.systemFontBold, 17 )
+	litersText = display.newText( textGroup, litersOrigin .. " Liters", -150, 34, native.systemFont, 17 )
 	litersText.fill = { 0 }
 	litersText.anchorX = 0
 
 	energyOrigin = 0
-	energyText = display.newText( textGroup, "Energy Cost:  " .. energyOrigin .. " kWh", -150, 75, native.systemFontBold, 17 )
+	energyText = display.newText( textGroup, "Energy Cost:  " .. energyOrigin .. " kWh", -150, 51, native.systemFont, 17 )
 	energyText.fill = { 0 }
 	energyText.anchorX = 0
 
@@ -135,6 +137,9 @@ function act:init()
 	drillButton.anchorX = 1
 	drillButton.x = W + 2
 	drillButton.y = YC + 50
+
+	act.group:insert( scanButton )
+	act.group:insert( drillButton )
 
 end
 
@@ -192,6 +197,9 @@ function waterSpotStats( event )
 		litersText.text = t.liters .. " Liters"
 		energyText.text = "Energy Cost: " .. string.format( "%2.0f", math.floor( t.energyCost ) ) .. " kWh"
 
+		currentLiters = t.liters
+		currentCost = t.energyCost
+
 --		print( t.contamination .. "% Contaminated, " .. t.frigidity .. "% Frozen, " .. t.liters .. " Liters" )
 
 	end
@@ -201,6 +209,8 @@ function waterSpotStats( event )
 end
 
 function transitionDrill()
+
+	-- 
 
 	-- Move game to Water Drilling game automatically. Will need to use Act transition
 

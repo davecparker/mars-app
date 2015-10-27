@@ -6,15 +6,23 @@
 
 display.setStatusBar( display.HiddenStatusBar )
 
-local W = display.contentWidth
-local H = display.contentHeight
-local XC = display.contentCenterX
-local YC = display.contentCenterY
 
 -- Declare access to game and act variables
 
 game = globalGame
 act = game.newAct()
+
+-- Require statements
+
+widget = require( "widget" )
+
+-- Declare constants
+
+local W = act.width
+local H = act.height
+local XC = act.xCenter
+local YC = act.yCenter
+
 
 --Declare file local functions to be used
 local initGame
@@ -36,12 +44,13 @@ local horribleRange -- Horrible range for the bar
 local bar -- The bar being adjusted
 local splash -- Splash screen for when the player finishes
 local startTimer -- Timer when beginning
+local difficulty = {} -- Difficulty of drill game
 local testText
 
 function act:init()
 
 	-- Setup the background
-	bg = display.newRect( XC, YC, W, H )
+	bg = display.newRect( act.group, XC, YC, W, H )
 	bg.fill = { type = "image", filename = "/media/drill/DrillOp.jpg" }
 
 	-- Create the worst range
@@ -70,7 +79,7 @@ function act:init()
 	idealRange.fill = { 0.25, 0.95, 1 }
 
 	-- Create the bar
-	bar = display.newRect( act.group, 0, H, W / 7, H / 4 )
+	bar = display.newRect( act.group, 0, H - 25, W / 7, H / 4 )
 	bar.anchorX = 0
 	bar.anchorY = 1
 	bar.fill = { 0.36, 0.25, 0.13, 0.5 }
@@ -81,12 +90,39 @@ function act:init()
 	splash.stroke = { 1, 0, 0 }
 
 	-- Start timer function
-	startInit = 3
+	startInit = 5
 	startTimer = display.newText( act.group, "Beginning in: " .. startInit, XC, YC - 100, native.systemFontBold, 25 )
 	startTimer.count = startInit
 
+	-- Create splash screen button
+
+	local options =
+	{
+		width = 80,
+		height = 40,
+		numFrames = 2,
+		sheetContentWidth = 160,
+		sheetContentHeight = 40
+	}
+
+	local buttonSheet = graphics.newImageSheet( "media/drillScan/Button.png", options )
+
+	local resetButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Restart", onPress = reset }
+
+	resetButton.x = XC
+	resetButton.y = YC + 170
+
+	act.group:insert( resetButton )
+
+	-- Set difficulty
+	difficulty.drop = 3
+	difficulty.rise = 18
+
+	-- Intro screen
+	game.drillPlayed = false
+
 	-- Test text
-	testText = display.newText( act.group, math.abs( YC - bar.height ), XC, YC, native.systemFont, 25 )
+	testText = display.newText( act.group, string.format( "%3.0f", math.abs( YC + 29 - bar.height ) ), XC, YC, native.systemFont, 25 )
 
 	-- Event listeners
 	start()
@@ -96,7 +132,7 @@ end
 function newFrame()
 	
 	droppingBar()
-	testText.text = math.abs( YC - bar.height )
+	testText.text = string.format( "%3.0f", math.abs( YC + 29 - bar.height ) )
 end
 
 function start()
@@ -114,23 +150,34 @@ function start()
 		Runtime:addEventListener( "enterFrame", newFrame )
 
 		-- Time limit
-		timer.performWithDelay( 5000, timeLimit )
+--		timer.performWithDelay( 5000, timeLimit )
 
 	end
+
+end
+
+function reset()
+
+	startTimer.count = 5
+	startTimer.isVisible = true
+	Runtime:removeEventListener( "touch", risingBar )
+	Runtime:removeEventListener( "enterFrame", newFrame )
+	bar.height = H / 4
+	start()
 
 end
 
 function droppingBar()
 
 	if bar.height > 0 then
-		bar.height = bar.height - 3.5
+		bar.height = bar.height - difficulty.drop
 	end
 end
 
 function risingBar( event )
 
 	if event.phase == "began" then
-		bar.height = bar.height + 16
+		bar.height = bar.height + difficulty.rise
 	end
 end
 
@@ -139,18 +186,18 @@ function timeLimit()
 	Runtime:removeEventListener( "enterFrame", newFrame )
 	Runtime:removeEventListener( "touch", risingBar )
 
-	local x = math.abs( YC - bar.height )
+	local x = math.abs( YC + 29 - bar.height )
 	local text = display.newText( act.group, "", XC, YC + 20, native.systemFontBold, 25 )
 
-	if x <= 14 then
+	if x <= 15 then
 		text.text = "Ideal range"
-	elseif x <= 60 then
+	elseif x <= 62 then
 		text.text = "Good range"
-	elseif x <= 120 then
+	elseif x <= 121 then
 		text.text =  "Mediocre range"
-	elseif x <= 180 then
+	elseif x <= 183 then
 		text.text =  "Bad range"
-	elseif x <= 240 then
+	elseif x <= 250 then
 		text.text = "Horrible range"
 	end
 end

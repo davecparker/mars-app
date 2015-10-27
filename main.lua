@@ -12,6 +12,7 @@
 game.pinValue( value, min, max )      -- Constrain a value to a range
 game.xyInRect( x, y, rect )           -- test if point is in rect
 game.xyHitTest( x1, y1, x2, y2, dxy ) -- x, y hit test
+game.eatTouch()                       -- return true to eat touch or tap event
 game.addOxygen( liters )              -- Add or subtract oxygen
 game.addWater( liters )               -- Add or subtract water
 game.addEnergy( kWh )                 -- Add or subtract energy
@@ -53,6 +54,7 @@ act:newImage( filename, options )        -- make a new imageRect display object
 act:newGroup( parent )                   -- make a new display (sub-)group
 act:whiteBackground()                    -- make a solid white background
 act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
+act:loadSound( filename, folder )        -- load sound file (folder defaults to act media)
 
 -----------------------------------------------------------------------------------------
 How to define an activity:
