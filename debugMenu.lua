@@ -27,6 +27,7 @@ local debugActs = {
 	"wireCut",
 	"thrustNav",
 	"drillScan",
+	"drill",
 	"rover",
 }
 
