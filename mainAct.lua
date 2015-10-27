@@ -16,10 +16,11 @@ local act = game.newAct()
 
 -- Constants
 local zoomTime = 500   -- time for zoom in/out transition (ms)
+local walkSpeed = 0.1  -- user's walking speed factor
 
 -- Act variables
 local shipGroup        -- display group centered on ship
-local walkSpeed = 0.1  -- user's walking speed factor
+local iconGroup        -- display group for map icons, within shipGroup
 local dot              -- user's position dot on map
 local roomInside       -- room the user is inside or nil if none
 local titleBar         -- title bar used when map is zoomed
@@ -49,7 +50,7 @@ local ship = {
 		{
 			name = "Engineering",
 			left = -94, top = 166, right = 19, bottom = 236, 
-			x = 0, y = 153, dy = 30, 
+			x = 0, y = 153, dy = 30,
 		},
 	},
 }
@@ -123,7 +124,13 @@ local function zoomToRoom( room )
 
 	-- Show the title bar with this room name
 	act.title.text = room.name
+	titleBar.isVisible = true
 	transition.to( titleBar, { y = yTitleBar, time = zoomTime })
+end
+
+-- Hide the title bar
+local function hideTitleBar()
+	titleBar.isVisible = false
 end
 
 -- Exit the currently zoomed room
@@ -138,7 +145,7 @@ local function exitRoom()
 		transition.to( dot, { xScale = 1, yScale = 1; time = zoomTime } )
 
 		-- Hide the title bar
-		transition.to( titleBar, { y = yTitleBar - act.dyTitleBar, time = zoomTime })
+		transition.to( titleBar, { y = yTitleBar - act.dyTitleBar, time = zoomTime, onComplete = hideTitleBar })
 	end
 end
 
@@ -218,10 +225,11 @@ function act:init()
 	dot.x = lab.x
 	dot.y = lab.y
 
-	-- Title bar to use when map is zoomed, moved off screen when unzoomed
+	-- Title bar to use when map is zoomed, invisible and off screen when unzoomed
 	titleBar = act:makeTitleBar( "", backTapped )
 	yTitleBar = titleBar.y  -- remember normal (visible) position
 	titleBar.y = titleBar.y - act.dyTitleBar   -- move off screen upwards
+	titleBar.isVisible = false
 
 	-- Post a new document (TODO: Temporary)
 	game.foundDocument( "Security Announcement" )
