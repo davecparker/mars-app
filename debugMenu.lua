@@ -58,7 +58,7 @@ function onRowTouch( event )
 		-- Run the selected activity module and remember it for next startup
 		local actName = debugActs[event.target.index]
 		game.saveState.startAct = actName
-		game.selectGameTab( 1 )  -- Misc activities run off of the Main tab
+		game.selectGameTab( 0 )  -- Pretend that no actual tab is selected
 		game.gotoAct( actName )  
 	--end
 end

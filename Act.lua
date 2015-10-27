@@ -115,6 +115,8 @@ function Act:makeTitleBar( title, backListener )
     bar.anchorX = 0
     bar.anchorY = 0
     bar:setFillColor( 0.5, 0, 0 )   -- dark red
+    bar:addEventListener( "touch", game.eatTouch )  -- eat touches on title bar
+    bar:addEventListener( "tap", game.eatTouch )    -- and taps too
 
     -- Title bar text
     title = title or ""
@@ -140,7 +142,7 @@ end
 -- Make a map item icon in the group with the given data table containing:
 --   t       -- "item", "doc", or "act"
 --   name    -- item name (e.g. "H2O"), document name, or act name
---   x, y    -- position relative to the given group
+--   x, y    -- position relative to the center of the ship
 function Act:newMapIcon( group, data )
     -- Create a rotating rectangle with a black frame
     assert( type( data ) == "table" )
