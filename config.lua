@@ -7,6 +7,7 @@ application =
 		height = 480, 
 		scale = "letterBox",
 		fps = 30,
+		audioPlayFrequency = 22050,
 		
 		--[[
 		imageSuffix =

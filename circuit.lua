@@ -107,7 +107,7 @@ local function turnWrench ( event )
 	-- back the wrench up if its moving in the wrong direction otherwise let it move counterclockwise
 	if wrenchRotation + 20  < lastAngle then
 		wrench.rotation = lastAngle
-	elseif wrenchRotation > lastAngle + 5 then
+	elseif wrenchRotation > lastAngle then
 		wrench.rotation = lastAngle
 	else
 		lastAngle = wrenchRotation
@@ -225,14 +225,7 @@ function act:init()
 	local backButton = act:newImage( "backButton.png", { width = 40 } )
 	backButton.x = act.xMin + 30
 	backButton.y = act.yMin + 30
-	backButton.button = widget.newButton 
-	{
-		 x = act.xMin + 30,
-		 y = act.yMin + 30,
-		 width = 50, 
-		 height = 50,
-		 onPress = backButtonPress 
-	}
+	backButton:addEventListener( "tap", backButtonPress )
 
 	-- panel
 	local panelLoose = false

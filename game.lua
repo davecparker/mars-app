@@ -10,7 +10,7 @@
 
 -- The game object where game global data and functions are stored
 local game = {
-    mapZoomName = false,  -- name of currently zoomed map view or nil if not zoomed
+    mapZoomName = nil,    -- name of currently zoomed map view or nil if not zoomed
     openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
 
     -- The saveState table is saved to a file between runs
@@ -42,6 +42,21 @@ function game.pinValue( value, min, max )
         return max
     end
     return value
+end
+
+-- Return true if (x, y) is inside the rect (left, top, right, bottom)
+function game.xyInRect( x, y, rect )
+    return x >= rect.left and x <= rect.right and y >= rect.top and y <= rect.bottom
+end
+
+-- Return true if two pairs of x, y coords are close within dxy
+function game.xyHitTest( x1, y1, x2, y2, dxy )
+    return math.abs( x1 - x2 ) <= dxy and math.abs( y1 - y2 ) <= dxy
+end
+
+-- Return true to eat a touch or tap event
+function game.eatTouch()
+    return true
 end
 
 
