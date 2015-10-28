@@ -38,6 +38,11 @@ local ship = {
 	-- Rooms (name, rectangle bounds, position just outside the door, delta to inside)
 	rooms = {
 		{ 
+			name = "Bridge", 
+			left = -45, top = -236, right = 45, bottom = -142, 
+			x = 1, y = -116, dy = -30, 
+		},
+		{ 
 			name = "Lab", 
 			left = 23, top = 5, right = 136, bottom = 78, 
 			x = 12, y = 40, dx = 30, 
@@ -46,6 +51,26 @@ local ship = {
 			name = "Captain's Cabin",
 			left = 23, top = -125, right = 136, bottom = -85, 
 			x = 12, y = -92, dx = 30, 
+		},
+		{
+			name = "First Officer's Cabin",
+			left = -136, top = -125, right = -20, bottom = -85, 
+			x = -8, y = -92, dx = -30, 
+		},
+		{
+			name = "Doctor's Cabin",
+			left = -55, top = -76, right = -21, bottom = -24, 
+			x = -26, y = -5, dy = -30, 
+		},
+		{
+			name = "Rover Bay",
+			left = -145, top = 86, right = -20, bottom = 158, 
+			x = -7, y = 94, dx = -30, 
+		},
+		{
+			name = "Greenhouse",
+			left = 25, top = 85, right = 140, bottom = 235, 
+			x = 10, y = 94, dx = 30, 
 		},
 		{
 			name = "Engineering",
@@ -222,8 +247,8 @@ function act:init()
 	-- Blue position dot, starting just outside the lab
 	dot = act:newImage( "blueDot.png", { parent = shipGroup } )
 	local lab = ship.rooms[1]
-	dot.x = lab.x
-	dot.y = lab.y
+	dot.x = 10   -- outside the Lab
+	dot.y = 40
 
 	-- Title bar to use when map is zoomed, invisible and off screen when unzoomed
 	titleBar = act:makeTitleBar( "", backTapped )
