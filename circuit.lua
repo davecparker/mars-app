@@ -19,9 +19,10 @@ local nutsRemoved = 0    -- the number of nuts that have been removed
 local panel
 local largeBG
 local wrenchTurns = 0
-local lastAngle -- saves the last angle the wrench was at
+local lastAngle          -- saves the last angle the wrench was at
 local wrenchRotation = 0 -- the actual angle of the wrench
 local offset = 0         -- saves an offset value for moving the panel
+local toolbox      
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -56,6 +57,8 @@ local function toolboxTouch (event)
 				wrench:removeSelf()
 				wrench = nil
 			end
+			transition.cancel() -- kill the blinking
+			toolbox.alpha = 1   -- set the alpha of the toolbox back to 1
 			toolWindow = display.newRect( act.group, act.xCenter, act.yCenter, 300, 300 )
 			wrench = act:newImage( "wrench.png",  { width = 120 } )
 			wrench.rotation = 45
@@ -98,27 +101,33 @@ local function turnWrench ( event )
 	else
 		wrenchRotation = math.floor(wrench.rotation + 360)
 	end
-	print (lastAngle .. "  " .. wrenchRotation)
-	-- adds 1 to turn wrech upon a 360 degree rotation
-	if math.floor(lastAngle) < 20 then
-		lastAngle = 360
-		wrenchTurns = wrenchTurns + 1
-	end
+	print (lastAngle .. "  " .. wrenchRotation .. "  " .. activeNut.angle )
+
 	-- back the wrench up if its moving in the wrong direction otherwise let it move counterclockwise
-	if wrenchRotation + 20  < lastAngle then
+	if wrenchRotation + 30 < lastAngle then
 		wrench.rotation = lastAngle
+
 	elseif wrenchRotation > lastAngle then
-		wrench.rotation = lastAngle
+		wrench.rotation = lastAngle	
 	else
 		lastAngle = wrenchRotation
 		nutRotate(event.x, event.y)  -- rotate the nut too
 	end
+
+	-- adds 1 to turn wrech upon a 360 degree rotation=========================================================================================
+	if math.floor(lastAngle) < 20 then
+		lastAngle = 360
+		wrenchTurns = wrenchTurns + 1
+	end
+	
 	-- if the wrench turns a certin amount then remove the nut
 	if wrenchTurns > 2 then
-		wrench:removeEventListener( "touch", turnWrench )
-		activeNut:removeSelf()
-		activeNut = nil
-		nutsRemoved = nutsRemoved + 1
+		if (wrenchRotation > activeNut.angle - 5) and (wrenchRotation < activeNut.angle + 5) then
+			wrench:removeEventListener( "touch", turnWrench )
+			activeNut:removeSelf()
+			activeNut = nil
+			nutsRemoved = nutsRemoved + 1
+		end
 		-- if all the nuts have been removed remove the wrench as well
 		if nutsRemoved == 4 then
 			wrench:removeSelf()
@@ -216,10 +225,11 @@ function act:init()
 	bg:addEventListener( "touch", bgTouch )
 
 	-- toolbox icon
-	local toolbox = act:newImage ( "toolbox.png", { width = 40 } )
+	toolbox = act:newImage ( "toolbox.png", { width = 40 } )
 	toolbox.x = act.xMax - 30
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
+	transition.blink ( toolbox, { time = 2000 } )
 
 	-- back button
 	local backButton = act:newImage( "backButton.png", { width = 40 } )
