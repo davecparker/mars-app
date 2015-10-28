@@ -10,11 +10,16 @@
 
 -- The game object where game global data and functions are stored
 local game = {
-    mapZoomName = nil,    -- name of currently zoomed map view or nil if not zoomed
+    -- Data for the current act to use
+    actParam = nil,       -- act parameter data from a gem
+    actGemName = nil,     -- gem name that triggered the act
     openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
 
     -- The saveState table is saved to a file between runs
     saveState = {
+        usedGems = {},  -- set of gem names that have been used
+        docs = {},      -- list of document filenames that user has found
+
         -- The user's current resource levels (and starting values)
         resources = {
             o2 = 100,     -- oxygen in liters
@@ -22,9 +27,6 @@ local game = {
             kWh = 100,    -- energy in kWh
             food = 100,   -- food in kg
         },
-
-        -- List of document filenames that user has found
-        docs = {},
     },     
 }
 

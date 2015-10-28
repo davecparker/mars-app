@@ -8,6 +8,9 @@
 -- Get local reference to the game globals
 local game = globalGame
 
+-- Load ship gem data
+local gems = require( "gems" )
+
 -- Create the act object
 local act = game.newAct()
 
@@ -132,8 +135,50 @@ local function walkTo( x, y, time )
 	game.addFood( -0.0002 * time )
 end
 
+-- Use a gem icon
+local function useGemIcon( icon )
+	gems.useGem( icon.name )   -- so it won't be displayed again
+	icon:removeSelf()          -- remove gem from screen
+end
+
+-- Handle tap on a map gem icon
+local function gemTapped( event )
+	local icon = event.target
+	local gem = icon.gem
+	if gem.t == "act" then
+		-- Run the linked activity
+		game.actGemName = icon.name
+		game.actParam = gem.param
+		game.gotoAct( gem.act )
+	elseif gem.t == "doc" then
+		-- Get the document
+		game.foundDocument( gem.file )
+		useGemIcon( icon )
+	elseif gem.t == "res" then
+		-- Add the resource
+		local r = game.saveState.resources
+		if r[gem.res] then
+			r[gem.res] = r[gem.res] + gem.amount
+		end
+		useGemIcon( icon )
+	end
+end
+
 -- Change to the zoomed view for the given room
 local function zoomToRoom( room )
+	-- Fade in icons for gems in the room
+	iconGroup = act:newGroup( shipGroup )   -- icons are centered on the ship
+	iconGroup.alpha = 0   -- will be faded in
+
+	-- Find all unused gems that are in the bounds of the zoomed room
+	for name, gem in pairs( gems.onShip ) do
+		if not gems.gemIsUsed( name ) and game.xyInRect( gem.x, gem.y, room ) then
+			local icon = gems.newGemIcon( iconGroup, name, gem )
+			icon:addEventListener( "tap", gemTapped )
+		end
+	end
+	transition.fadeIn( iconGroup, { time = zoomTime, transition = easing.inCubic } )
+
 	-- Animate the dot walking into the room
 	local x = room.x + (room.dx or 0)
 	local y = room.y + (room.dy or 0)
@@ -144,13 +189,23 @@ local function zoomToRoom( room )
 	local scale = 2
 	local x = act.xCenter - scale * (room.left + room.right) / 2
 	local y = act.yCenter - scale * (room.top + room.bottom) / 2
-	transition.to( shipGroup, { x = x, y = y, xScale = scale, yScale = scale; time = zoomTime } )
+	transition.to( shipGroup, { x = x, y = y, xScale = scale, yScale = scale, 
+				time = zoomTime, onComplete = zoomDone } )
 	transition.to( dot, { xScale = 1/scale, yScale = 1/scale; time = zoomTime } ) -- keep dot original size
 
 	-- Show the title bar with this room name
 	act.title.text = room.name
 	titleBar.isVisible = true
 	transition.to( titleBar, { y = yTitleBar, time = zoomTime })
+end
+
+-- Called when a zoom out of a room is complete
+local function zoomOutDone()
+	-- Remove gem icons (they are done fading out)
+	if iconGroup then
+		iconGroup:removeSelf()
+		iconGroup = nil
+	end
 end
 
 -- Hide the title bar
@@ -164,6 +219,12 @@ local function exitRoom()
 		-- Walk to just outside the door of the room we are in
 		walkTo( roomInside.x, roomInside.y, zoomTime ) 
 		roomInside = nil
+
+		-- Fade out then delete any gem icons
+		if iconGroup then
+			transition.fadeOut( iconGroup, { time = zoomTime, transition = easing.outCubic, 
+					onComplete = zoomOutDone } )
+		end
 
 		-- Zoom the map out
 		transition.to( shipGroup, { x = act.xCenter, y = act.yCenter, xScale = 1, yScale = 1; time = zoomTime })
