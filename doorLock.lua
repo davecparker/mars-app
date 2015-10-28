@@ -11,6 +11,7 @@ local game = globalGame
 -- Create the act object
 local act = game.newAct()
 
+local widget = require( "widget" )
 
 ------------------------- Start of Activity --------------------------------
 local screen = {}
@@ -29,10 +30,11 @@ local keyPressed
 
 local colorNumbers = display.newGroup()
 
+local sound = {}
 
 -- When the Back Button is Pushed
 function backTapped()
-	game.gotoAct( "mainAct", { effect = "slideUp", time = 800 } )
+	game.gotoAct( "mainAct", { effect = "slideRight", time = 800 } )
 end
 
 -- Checks to see if the numbers entered match the passKey
@@ -102,8 +104,8 @@ function colorToFlash( flashColor )
 	end
 
 	-- Blink the Numbers and then Destroy
-	timer.performWithDelay( 400, flashTheNumbers, 4 )
-	timer.performWithDelay( 2000, removeFlashedNumbers )
+	timer.performWithDelay( 200, flashTheNumbers, 6 )
+	timer.performWithDelay( 1200, removeFlashedNumbers )
 end
 
 
@@ -135,22 +137,23 @@ function refreshScreen( )
 	elseif keyedCorrectly == false then 	-- Create Red Numbers if Wrong
 		keyedCorrectly = nil
 		colorToFlash( "Red" )
-	else 									--	Else Create Normal Numbers
-		for i = 1, #numberDisplay, 1 do
-			local newNumber = display.newImage( act.group, number, numberDisplay[i]+1)
-			newNumber.x = numberLocation( i )
-			newNumber.y = screen.y
-			newNumber.blink = function( self )
-				if self.isVisible then
-					self.isVisible = false
-				else 
-					self.isVisible = true
+	else
+		if table.maxn(numberDisplay) <= 4 then 									--	Else Create Normal Numbers
+			for i = 1, #numberDisplay, 1 do
+				local newNumber = display.newImage( act.group, number, numberDisplay[i]+1)
+				newNumber.x = numberLocation( i )
+				newNumber.y = screen.y
+				newNumber.blink = function( self )
+					if self.isVisible then
+						self.isVisible = false
+					else 
+						self.isVisible = true
+					end
 				end
+				table.insert( numberCreate, newNumber )
 			end
-			table.insert( numberCreate, newNumber )
 		end
 	end
-
 end
 
 -- Clears the Screen
@@ -162,8 +165,8 @@ end
 
 -- The Listener for the Buttons
 function keyPressed( event )
-
 	local key = event.target.name
+	audio.play( sound.button1 )
 
 	if key == "clr" then
 		clearKeyPad()
@@ -172,8 +175,10 @@ function keyPressed( event )
 	if key == "ent" then
 		if checkKey() then
 			keyedCorrectly = true
+			audio.play( sound.beep1 )
 		else
 			keyedCorrectly = false
+			audio.play( sound.beep2 )
 		end
 	end
 
@@ -181,7 +186,22 @@ function keyPressed( event )
 		table.insert( numberDisplay, key ) -- Remove else statement if screen should wrap
 	end
 
-	refreshScreen()
+	if table.maxn(numberDisplay) <=4 then
+		refreshScreen()
+	end 
+end
+
+local function createButton( name, file, x, y )
+	local b = widget.newButton {
+		defaultFile = file,
+		--overFile = file2,
+		width = 50,
+		height = 50,
+		x = x, y = y,
+		onRelease = keyPressed
+	}
+	b.name = name
+	return b
 end
 
 -- Init the act
@@ -193,6 +213,14 @@ function act:init()
 	-- Background
 	--...
 
+	-- Sound
+	sound.button1 = audio.loadSound( "media/doorLock/sounds/button1.wav" )
+
+	sound.beep1 = audio.loadSound( "media/doorLock/sounds/beep1.wav" )
+	sound.beep2 = audio.loadSound( "media/doorLock/sounds/beep2.wav" )
+
+	audio.setVolume( 0.6 )
+
 	-- Screen
 	screen = act:newImage( "screen.png", { width=200 })
 	screen.x = act.xCenter
@@ -203,11 +231,15 @@ function act:init()
 	panel.x = act.xCenter
 	panel.y = act.yCenter + 50
 
+	button.one = createButton( 1, "media/doorLock/1key.png", panel.x - 60, panel.y - 90 )
+
+	--[[
 	button.one = act:newImage( "1key.png", { width=50 } )
 	button.one.x = panel.x - 60
 	button.one.y = panel.y - 90
 	button.one.name = 1
 	button.one:addEventListener( "tap", keyPressed )
+	--]]
 
 	button.two = act:newImage( "2key.png", { width=50 } )
 	button.two.x = panel.x
@@ -274,6 +306,8 @@ function act:init()
 	button.enter.y = panel.y + 90
 	button.enter.name = "ent"
 	button.enter:addEventListener( "tap", keyPressed )
+
+	act.group:insert( button.one )
 end
 
 
