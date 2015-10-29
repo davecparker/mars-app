@@ -151,20 +151,30 @@ function act:init()
 	-- create group for rotating background space objects
 	spaceGroup = act:newGroup()
 
+	display.setDefault("textureWrapX", "mirrorRepeat" )
+	display.setDefault("textureWrapY", "mirrorRepeat")
+
 	-- Create control buttons, background, etc.
-	buttonTurnLeft = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
+	buttonTurnLeft = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
 	buttonTurnLeft.rotation = -90
-	buttonTurnRight = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
+	buttonTurnRight = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
 	buttonTurnRight.rotation = 90
-	buttonRollLeft = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
-	buttonRollRight = display.newImageRect(act.group, "media/thrustNav/arrow-button.png",30,30)
-	buttonPitchUp = display.newImageRect(act.group, "media/thrustnav/arrow-button.png",30,30)
+	buttonRollLeft = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
+	buttonRollRight = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
+	buttonPitchUp = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
 	print( "buttonPitchUp=",buttonPitchUp )
-	buttonPitchDown = display.newImageRect(act.group, "media/thrustnav/arrow-button.png",30,30)
+	buttonPitchDown = act:newImage( "arrowbutton.png" , { width = 30, height = 30 } )
 	print( "buttonPitchDown=",buttonPitchDown )
 	buttonPitchDown.rotation = 180
 
-	local bg = display.newImageRect( spaceGroup, "media/thrustNav/starrynight.png", 5*act.width, 5*act.height )
+	local paint = { 
+		type = "image", 
+		filename = "media/thrustNav/starrynight.png"
+		}
+	-- local bg = display.newImageRect( spaceGroup, "media/thrustNav/starrynight.png", 5*act.width, 5*act.height )
+	local bg = display.newRect( spaceGroup, 0, 0, 5*act.width, 5*act.height  )
+	bg.fill = paint
+
 	-- bg:addEventListener( "touch", touched )
 	print("bg=", bg )
 
@@ -230,6 +240,7 @@ function act:init()
 	buttonRollLeft.y = act.yMax - (act.yMax - act.yMin) / 20
 	buttonRollLeft.isVisible = true
 
+	-- Use act.width and act.height
 	buttonRollRight.x = act.xMin + (act.xMax - act.xMin) / 5
 	buttonRollRight.y = act.yMax - (act.yMax - act.yMin) / 20
 	buttonRollRight.isVisible = true
