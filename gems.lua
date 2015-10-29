@@ -35,9 +35,37 @@ function gems.gemIsUsed( name )
 	return game.saveState.usedGems[name]
 end
 
--- Grab the gem with the given name, display it for the user then mark it as used
-function gems.useGem( name )
-	game.saveState.usedGems[name] = true
+-- Grab the gem with the given icon, display it for the user in a message box, 
+-- then mark it as used and remove it from the screen.
+function gems.grabGemIcon( icon )
+    -- Make text for the message box and display it
+    local text
+    local gem = icon.gem
+    if gem.t == "doc" then
+        text = gem.file
+    elseif gem.t == "res" then
+        local res = gem.res
+        local format
+        if res == "o2" then
+            format = "%d liters of Oxygen"
+        elseif res == "h2o" then
+            format = "%d liters of Water"
+        elseif res == "kWh" then
+            format = "%d kWh of Energy"
+        elseif res == "food" then
+            format = "%d kg of food"
+        else
+            return  -- malformed gem
+        end
+        text = string.format( format, gem.amount )
+    else
+        return  -- not a grabable gem
+    end
+    game.messageBox( text )
+
+    -- Use and remove the gem
+	game.saveState.usedGems[icon.name] = true
+    icon:removeSelf()
 end	
 
 -- Make a gem icon in the group with the given gem name and data
@@ -61,11 +89,6 @@ function gems.newGemIcon( group, name, gem )
     icon.name = name
 	icon.gem = gem
     return icon
-end
-
--- Display a message box showing the contents of the given gem
-function grabGem()
-	
 end
 
 

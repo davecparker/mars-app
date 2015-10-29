@@ -135,12 +135,6 @@ local function walkTo( x, y, time )
 	game.addFood( -0.0002 * time )
 end
 
--- Use a gem icon
-local function useGemIcon( icon )
-	gems.useGem( icon.name )   -- so it won't be displayed again
-	icon:removeSelf()          -- remove gem from screen
-end
-
 -- Handle tap on a map gem icon
 local function gemTapped( event )
 	local icon = event.target
@@ -153,14 +147,14 @@ local function gemTapped( event )
 	elseif gem.t == "doc" then
 		-- Get the document
 		game.foundDocument( gem.file )
-		useGemIcon( icon )
+		gems.grabGemIcon( icon )
 	elseif gem.t == "res" then
 		-- Add the resource
 		local r = game.saveState.resources
 		if r[gem.res] then
 			r[gem.res] = r[gem.res] + gem.amount
 		end
-		useGemIcon( icon )
+		gems.grabGemIcon( icon )
 	end
 end
 
