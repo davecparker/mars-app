@@ -57,7 +57,7 @@ local function toolboxTouch (event)
 				wrench:removeSelf()
 				wrench = nil
 			end
-			transition.cancel() -- kill the blinking
+			transition.cancel( toolbox ) -- kill the blinking
 			toolbox.alpha = 1   -- set the alpha of the toolbox back to 1
 			toolWindow = display.newRect( act.group, act.xCenter, act.yCenter, 300, 300 )
 			wrench = act:newImage( "wrench.png",  { width = 120 } )

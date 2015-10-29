@@ -18,11 +18,27 @@ local game = globalGame
 local gems = {
 	-- Gems on the ship
 	onShip = {
+        -- In Bridge
+        fly1 =      { x = 0, y = -230, t = "act", act = "thrustNav", param = 1 },
+
+        -- In Rover Bay
+        rover =     { x = -125, y = 125, t = "act", act = "rover" },
+        battR1 =    { x = -120, y = 90, t = "res", res = "kWh", amount = 100 },
+        battR2 =    { x = -100, y = 90, t = "res", res = "kWh", amount = 100 },
+        battR3 =    { x = -80,  y = 90, t = "res", res = "kWh", amount = 100 },
+
+        -- In Lab
+        h2oL1 =     { x = 130,  y = 10, t = "res", res = "h2o", amount = 50 },
+        o2L1 =      { x = 130,  y = 30, t = "res", res = "o2", amount = 50 },     
+        foodL1 =    { x = 130,  y = 50, t = "res", res = "food", amount = 50 },     
+        codeDoc1 =  { x = 80, y = 70, t = "doc", file = "Security Announcement" },
+        resDoc1 =   { x = 110, y = 70, t = "doc", file = "Resource Management" },
+ 
 		-- In Engineering room 
 		panel1 =	{ x = -10, y = 230, t = "act", act = "circuit", param = 1, },
 		panel2 =	{ x = -40, y = 230, t = "act", act = "circuit", param = 2, },
 		panelDoc = 	{ x = -85, y = 230, t = "doc", file = "Circuit Manual" },
-		battE1 = 	{ x = -50, y = 170, t = "res", res = "kWh", amount = 100 },
+		battE1 = 	{ x = -50, y = 170, t = "res", res = "kWh", amount = 150 },
 	},
 
 	-- Gems on Mars

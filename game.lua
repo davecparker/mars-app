@@ -102,8 +102,8 @@ end
 
 ------------------------- User interface  ---------------------------------
 
--- Immediately end and destroy the active message box (no end animation)
--- that was shown by game.messageBox() if any
+-- Immediately end and destroy the active message box, if any, that was 
+-- shown by game.messageBox()
 function game.endMessageBox()
     if messageBox then
         print("Dismiss")
@@ -123,8 +123,8 @@ function game.messageBox( text )
 
    -- Make a hit area to cover the screen to capture touch anywhere to dismiss
     local r = display.newRect( messageBox, 0, 0, game.width, game.height)
-    r:setFillColor( 0 )
-    r.alpha = 0.25    -- darkens screen slightly
+    r.isVisible = false
+    r.isHitTestable = true
     r:addEventListener( "touch", game.endMessageBox )
 
     -- Make a group for the visible part of the message box in the center of the screen
@@ -142,14 +142,14 @@ function game.messageBox( text )
         fontSize = 20,
         align = "center",
     }
-    text:setFillColor( 1 )  -- white
+    text:setFillColor( 0 )  -- black
 
     -- Make a rounded rect for the message box with height sized for the text if necessary
     local dxyMarginText = 20     -- margin around text
     local radius = 10   -- corner radius
     local rr = display.newRoundedRect( text.x, text.y,
                     text.width + dxyMarginText * 2, text.height + dxyMarginText * 2, radius )
-    rr:setFillColor( 0.5, 0, 0 )   -- dark red
+    rr:setFillColor( 1, 1, 0.4 )   -- pale yellow
     rr:setStrokeColor( 0 )   -- black
     rr.strokeWidth = 2
 

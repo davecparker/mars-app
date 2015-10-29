@@ -310,9 +310,6 @@ function act:init()
 	yTitleBar = titleBar.y  -- remember normal (visible) position
 	titleBar.y = titleBar.y - act.dyTitleBar   -- move off screen upwards
 	titleBar.isVisible = false
-
-	-- Post a new document (TODO: Temporary)
-	game.foundDocument( "Security Announcement" )
 end
 
 -- Prepare the view before it shows
