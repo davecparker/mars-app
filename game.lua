@@ -14,6 +14,9 @@ local game = {
     actParam = nil,       -- act parameter data from a gem
     actGemName = nil,     -- gem name that triggered the act
     openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
+    lockedRoom = nil,     -- locked room that user is trying to enter or nil if none
+    doorCode = nil,       -- door code for locked room or nil if none
+    doorUnlocked = nil,   -- set to true when a locked door is successfully unlocked
 
     -- The saveState table is saved to a file between runs
     saveState = {
