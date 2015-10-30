@@ -45,9 +45,11 @@ local ship             	-- ship object
 local spaceGroup    	-- group for rotating space background
 local xDelta, yDelta, rotDelta  -- positional deltas used on each enter frame
 local xDeltaInc, yDeltaInc, rotDeltaInc  -- increments for the deltas
+local xTargetDelta, yTargetDelta  -- delta from Target
 local navStatsText     -- text string for nav stats
 local targetRect       -- Rectangle target area
 local arrow        		-- directional arrow toward mars
+local totalRocketImpulses = 0    -- number of rocket impulses used
 
 -- Make a small red circle centered at the given location
 local function makeRedCircle( x, y )
@@ -67,12 +69,19 @@ local function touched( event )
 	xyCenterText.text = string.format( "Center + (%d, %d)", x - act.xCenter, y - act.yCenter )
 end
 
+-- Update energy consumed
+function updateEnergy()
+	totalRocketImpulses = totalRocketImpulses + 1
+	-- also update energy to main resources
+end
+
 -- Turn left button 
 function buttonTurnLeftTouch (event)
 	if event.phase == "began" then
 		print("Turn Left Button")
 		xDelta = xDelta + xDeltaInc
 		printPositions()
+		updateEnergy()
 	end
 	return true
 end
@@ -83,6 +92,7 @@ function buttonTurnRightTouch (event)
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
 		xDelta = xDelta - xDeltaInc
 		printPositions()
+		updateEnergy()
 	end
 	return true
 end
@@ -93,6 +103,7 @@ function buttonRollLeftTouch (event)
 		print("Roll Left Button")
 		rotDelta = rotDelta + rotDeltaInc
 		printPositions()
+		updateEnergy()
 	end
 	return true
 end
@@ -103,6 +114,7 @@ function buttonRollRightTouch (event)
 		print("Roll Right Button, rotation= ", spaceGroup.rotation )
 		rotDelta = rotDelta - rotDeltaInc
 		printPositions()
+		updateEnergy()
 	end
 	return true
 end
@@ -113,6 +125,7 @@ function buttonPitchUpTouch (event)
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		yDelta = yDelta + yDeltaInc
 		printPositions()
+		updateEnergy()
 	end
 	return true
 end
@@ -123,6 +136,7 @@ function buttonPitchDownTouch (event)
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		yDelta = yDelta - yDeltaInc
 		printPositions()
+		updateEnergy()
 	end
 	return true
 end
@@ -151,8 +165,9 @@ function act:init()
 	-- create group for rotating background space objects
 	spaceGroup = act:newGroup()
 
-	display.setDefault("textureWrapX", "mirrorRepeat" )
-	display.setDefault("textureWrapY", "mirrorRepeat")
+	-- tried and didn't wrap as desired
+	-- display.setDefault("textureWrapX", "mirrorRepeat" )
+	-- display.setDefault("textureWrapY", "mirrorRepeat")
 
 	-- Create control buttons, background, etc.
 	buttonTurnLeft = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
@@ -167,19 +182,21 @@ function act:init()
 	print( "buttonPitchDown=",buttonPitchDown )
 	buttonPitchDown.rotation = 180
 
-	local paint = { 
-		type = "image", 
-		filename = "media/thrustNav/starrynight.png"
-		}
-	-- local bg = display.newImageRect( spaceGroup, "media/thrustNav/starrynight.png", 5*act.width, 5*act.height )
-	local bg = display.newRect( spaceGroup, 0, 0, 5*act.width, 5*act.height  )
-	bg.fill = paint
+	local bg = display.newImageRect( spaceGroup, "media/thrustNav/starrynight.png", 5*act.width, 5*act.height )
+	-- local paint = { 
+	-- 		type = "image", 
+	--		filename = "media/thrustNav/starrynight.png"
+	-- 	}
+	-- local bg = display.newRect( spaceGroup, 0, 0, 5*act.width, 5*act.height  )
+	-- bg.fill = paint  -- obj.fill is Pro version of Corona only
 
 	-- bg:addEventListener( "touch", touched )
 	print("bg=", bg )
 
-	local yText = act.yMin + 30
-	navStatsText = display.newText( act.group, "Hello", act.width / 3, yText, native.systemFont, 14 )
+	local yText = act.yMin + 10
+	navStatsText = display.newText( act.group, "Hello", act.xMin+10, yText, native.systemFont, 14 )
+	navStatsText.anchorX = 0
+	navStatsText.anchorY = 0
 	print( "navStatsText=" , navStatsText )
 	
 	spaceGroup.y = act.height / 2 - 100
@@ -277,22 +294,46 @@ end
 
 -- Update on screen stats for users reference
 function updateNavStats()
-	local xOnTarget = ""
-	local yOnTarget = ""
+	local xStr = ""
+	local yStr = ""
+	local rotStr = ""
+	local xScore = 0
+	local yScore = 0
+	local rotScore = 0
+	local totalScore = 0
 
+	xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter
+	yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
+	
+
+	xScore = 100 - math.abs( xTargetDelta )
+	yScore = 100 - math.abs( yTargetDelta )
 	-- special treatment for mars
    	if( hasCollided( mars, targetRect ) ) then
-   		xOnTarget = "ON TARGET"
-		yOnTarget = "ON TARGET"
+   		xStr = "ON TARGET"
+		yStr = "ON TARGET"
 	end
+	if( xTargetDelta < 5  and xTargetDelta > -5 ) then xStr = xStr .. " Getting close" end
+
+	rotScore = 100 * (1 - math.abs( rotDelta ) ) 
+	if( rotDelta == 0 ) then
+		rotStr = string.format( "Spin Stopped   %3d", rotScore )
+	else
+		rotStr = string.format( "               %3d", rotScore )
+	end
+	energyScore = 100 - totalRocketImpulses
+	totalScore = ( xScore + yScore + rotScore + energyScore ) / 4
 
 	if( hasCollided( earth, targetRect ) ) then
 		navStatsText.text = "Where are you going?  Home?"	
 	else
-		navStatsText.text = string.format("%s  %5.1f   %s  %5.1f\n%s  %4.0f  %s  %5.1f\n%s  %5.1f  %5.3f\n",  
-		"xDelta=", ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter , xOnTarget, spaceGroup.anchorX,
-		"yDelta=", (mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter , yOnTarget, spaceGroup.anchorY,
-		"rotation=", spaceGroup.rotation % 360, rotDelta )
+		navStatsText.text = string.format("                                                          Score\n%s  %3d %5.1f   %s\n%s  %3d %5.1f  %s\n%s  %5.1f  %5.2f  %s\n%s %3d\n%s %5d",  
+		"xDelta=", xTargetDelta , xDelta, xStr,
+		"yDelta=", yTargetDelta , yDelta, yStr,
+		"rotation=", spaceGroup.rotation % 360, rotDelta, rotStr,
+		"totalImpulses= ", totalRocketImpulses,
+		"Score Total                                       ", totalScore )
+
 	end
 end
 
