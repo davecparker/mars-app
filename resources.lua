@@ -41,9 +41,6 @@ function act:init()
 	h2oLabel = makeLabel( yStart + dySpacing * 2 )
 	kWhLabel = makeLabel( yStart + dySpacing * 3 )
 	foodLabel = makeLabel( yStart + dySpacing * 4 )
-
-	-- Post a new document (TODO: Temporary)
-	game.foundDocument( "Resource Management" )
 end
 
 -- Refresh the labels to read current values

@@ -79,7 +79,6 @@ local function checkState ()
 		andBottom:setFrame( 1 )
 		ledBottom:setFrame( 1 )
 	end
-
 end
 
 -- function for cutting the wire
@@ -117,8 +116,13 @@ local function wireSet (w, x, y)
 	return w
 end
 
-
-
+-- function for the uncutable wires
+local function wireNoCut ( x, y )
+	local w = act:newImage ( "NoCutWire.png", { width = 251 / 3 } )
+	w.x = act.xCenter + x
+	w.y = act.yCenter + y
+	return w
+end
 
 -- Handle touches on the background by updating the text displays=============================================================
 --local function touched( event )
@@ -130,7 +134,6 @@ end
 --	xyText.text = string.format( "(%d, %d)", x, y )
 --	xyCenterText.text = string.format( "Center + (%d, %d)", x - act.xCenter, y - act.yCenter )
 --end
-
 
 ------------------------- Start of Activity ----------------------------------------------------
 
@@ -235,26 +238,16 @@ function act:init()
 	-- wire cutting buttons 
 	wire8.button1 = wireButtonCreator ( wire8, act.xCenter - 21, act.yCenter + 128, 90, 50)
 
-	-- wire9 image sheet---------------------------------------------------------------------------------------------------------------
-	local wire9Options = { width = 248, height = 121, numFrames = 2 }
-	local wire9Sequence = { name = wire9, start = 1, count = 2 }
-	local wire9ImageSheet = graphics.newImageSheet( "media/wireCut/wire9sheet.png", wire9Options )
-	wire9 = display.newSprite( act.group, wire9ImageSheet, wire9Sequence )
-	wireSet ( wire9, 85, -91 )
-
-	-- wire10 image sheet---------------------------------------------------------------------------------------------------------------
-	local wire10Options = { width = 253, height = 126, numFrames = 2 }
-	local wire10Sequence = { name = wire10, start = 1, count = 2 }
-	local wire10ImageSheet = graphics.newImageSheet( "media/wireCut/wire10sheet.png", wire10Options )
-	wire10 = display.newSprite( act.group, wire10ImageSheet, wire10Sequence )
-	wireSet ( wire10, 85, -1 )
-
-	-- wire11 image sheet---------------------------------------------------------------------------------------------------------------
-	local wire11Options = { width = 256, height = 128, numFrames = 2 }
-	local wire11Sequence = { name = wire11, start = 1, count = 2 }
-	local wire11ImageSheet = graphics.newImageSheet( "media/wireCut/wire11sheet.png", wire11Options )
-	wire11 = display.newSprite( act.group, wire11ImageSheet, wire11Sequence )
-	wireSet ( wire11, 85, 90 )
+	-- The uncutable wires---------------------------------------------------------------------------------------------------------------
+	local wire9 = wireNoCut ( 85, -88 )
+	--wire9.x = act.xCenter + 85
+	--wire9.y = act.yCenter - 88
+	local wire10 = wireNoCut ( 85, 2 )
+	--wire10.x = act.xCenter + 85
+	--wire10.y = act.yCenter + 2
+	local wire11 = wireNoCut ( 85, 92 )
+	--wire11.x = act.xCenter + 85
+	--wire11.y = act.yCenter + 92
 
 	-- led image sheet-------------------------------------------------------------------------------------------------------------------
 	local ledOptions = { width = 249, height = 252, numFrames = 2 }
@@ -329,9 +322,6 @@ function act:init()
 		 height = 50,
 		 onPress = backButtonPress 
 	}
-
-	
-
 
 	-- Touch location text display objects==============================================================================================
 	--local yText = act.yMin + 15   -- relative to actual top of screen
