@@ -94,7 +94,6 @@ function act:init()
 		waterSpot[i].group.xScale = 0.1
 		waterSpot[i].group.yScale = 0.1
 		waterSpot[i].group.isVisible = false
-
 	end
 
 	scanCircle = display.newCircle( act.group, XC, YC, 50 )
@@ -157,6 +156,7 @@ function act:init()
 	drillButton.anchorX = 1
 	drillButton.x = W + 2
 	drillButton.y = YC + 210
+	drillButton.isVisible = false
 
 	act.group:insert( scanButton )
 	act.group:insert( drillButton )
@@ -175,6 +175,9 @@ function act:stop()
 		waterSpot[i]:removeSelf()
 
 	end
+
+	act.group:insert( scanButton )
+	act.group:insert( drillButton )
 
 end
 
@@ -227,20 +230,37 @@ function waterSpotStats( event )
 
 		local t = event.target
 
-		t.group.isVisible = true
+		if t.group.isVisible == false then
 
-		transition.to( t.group, { time = 333, x = t.group.x + 35, xScale = 1, yScale = 1 } )
+			t.group.isVisible = true
 
-		contamText.text = t.contamination .. "% Contaminated"
-		freezeText.text = t.frigidity .. "% Frozen"
-		litersText.text = t.liters .. " Liters"
-		energyText.text = "Energy Cost: " .. string.format( "%2.0f", math.floor( -t.energyCost ) ) .. " kWh"
+			transition.to( t.group, { time = 333, x = t.group.x + 35, xScale = 1, yScale = 1 } )
 
-		currentLiters = t.liters
-		currentCost = t.energyCost
+			contamText.text = t.contamination .. "% Contaminated"
+			freezeText.text = t.frigidity .. "% Frozen"
+			litersText.text = t.liters .. " Liters"
+			energyText.text = "Energy Cost: " .. string.format( "%2.0f", math.floor( -t.energyCost ) ) .. " kWh"
 
---		t:removeEventListener( "touch", waterSpotStats )
---		t:addEventListener( "touch", waterSpotStatsHide )
+			drillButton.isVisible = true
+
+			currentLiters = t.liters
+			currentCost = t.energyCost
+
+		elseif t.group.isVisible == true then
+
+			transition.to( t.group, { time = 333, x = t.group.x - 35, xScale = 0.001, yScale = 0.001, onComplete = hideGroup } )
+
+			contamText.text = "0% Contaminated"
+			freezeText.text = "0% Frozen"
+			litersText.text = "0 Liters"
+			energyText.text = "Energy Cost: 0 kWh"
+
+			drillButton.isVisible = false
+
+			currentLiters = 0
+			currentCost = 0
+
+		end
 
 	end
 
@@ -251,31 +271,6 @@ end
 function hideGroup( obj )
 
 	obj.isVisible = false
-
-end
-
-function waterSpotStatsHide( event )
-
-	if event.phase == "began" then
-
-		local t = event.target
-
-		transition.to( t.group, { time = 333, x = t.group.x - 35, xScale = 0.1, yScale = 0.1, onComplete = hideGroup } )
-
-		contamText.text = "0% Contaminated"
-		freezeText.text = "0% Frozen"
-		litersText.text = "0 Liters"
-		energyText.text = "Energy Cost: 0 kWh"
-
-		currentLiters = 0
-		currentCost = 0
-
-		t:removeEventListener( "touch", waterSpotStatsHide )
-		t:addEventListener( "touch", waterSpotStats )
-
-	end
-
-	return true
 
 end
 

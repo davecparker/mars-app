@@ -25,7 +25,16 @@ local icons       -- display group for map icons
 
 -- Handle taps on a map icon
 local function tappedIcon( icon, event )
+	-- What kind of icon is this?
 	print( icon.name )
+	if icon.t == "act" then
+		-- Run the named activity (TODO: parameters?)
+		game.gotoAct( icon.name )
+	elseif icon.t == "doc" then
+		-- Add the document to the inventory
+		game.foundDocument( icon.name )
+	end
+	return true
 end
 
 -- Create and return a new icon with the given data table
@@ -81,6 +90,7 @@ local function backTapped()
 	-- Go back to overall map view
 	game.mapZoomName = nil
 	game.gotoAct( "mainAct", { effect = "crossFade", time = 250 } )
+	return true
 end
 
 -- Prepare the act by loading the current map view

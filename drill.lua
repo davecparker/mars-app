@@ -104,6 +104,34 @@ function act:init()
 	-- Intro screen
 	game.drillPlayed = false
 
+	-- Create splash screen button
+
+	local options =
+	{
+		width = 80,
+		height = 40,
+		numFrames = 2,
+		sheetContentWidth = 160,
+		sheetContentHeight = 40
+	}
+
+	local buttonSheet = graphics.newImageSheet( "media/drillScan/Button.png", options )
+
+	local resetButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Restart", onPress = reset }
+
+	resetButton.x = XC
+	resetButton.y = YC + 170
+	resetButton.isVisible = false
+
+	act.group:insert( resetButton )
+
+	-- Set difficulty
+	difficulty.drop = 3
+	difficulty.rise = 18
+
+	-- Intro screen
+	game.drillPlayed = false
+
 	-- Test text
 	testText = display.newText( act.group, string.format( "%3.0f", math.abs( YC + 29 - bar.height ) ), XC, YC, native.systemFont, 25 )
 
@@ -112,12 +140,8 @@ end
 function act:prepare()
 
 	resetButton.isVisible = false
-
-end
-
-function act:start()
-
 	start()
+
 
 end
 
