@@ -27,6 +27,16 @@ local game = {
             kWh = 100,    -- energy in kWh
             food = 100,   -- food in kg
         },
+
+        roverCoord = {
+            x1 = 0,
+            y1 = 0,
+            x2 = 0,
+            y2 = 0
+        },
+
+        -- List of document filenames that user has found
+        docs = {},
     },     
 }
 
