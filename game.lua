@@ -10,11 +10,16 @@
 
 -- The game object where game global data and functions are stored
 local game = {
-    mapZoomName = nil,    -- name of currently zoomed map view or nil if not zoomed
+    -- Data for the current act to use
+    actParam = nil,       -- act parameter data from a gem
+    actGemName = nil,     -- gem name that triggered the act
     openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
 
     -- The saveState table is saved to a file between runs
     saveState = {
+        usedGems = {},  -- set of gem names that have been used
+        docs = {},      -- list of document filenames that user has found
+
         -- The user's current resource levels (and starting values)
         resources = {
             o2 = 100,     -- oxygen in liters
@@ -22,14 +27,14 @@ local game = {
             kWh = 100,    -- energy in kWh
             food = 100,   -- food in kg
         },
-
-        -- List of document filenames that user has found
-        docs = {},
     },     
 }
 
 -- Shortcuts to access parts of the game data in this module
 local res = game.saveState.resources
+
+-- File local variables
+local messageBox       -- currently displayed message box or nil if none
 
 
 ------------------------- Utility Functions  --------------------------------
@@ -94,6 +99,75 @@ function game.addFood( kg )
     end
 end
 
+
+------------------------- User interface  ---------------------------------
+
+-- Immediately end and destroy the active message box, if any, that was 
+-- shown by game.messageBox()
+function game.endMessageBox()
+    if messageBox then
+        print("Dismiss")
+        messageBox:removeSelf()
+        messageBox = nil
+    end
+end
+
+-- Display a message box with the given text.
+-- Touching the screen anywhere will dismiss it.
+function game.messageBox( text )
+    -- Dismiss existing message box if any, and make new group
+    game.endMessageBox()
+    messageBox = display.newGroup()    -- in global group
+    messageBox.x = game.xCenter      -- centered on screen
+    messageBox.y = game.yCenter
+
+   -- Make a hit area to cover the screen to capture touch anywhere to dismiss
+    local r = display.newRect( messageBox, 0, 0, game.width, game.height)
+    r.isVisible = false
+    r.isHitTestable = true
+    r:addEventListener( "touch", game.endMessageBox )
+
+    -- Make a group for the visible part of the message box in the center of the screen
+    local boxGroup = display.newGroup()
+    messageBox:insert( boxGroup )
+
+    -- Create a text object for the message text
+    local text = display.newText{
+        text = text,
+        x = 0,
+        y = 0,
+        -- width = game.width * 0.7,     -- TODO: Support multi-line
+        -- height = 0,  -- auto-size the height
+        font = native.systemFontBold,
+        fontSize = 20,
+        align = "center",
+    }
+    text:setFillColor( 0 )  -- black
+
+    -- Make a rounded rect for the message box with height sized for the text if necessary
+    local dxyMarginText = 20     -- margin around text
+    local radius = 10   -- corner radius
+    local rr = display.newRoundedRect( text.x, text.y,
+                    text.width + dxyMarginText * 2, text.height + dxyMarginText * 2, radius )
+    rr:setFillColor( 1, 1, 0.4 )   -- pale yellow
+    rr:setStrokeColor( 0 )   -- black
+    rr.strokeWidth = 2
+
+    -- Make another rounded rect as a shadow
+    local dxyOffset = 5
+    local shadow = display.newRoundedRect( rr.x + 5, rr.y + 5, rr.width, rr.height, radius )
+    shadow:setFillColor( 0 )   -- black
+    shadow.alpha = 0.5
+
+    -- Stack the parts in the right order
+    boxGroup:insert( shadow )
+    boxGroup:insert( rr )
+    boxGroup:insert( text )
+
+    -- Make the box zoom in
+    transition.from( boxGroup, { xScale = 0.2, yScale = 0.2, time = 200, 
+            transition = easing.outCubic } )
+end
 
 ------------------------- Game management  --------------------------------
 
