@@ -21,11 +21,25 @@ local wire1, wire2, wire3, wire4, wire5, wire6, wire7, wire8, wire9, wire10, wir
 local orTL, orTR, orBL                -- or gates
 local andTop, andBottom              -- and gates
 local ledTop, ledMid, ledBottom      -- LEDs
+local toolbox
+local toolWindow
 ------------------------- Functions -------------------------------------------------------
 
 -- function to send you back when you press the back button
 local function backButtonPress ( event )
 	game.gotoAct ( "mainAct" )
+end
+
+-- function for the toolbox touch
+local function toolboxTouch (event) 
+	if event.phase == "began" then
+		if toolWindow == nil then
+			transition.cancel( toolbox ) -- kill the blinking
+			toolbox.alpha = 1   -- set the alpha of the toolbox back to 1
+			toolWindow = display.newRect( act.group, act.xCenter, act.yCenter, 300, 300 )
+		end
+	end
+	return true
 end
 
 -- checks the state of the game and what wires have been cut
@@ -142,8 +156,8 @@ function act:init()
 
 	-- background image
 	local wireCutBG = act:newImage ( "wireCutBG.jpg", { width = 320} )
-	wireCutBG.y = act.yCenter + 10
-	wireCutBG.x = act.xCenter - 4
+	wireCutBG.y = act.yCenter + 20
+	wireCutBG.x = act.xCenter
 	--wireCutBG:addEventListener( "touch", touched )--====================================================================================
 
 	-- wire1 image sheet---------------------------------------------------------------------------------------------------------------
@@ -151,101 +165,101 @@ function act:init()
 	local wire1Sequence = { start = 1, count = 2 }
 	local wire1ImageSheet = graphics.newImageSheet( "media/wireCut/wire1sheet.png", wire1Options )
 	wire1 = display.newSprite( act.group, wire1ImageSheet, wire1Sequence )
-	wireSet ( wire1, -65, -160 )
+	wireSet ( wire1, -65, -150 )
 
 	-- wire cutting buttons 
-	wire1.button1 = wireButtonCreator ( wire1, act.xCenter - 66, act.yCenter - 164, 30, 100)
+	wire1.button1 = wireButtonCreator ( wire1, act.xCenter - 66, act.yCenter - 144, 30, 100)
 
 	-- wire2 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire2Options = { width = 630, height = 253, numFrames = 2 }
 	local wire2Sequence = { start = 1, count = 2 }
 	local wire2ImageSheet = graphics.newImageSheet( "media/wireCut/wire2sheet.png", wire2Options )
 	wire2 = display.newSprite( act.group, wire2ImageSheet, wire2Sequence )
-	wireSet ( wire2, -57, -150 )
+	wireSet ( wire2, -57, -130 )
 
 	-- wire cutting buttons 
-	wire2.button1 = wireButtonCreator ( wire2, act.xCenter - 65, act.yCenter - 166, 185, 20)
-	wire2.button1 = wireButtonCreator ( wire2, act.xCenter + 32, act.yCenter - 143, 30, 50)
+	wire2.button1 = wireButtonCreator ( wire2, act.xCenter - 65, act.yCenter - 146, 185, 20)
+	wire2.button1 = wireButtonCreator ( wire2, act.xCenter + 32, act.yCenter - 123, 30, 50)
 
 	-- wire3 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire3Options = { width = 290, height = 155, numFrames = 2 }
 	local wire3Sequence = { name = wire3, start = 1, count = 2 }
 	local wire3ImageSheet = graphics.newImageSheet( "media/wireCut/wire3sheet.png", wire3Options )
 	wire3 = display.newSprite( act.group, wire3ImageSheet, wire3Sequence )
-	wireSet ( wire3, -120, -93 )
+	wireSet ( wire3, -120, -73 )
 
 	-- wire cutting buttons 
-	wire3.button1 = wireButtonCreator ( wire3, act.xCenter - 124, act.yCenter - 90, 80, 20)
+	wire3.button1 = wireButtonCreator ( wire3, act.xCenter - 124, act.yCenter - 70, 80, 20)
 
 	-- wire4 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire4Options = { width = 535, height = 508, numFrames = 2 }
 	local wire4Sequence = { name = wire4, start = 1, count = 2 }
 	local wire4ImageSheet = graphics.newImageSheet( "media/wireCut/wire4sheet.png", wire4Options )
 	wire4 = display.newSprite( act.group, wire4ImageSheet, wire4Sequence )
-	wireSet ( wire4, -70, -6 )
+	wireSet ( wire4, -70, 14 )
 	
 	-- wire cutting buttons 
-	wire4.button1 = wireButtonCreator ( wire4, act.xCenter - 110, act.yCenter + 5, 100, 20)
-	wire4.button1 = wireButtonCreator ( wire4, act.xCenter - 67, act.yCenter + 35, 30, 60)
-	wire4.button1 = wireButtonCreator ( wire4, act.xCenter - 49, act.yCenter - 5, 30, 20)
-	wire4.button1 = wireButtonCreator ( wire4, act.xCenter - 14, act.yCenter - 50, 40, 100)
+	wire4.button1 = wireButtonCreator ( wire4, act.xCenter - 110, act.yCenter + 25, 100, 20)
+	wire4.button1 = wireButtonCreator ( wire4, act.xCenter - 67, act.yCenter + 55, 30, 60)
+	wire4.button1 = wireButtonCreator ( wire4, act.xCenter - 49, act.yCenter + 15, 30, 20)
+	wire4.button1 = wireButtonCreator ( wire4, act.xCenter - 14, act.yCenter - 30, 40, 100)
 
 	-- wire5 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire5Options = { width = 236, height = 538, numFrames = 2 }
 	local wire5Sequence = { name = wire5, start = 1, count = 2 }
 	local wire5ImageSheet = graphics.newImageSheet( "media/wireCut/wire5sheet.png", wire5Options )
 	wire5 = display.newSprite( act.group, wire5ImageSheet, wire5Sequence )
-	wireSet ( wire5, -91, 14 )
+	wireSet ( wire5, -91, 34 )
 
 	--wire cutting buttons 
-	wire5.button1 = wireButtonCreator ( wire5, act.xCenter - 62, act.yCenter - 40, 20, 40)
-	wire5.button2 = wireButtonCreator ( wire5, act.xCenter - 68, act.yCenter - 17, 20, 20)
-	wire5.button3 = wireButtonCreator ( wire5, act.xCenter - 78, act.yCenter - 2, 20, 20)
-	wire5.button4 = wireButtonCreator ( wire5, act.xCenter - 88, act.yCenter + 9, 20, 20)
-	wire5.button5 = wireButtonCreator ( wire5, act.xCenter - 100, act.yCenter + 16, 20, 20)
-	wire5.button6 = wireButtonCreator ( wire5, act.xCenter - 119, act.yCenter + 54, 20, 80)
-	wire5.button7 = wireButtonCreator ( wire5, act.xCenter - 98, act.yCenter + 89, 40, 20)
+	wire5.button1 = wireButtonCreator ( wire5, act.xCenter - 62, act.yCenter - 20, 20, 40)
+	wire5.button2 = wireButtonCreator ( wire5, act.xCenter - 68, act.yCenter + 3, 20, 20)
+	wire5.button3 = wireButtonCreator ( wire5, act.xCenter - 78, act.yCenter + 18, 20, 20)
+	wire5.button4 = wireButtonCreator ( wire5, act.xCenter - 88, act.yCenter + 29, 20, 20)
+	wire5.button5 = wireButtonCreator ( wire5, act.xCenter - 100, act.yCenter + 36, 20, 20)
+	wire5.button6 = wireButtonCreator ( wire5, act.xCenter - 119, act.yCenter + 74, 20, 80)
+	wire5.button7 = wireButtonCreator ( wire5, act.xCenter - 98, act.yCenter + 109, 40, 20)
 	
 	-- wire6 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire6Options = { width = 570, height = 261, numFrames = 2 }
 	local wire6Sequence = { name = wire6, start = 1, count = 2 }
 	local wire6ImageSheet = graphics.newImageSheet( "media/wireCut/wire6sheet.png", wire6Options )
 	wire6 = display.newSprite( act.group, wire6ImageSheet, wire6Sequence )
-	wireSet ( wire6, -69, 48 )
+	wireSet ( wire6, -69, 68 )
 
 	-- wire cutting buttons 
-	wire6.button1 = wireButtonCreator ( wire6, act.xCenter - 90, act.yCenter + 49, 135, 20)
-	wire6.button1 = wireButtonCreator ( wire6, act.xCenter - 3, act.yCenter + 45, 40, 80)
+	wire6.button1 = wireButtonCreator ( wire6, act.xCenter - 90, act.yCenter + 69, 135, 20)
+	wire6.button1 = wireButtonCreator ( wire6, act.xCenter - 3, act.yCenter + 65, 40, 80)
 
 	-- wire7 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire7Options = { width = 159, height = 247, numFrames = 2 }
 	local wire7Sequence = { name = wire7, start = 1, count = 2 }
 	local wire7ImageSheet = graphics.newImageSheet( "media/wireCut/wire7sheet.png", wire7Options )
 	wire7 = display.newSprite( act.group, wire7ImageSheet, wire7Sequence )
-	wireSet ( wire7, 24, -40 )
+	wireSet ( wire7, 24, -20 )
 
 	-- wire cutting buttons 
-	wire7.button1 = wireButtonCreator ( wire7, act.xCenter + 10, act.yCenter - 30, 20, 40)
-	wire7.button1 = wireButtonCreator ( wire7, act.xCenter + 32, act.yCenter - 52, 30, 30)
+	wire7.button1 = wireButtonCreator ( wire7, act.xCenter + 10, act.yCenter - 10, 20, 40)
+	wire7.button1 = wireButtonCreator ( wire7, act.xCenter + 32, act.yCenter - 32, 30, 30)
 
 	-- wire8 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire8Options = { width = 275, height = 194, numFrames = 2 }
 	local wire8Sequence = { name = wire8, start = 1, count = 2 }
 	local wire8ImageSheet = graphics.newImageSheet( "media/wireCut/wire8sheet.png", wire8Options )
 	wire8 = display.newSprite( act.group, wire8ImageSheet, wire8Sequence )
-	wireSet ( wire8, -20, 131 )
+	wireSet ( wire8, -20, 151 )
 
 	-- wire cutting buttons 
-	wire8.button1 = wireButtonCreator ( wire8, act.xCenter - 21, act.yCenter + 128, 90, 50)
+	wire8.button1 = wireButtonCreator ( wire8, act.xCenter - 21, act.yCenter + 148, 90, 50)
 
 	-- The uncutable wires---------------------------------------------------------------------------------------------------------------
-	local wire9 = wireNoCut ( 85, -88 )
+	local wire9 = wireNoCut ( 85, -68 )
 	--wire9.x = act.xCenter + 85
 	--wire9.y = act.yCenter - 88
-	local wire10 = wireNoCut ( 85, 2 )
+	local wire10 = wireNoCut ( 85, 22 )
 	--wire10.x = act.xCenter + 85
 	--wire10.y = act.yCenter + 2
-	local wire11 = wireNoCut ( 85, 92 )
+	local wire11 = wireNoCut ( 85, 112 )
 	--wire11.x = act.xCenter + 85
 	--wire11.y = act.yCenter + 92
 
@@ -264,9 +278,9 @@ function act:init()
 	end
 
 	-- create top led sprites
-	ledTop = ledMaker ( -31, -90 )
-	ledMid = ledMaker ( -31, 0 )
-	ledBottom = ledMaker ( -31, 90 )
+	ledTop = ledMaker ( -31, -70 )
+	ledMid = ledMaker ( -31, 20 )
+	ledBottom = ledMaker ( -31, 110 )
 
 	-- or gate image sheet -------------------------------------------------------------------------------------------------------
 	local orGateOptions = { width = 258, height = 238, numFrames = 2 }
@@ -283,9 +297,9 @@ function act:init()
 	end
 
 	-- create the or gates
-	orTL = orMaker ( -60, -90 )
-	orTR = orMaker ( 40, -90 )
-	orBL = orMaker ( -60, 90 )
+	orTL = orMaker ( -60, -70 )
+	orTR = orMaker ( 40, -70 )
+	orBL = orMaker ( -60, 110 )
 
 	-- and gate image sheet -----------------------------------------------------------------------------------------------------------------
 	local andGateOptions = { width = 125, height = 130, numFrames = 4 }
@@ -302,16 +316,16 @@ function act:init()
 	end
 
 	-- make the and gates
-	andTop = andMaker( 40, 0 )
-	andBottom = andMaker ( 40, 90 )
+	andTop = andMaker( 40, 20 )
+	andBottom = andMaker ( 40, 110 )
 
 	-- background mask
 	local wireCutBGMask = act:newImage ( "wireCutBGMask.png", { width = 320 } )
-	wireCutBGMask.y = act.yCenter + 10
-	wireCutBGMask.x = act.xCenter - 4
+	wireCutBGMask.y = act.yCenter + 20
+	wireCutBGMask.x = act.xCenter
 
 	-- back button
-	local backButton = act:newImage( "backButton.png", { width = 40 } )
+	local backButton = act:newImage( "backButton.png", { width = 50, folder = "media/circuit"} )
 	backButton.x = act.xMin + 30
 	backButton.y = act.yMin + 30
 	backButton.button = widget.newButton 
@@ -322,6 +336,13 @@ function act:init()
 		 height = 50,
 		 onPress = backButtonPress 
 	}
+
+	-- toolbox icon
+	toolbox = act:newImage ( "toolbox2.png", { width = 45, folder = "media/circuit" } )
+	toolbox.x = act.xMax - 30
+	toolbox.y = act.yMin + 30
+	toolbox:addEventListener( "touch", toolboxTouch )
+	transition.blink ( toolbox, { time = 2000 } )
 
 	-- Touch location text display objects==============================================================================================
 	--local yText = act.yMin + 15   -- relative to actual top of screen

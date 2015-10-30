@@ -12,6 +12,7 @@ local game = globalGame
 -- Create the act object
 local act = game.newAct()
 local widget = require( "widget" )  -- need to make buttons
+local util = require ("circuitActUtil")
 
 ------------------------- Variables ---------------------------------------------------------
 
@@ -227,6 +228,7 @@ function act:init()
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
 	transition.blink ( toolbox, { time = 2000 } )
+	--toolbox = util.makeToolbox(act)
 
 	-- back button
 	local backButton = act:newImage( "backButton.png", { width = 50 } )
