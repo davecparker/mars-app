@@ -53,7 +53,7 @@ local ship = {
 		{
 			name = "Captain's Cabin",
 			left = 23, top = -125, right = 136, bottom = -85, 
-			x = 12, y = -92, dx = 30, 
+			x = 12, y = -92, dx = 30, doorCode = "5678",
 		},
 		{
 			name = "First Officer's Cabin",
@@ -251,9 +251,17 @@ local function touchMap( event )
 		for i = 1, #ship.rooms do
 			local room = ship.rooms[i]
 			if game.xyHitTest( dot.x, dot.y, room.x, room.y, 10 ) then
-				-- print( "Near door: " .. room.name )
 				if game.xyInRect( x, y, room ) then
-					zoomToRoom( room )
+					-- Is this room locked?
+					if room.doorCode then
+						-- Use the doorLock act
+						game.lockedRoom = room
+						game.doorCode = room.doorCode
+						game.gotoAct( "doorLock" ) 
+					else
+						-- Not locked, just go inside
+						zoomToRoom( room )
+					end
 					return true
 				end
 			end
@@ -315,6 +323,15 @@ end
 -- Prepare the view before it shows
 function act:prepare()
 	-- TODO: Go to current activity if any
+
+	-- If we just unlocked a door (coming back from doorLock act) then go in
+	if game.lockedRoom and game.doorUnlocked then
+		zoomToRoom( game.lockedRoom )
+	end
+	-- Reset for next door
+	game.lockedRoom = nil
+	game.doorCode = nil
+	game.doorUnlocked = nil
 end
 
 ------------------------- End of Activity --------------------------------

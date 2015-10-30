@@ -20,7 +20,7 @@ local numberCreate = {}
 local numberDisplay = {}
 
 local backTapped
-local passKey = "1234"
+local defaultPassKey = "1234"
 local keyedCorrectly
 local numberLocation
 local refreshScreen
@@ -35,8 +35,9 @@ function backTapped()
 	game.gotoAct( "mainAct", { effect = "slideUp", time = 800 } )
 end
 
--- Checks to see if the numbers entered match the passKey
+-- Checks to see if the numbers entered match the lock code
 function checkKey()
+	local passKey = game.doorCode or defaultPassKey
 	if table.maxn(numberDisplay) < 4 then
 		return false
 	else
@@ -78,6 +79,11 @@ function removeFlashedNumbers()
 		table.remove( colorNumbers[i] )
 	end
 	clearKeyPad() -- Remove Previously Typed Numbers
+
+	-- If door unlocked successfully then go back to mainAct to enter the room
+	if game.doorUnlocked then
+		game.gotoAct( "mainAct", { effect = "crossFade", time = 500 } )
+	end
 end
 
 -- Creates New Number Objects of the Requested Color
@@ -130,6 +136,7 @@ function refreshScreen( )
 	end
 
 	if keyedCorrectly == true then 			-- Create Green Numbers if Correct
+		game.doorUnlocked = true            -- Tell mainAct that we unlocked the door
 		keyedCorrectly = nil
 		colorToFlash( "Green" )
 	elseif keyedCorrectly == false then 	-- Create Red Numbers if Wrong
