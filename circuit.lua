@@ -72,12 +72,6 @@ local function toolboxTouch (event)
 	return true
 end
 
-local function nutRotate (fx, fy)
-	local dx = fx - activeNut.x
-	local dy = fy - activeNut.y
-	activeNut.rotation = (math.atan2(dy, dx) * 180 / math.pi)
-end
-
 -- function for turning wrench
 -- as the player moves the finger around the bolt the wrench follows
 local function turnWrench ( event )
@@ -101,7 +95,6 @@ local function turnWrench ( event )
 	else
 		wrenchRotation = math.floor(wrench.rotation + 360)
 	end
-	print (lastAngle .. "  " .. wrenchRotation .. "  " .. activeNut.angle )
 
 	-- back the wrench up if its moving in the wrong direction otherwise let it move counterclockwise
 	if wrenchRotation + 30 < lastAngle then
@@ -111,7 +104,7 @@ local function turnWrench ( event )
 		wrench.rotation = lastAngle	
 	else
 		lastAngle = wrenchRotation
-		nutRotate(event.x, event.y)  -- rotate the nut too
+		activeNut.rotation = wrench.rotation - 25
 	end
 
 	-- adds 1 to turn wrech upon a 360 degree rotation=========================================================================================
@@ -149,10 +142,10 @@ local function nutTouch ( event )
 		end
 		-- create a wrench on the selected nut and reset the wrenchturns
 		if wrenchSelected then
-			wrench = act:newImage( "wrench.png",  { width = 130 } )
+			wrench = act:newImage( "wrench.png",  { width = 150 } )
 			wrench.anchorX = 0.13
 			wrench.x = event.target.x  -- refrences the targets x that was touched
-			wrench.y = event.target.y  -- same thing buy y cord
+			wrench.y = event.target.y  -- same thing but y cord
 			wrench:rotate (activeNut.angle)
 			wrench:addEventListener( "touch", turnWrench )
 			wrenchTurns = 0
@@ -171,9 +164,13 @@ local function removePanel ( event )
 		if (event.phase == "moved") and (panelLoose == true ) then
 			
 			panel.x = event.x + offset
-			if panel.x < act.xMin or panel.x > act.xMax then
+			if panel.x > act.xMax then
 				-- move panel off screen and transition to the next part of the game
 				transition.to( panel, { time = 500, x = 500, onComplete = game.gotoAct( "wireCut", "fade" ) } )
+			end
+			if panel.x < act.xMin then
+				-- move panel off screen and transition to the next part of the game
+				transition.to( panel, { time = 500, x = -220, onComplete = game.gotoAct( "wireCut", "fade" ) } )
 			end
 		end
 		return true
@@ -225,14 +222,14 @@ function act:init()
 	bg:addEventListener( "touch", bgTouch )
 
 	-- toolbox icon
-	toolbox = act:newImage ( "toolbox.png", { width = 40 } )
+	toolbox = act:newImage ( "toolbox2.png", { width = 45 } )
 	toolbox.x = act.xMax - 30
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
 	transition.blink ( toolbox, { time = 2000 } )
 
 	-- back button
-	local backButton = act:newImage( "backButton.png", { width = 40 } )
+	local backButton = act:newImage( "backButton.png", { width = 50 } )
 	backButton.x = act.xMin + 30
 	backButton.y = act.yMin + 30
 	backButton:addEventListener( "tap", backButtonPress )
