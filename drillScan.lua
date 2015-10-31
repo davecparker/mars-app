@@ -33,6 +33,7 @@ local waterSpotStats
 local waterSpotStatsHide
 local transitionDrill
 local backButton
+local chooseBg
 
 -- Display group declaration
 
@@ -52,7 +53,6 @@ local contamText
 local freezeText
 local litersText
 local energyText
-local scanButton
 local drillButton
 local currentLiters = 0
 local currentCost = 0
@@ -63,8 +63,9 @@ local waterSpot = {}
 
 function act:init()
 
-	marsSurface = act:newImage ( "MarsSurface.jpg", { width = W, height = H } )
-	marsSurface.x, marsSurface.y = 3 * W / 4, 4 * H / 5
+--	marsSurface = act:newImage ( "MarsSurface.jpg", { width = W, height = H } )
+	marsSurface = chooseBg()
+	marsSurface.x, marsSurface.y = W, 4 * H / 5
 	marsSurface.anchorX = 1
 	marsSurface.anchorY = 1
 
@@ -72,8 +73,7 @@ function act:init()
 
 	for i = 1, 3 do
 		
-		waterSpot[i] = display.newCircle( act.group, math.random( 10, 3 * W / 4 - 10 ), math.random( 10, 4 * H / 5 - 10 ), 10 )
-		waterSpot[i].fill = { 0, 0, 1, 0.5 }
+		waterSpot[i] = display.newImage( act.group, "media/drillScan/WaterSpot.png", math.random( 10, W - 10 ), math.random( 10, 4 * H / 5 - 10 ), true )
 		waterSpot[i].isVisible = false
 		waterSpot[i].contamination = math.random( 0, 100 )
 		waterSpot[i].frigidity = 100 - waterSpot[i].contamination
@@ -101,15 +101,15 @@ function act:init()
 	scanCircle.alpha = 0.001
 
 	infoConsole = act:newImage( "Steel2.jpg", { width = 1024, height = 768 } )
-	infoConsole.x, infoConsole.y = XC, 4 * H / 5
+	infoConsole.x, infoConsole.y = XC, H - 115
 	infoConsole.anchorX = 0.5
 	infoConsole.anchorY = 0
 
-	scanConsole = act:newImage( "Steel.jpg", { width = W / 4, height = 1414 } )
+--[[	scanConsole = act:newImage( "Steel.jpg", { width = W / 4, height = 1414 } )
 	scanConsole.x, scanConsole.y = 3 * W / 4, 4 * H / 5
 	scanConsole.anchorX = 0
 	scanConsole.anchorY = 1
-
+]]
 	textGroup = display.newGroup( )
 	textGroup.x = XC
 	textGroup.y = YC + 185
@@ -145,26 +145,21 @@ function act:init()
 
 	local buttonSheet = graphics.newImageSheet( "media/drillScan/Button.png", options )
 
-	scanButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Scan", onPress = scanActivate }
-
-	scanButton.anchorX = 1
-	scanButton.x = W + 2
-	scanButton.y = YC - 170
-
 	drillButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Drill", onPress = transitionDrill }
 
 	drillButton.anchorX = 1
 	drillButton.x = W + 2
-	drillButton.y = YC + 210
-	drillButton.isVisible = false
+	drillButton.y = H - 50
+--	drillButton.isVisible = false
 
-	act.group:insert( scanButton )
 	act.group:insert( drillButton )
 	act.group:insert( textGroup )
 
 end
 
 function act:prepare()
+
+	marsSurface:addEventListener( "touch", scan )
 
 end
 
@@ -176,14 +171,66 @@ function act:stop()
 
 	end
 
-	act.group:insert( scanButton )
-	act.group:insert( drillButton )
+--	act.group:insert( drillButton )
+
+	marsSurface:removeEventListener( "touch", scan )
 
 end
 
-function scanActivate()
+function chooseBg()
 
-	marsSurface:addEventListener( "touch", scan )
+	local p
+	local rand = math.random( 10 )
+
+	local function marsSurfacePick( file )
+
+		return act:newImage( file, { width = W, height = H } )
+
+	end
+
+	if rand == 1 then
+
+		p = marsSurfacePick( "Mars1.jpg" )
+
+	elseif rand == 2 then
+
+		p = marsSurfacePick( "Mars2.jpg" )
+
+	elseif rand == 3 then
+
+		p = marsSurfacePick( "Mars3.jpg" )
+
+	elseif rand == 4 then
+
+		p = marsSurfacePick( "Mars4.jpg" )
+
+	elseif rand == 5 then
+
+		p = marsSurfacePick( "Mars5.jpg" )
+
+	elseif rand == 6 then
+
+		p = marsSurfacePick( "Mars6.jpg" )
+
+	elseif rand == 7 then
+
+		p = marsSurfacePick( "Mars7.jpeg" )
+
+	elseif rand == 8 then
+
+		p = marsSurfacePick( "Mars8.jpg" )
+
+	elseif rand == 9 then
+
+		p = marsSurfacePick( "Mars9.png" )
+
+	elseif rand == 10 then
+
+		p = marsSurfacePick( "Mars10.jpg" )
+
+	end
+
+	return p
 
 end
 
@@ -220,7 +267,7 @@ function finishScan()
 
 	end
 
-	transition.fadeOut( scanCircle, { time = 500, transition = easing.outInBounce, onComplete = marsSurface:removeEventListener( "touch", scan ) } )
+	transition.fadeOut( scanCircle, { time = 500, transition = easing.outInBounce } )
 
 end
 
@@ -231,6 +278,16 @@ function waterSpotStats( event )
 		local t = event.target
 
 		if t.group.isVisible == false then
+
+			for i = 1, #waterSpot do
+
+				if waterSpot[i] ~= t then
+
+					transition.to( waterSpot[i].group, { time = 333, x = waterSpot[i].group.x - 35, xScale = 0.001, yScale = 0.001, onComplete = hideGroup } )
+
+				end
+
+			end
 
 			t.group.isVisible = true
 
