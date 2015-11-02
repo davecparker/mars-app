@@ -81,6 +81,7 @@ function act:init()
 		waterSpot[i].energyCost =  -( waterSpot[i].contamination / 5 + waterSpot[i].frigidity / 10 )
 		waterSpot[i].group = display.newGroup( )
 		waterSpot[i].group.x, waterSpot[i].group.y = waterSpot[i].x, waterSpot[i].y
+		waterSpot[i].difficulty = ( ( waterSpot[i].contamination ^ 2 + waterSpot[i].frigidity ) ^ 0.5 ) * 0.1
 		act.group:insert( waterSpot[i].group )
 
 	end
@@ -89,11 +90,12 @@ function act:init()
 
 	for i = 1, 3 do
 
-		waterSpot[i].infoBox = display.newRoundedRect( waterSpot[i].group, 0, 0, 60, 40, 10 )
+		waterSpot[i].infoBox = display.newRoundedRect( waterSpot[i].group, 0, 0, 70, 40, 10 )
 		waterSpot[i].infoBox.fill = { 0, 0, 0, 0.5 }
 		waterSpot[i].group.xScale = 0.1
 		waterSpot[i].group.yScale = 0.1
 		waterSpot[i].group.isVisible = false
+		waterSpot[i].diffText = display.newText( waterSpot[i].group, "Level: " .. string.format( "%2.1f", waterSpot[i].difficulty ), 0, 0, native.systemFontBold, 14 )
 	end
 
 	scanCircle = display.newCircle( act.group, XC, YC, 50 )
@@ -291,7 +293,15 @@ function waterSpotStats( event )
 
 			t.group.isVisible = true
 
-			transition.to( t.group, { time = 333, x = t.x + 40, xScale = 1, yScale = 1 } )
+			if t.x <= W - 70 then
+
+				transition.to( t.group, { time = 333, x = t.x + 45, xScale = 1, yScale = 1 } )
+
+			elseif t.x > W - 70 then
+
+				transition.to( t.group, { time = 333, x = t.x - 45, xScale = 1, yScale = 1 } )
+				
+			end
 
 			contamText.text = t.contamination .. "% Contaminated"
 			freezeText.text = t.frigidity .. "% Frozen"
