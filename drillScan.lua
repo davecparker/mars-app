@@ -89,7 +89,7 @@ function act:init()
 
 	for i = 1, 3 do
 
-		waterSpot[i].infoBox = display.newRoundedRect( waterSpot[i].group, 0, 0, 40, 60, 10 )
+		waterSpot[i].infoBox = display.newRoundedRect( waterSpot[i].group, 0, 0, 60, 40, 10 )
 		waterSpot[i].infoBox.fill = { 0, 0, 0, 0.5 }
 		waterSpot[i].group.xScale = 0.1
 		waterSpot[i].group.yScale = 0.1
@@ -283,7 +283,7 @@ function waterSpotStats( event )
 
 				if waterSpot[i] ~= t then
 
-					transition.to( waterSpot[i].group, { time = 333, x = waterSpot[i].group.x - 35, xScale = 0.001, yScale = 0.001, onComplete = hideGroup } )
+					transition.to( waterSpot[i].group, { time = 333, x = waterSpot[i].x, xScale = 0.001, yScale = 0.001, onComplete = hideGroup } )
 
 				end
 
@@ -291,7 +291,7 @@ function waterSpotStats( event )
 
 			t.group.isVisible = true
 
-			transition.to( t.group, { time = 333, x = t.group.x + 35, xScale = 1, yScale = 1 } )
+			transition.to( t.group, { time = 333, x = t.x + 40, xScale = 1, yScale = 1 } )
 
 			contamText.text = t.contamination .. "% Contaminated"
 			freezeText.text = t.frigidity .. "% Frozen"
@@ -305,7 +305,7 @@ function waterSpotStats( event )
 
 		elseif t.group.isVisible == true then
 
-			transition.to( t.group, { time = 333, x = t.group.x - 35, xScale = 0.001, yScale = 0.001, onComplete = hideGroup } )
+			transition.to( t.group, { time = 333, x = t.x, xScale = 0.001, yScale = 0.001, onComplete = hideGroup } )
 
 			contamText.text = "0% Contaminated"
 			freezeText.text = "0% Frozen"
