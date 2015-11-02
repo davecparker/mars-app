@@ -50,16 +50,19 @@ local dynamicGrp -- display group for dynamic objects
 local terrain = {} -- basic terrain
 local obstacle = {} -- terrain obstacles
 local shape = {} -- possible terrain obstacles
-local wheel = {} -- rover wheels
-local bg
-local rover
-local elevation = 100
-local terrainExcess = 100
-local terrainOffset = -80
-local terrainColor = { 1.0, 0.2, 0.2 }
+local wheelSprite = {} -- rover wheels
+local rover -- the rover
+local map -- the map
+local bg -- background
+local speedText
+local elevation = 100 -- terrain elevation
+local terrainExcess = 100 -- off display terrain amount
+local terrainOffset = -80 -- terrain offset
+local terrainColor = { 0.7, 0.35, 0.25 }
+local obstacleColor = { 0.3, 0.1, 0.1 }
 
--- create new 1-corona unit wide terrain component rectangle 
--- accepts x-coord & height, returns rectangle display object
+-- Create new 1-corona unit wide terrain component rectangle 
+-- Accepts x-coord & height, returns rectangle display object
 local function newRectangle( x, h )
 	local rect = display.newRect( dynamicGrp, x, act.yMax, 1, h )
 	rect:setFillColor( unpack(terrainColor) )
@@ -68,108 +71,138 @@ local function newRectangle( x, h )
 	return rect
 end
 
--- create new circle terrain component
--- accepts circle x, y coordinates, returns circle display object
-local function randCircle( x, y )
-	local radius = math.random( 3, 10 ) -- random radius
-	local yDev = math.random( radius/2, radius*0.6 ) -- randomly vary y coord w/radius
-	local circle = display.newCircle( dynamicGrp, x, y + 0.5*radius, radius )
-	circle:setFillColor( unpack(terrainColor)  )
-	physics.addBody( circle, "static", { friction = 1.0 } )
+-- Create new circle terrain component
+-- Accepts circle x, y coordinates, returns circle display object
+local function randCircle( x, y, r )
+	local yDev = math.random( r * 0.5, r * 0.7 ) -- randomly vary y coord w/radius
+	local circle = display.newCircle( dynamicGrp, x, y + yDev, r )
 	return circle
 end
 
--- create new square of random side length
--- accepts square x, y coordinates, returns square display object
-local function randSquare( x, y )
-	local side = math.random( 5, 10 )
-	local square = display.newRect( dynamicGrp, x, y + 1, side, side )
+-- Create new square of random side length
+-- Accepts square x, y coordinates, returns square display object
+local function randSquare( x, y, s )
+	local square = display.newRect( dynamicGrp, x, y + s/10, s, s )
 	square.rotation = math.random( 30, 60 ) -- random rotation for variation
-	square:setFillColor( unpack(terrainColor)  )
-	physics.addBody( square, "static", { friction = 1.0 } )
 	return square
 end
 
--- create new rounded square of random side length
--- accepts square x, y coordinates, returns rounded square display object
-local function randRoundSquare( x, y )
-	local side = math.random( 5, 10 )
-	local square = display.newRoundedRect( dynamicGrp, x, y + 1, side, side, side/4 )
+-- Create new rounded square of random side length
+-- Accepts square x, y coordinates, returns rounded square display object
+local function randRoundSquare( x, y, s )
+	local square = display.newRoundedRect( dynamicGrp, x, y + s/10, s, s, s/4 )
 	square.rotation = math.random( 30, 60 )
-	square:setFillColor( unpack(terrainColor)  )
-	physics.addBody( square, "static", { friction = 1.0 } )
 	return square
 end
 
--- create new trapezoid polygon of random length
--- accepts x, y coordinates of bottom-left vertice, returns trapezoid display object
-local function randPoly( x, y )
-	local s = math.random( 4, 10 )
-	local vertices = { x, y, x + s, y - s, x + 2 * s, y - s, x + 3 * s, y }
-	local poly = display.newPolygon( dynamicGrp, 0, 0, vertices )
-	poly.x = x
-	poly.y = y - 1
-	poly:setFillColor( unpack(terrainColor)  )
-	physics.addBody( poly, "static", { friction = 1.0 } )
+-- Create new trapezoid polygon of random length
+-- Accepts x, y coordinates of bottom-left vertice, returns trapezoid display object
+local function randPoly( x, y, s )
+	local l = math.random( 3, 10 )
+	local vertices = { x, y, x + s, y - s, x + s + l, y - s, x + 2 * s + l, y }
+	local rotation = math.random( -20, 20 )
+	local poly = display.newPolygon( dynamicGrp, x, y - 1 + math.abs( rotation/15 ), vertices )
+	poly.rotation = rotation
 	return poly
 end
 
--- function to create terrain of rectangles and randomly selected polygons
-function NewTerrain( nObstacles)
-	-- fill terrain with rectangles to span display width plus terrainExcess
-	for i = 1, act.xMax + terrainExcess + ( 1 - act.xMin ) do
-		terrain[i] = newRectangle( i - 1 + terrainOffset, elevation )
-	end
-
-	-- fill shape table with terrain shape functions
+-- Create terrain of rectangles and randomly selected, sized, & rotated polygons
+local function newTerrain( nObstacles)
+	-- fill shape table with terrain obstacle shape functions
 	shape = { randCircle, randSquare, randRoundSquare, randPoly }
 	
-	-- divide terrain into x-axis zones for even obstacle distribution
-	-- fill obstacle table with one randomly selected shape per zone
-	local zoneLength = math.floor( (act.width + terrainExcess)/nObstacles )	
+	-- fill obstacle table with shapes randomly distributed along terrain x-axis extent
+	-- obsolete: local zoneLength = math.floor( (act.width + terrainExcess)/nObstacles )	
 	for i = 1, nObstacles do
-		local x = math.random( (i - 1) * zoneLength, i * zoneLength ) + terrainOffset
-		obstacle[i] = shape[math.random(1, 4)]( x, act.yMax - elevation )
+		-- obsolete: local x = math.random( (i - 1) * zoneLength, i * zoneLength ) + terrainOffset
+		local x = math.random( (i - 1) + terrainOffset, act.width + terrainExcess + terrainOffset )
+		local size = math.random( 5, 10 )
+		obstacle[i] = shape[math.random(1, 4)]( x, act.yMax - elevation, size )
+		obstacle[i]:setFillColor( unpack(obstacleColor)  )
+		physics.addBody( obstacle[i], "static", { friction = 1.0 } )
+	end
+
+	-- fill terrain with rectangles to span display width plus terrainExcess
+	for i = 1, act.width + terrainExcess do
+		terrain[i] = newRectangle( i - 1 + terrainOffset, elevation )
 	end
 end
 
--- function to create the rover
-function NewRover( roverY )
+-- Create the rover
+local function newRover( roverY )
 
+	-- tables to hold suspension joints
 	local suspension = {}
 	local wheelToWheelJoint = {}
-	local wheelToBodyJoint = {}
+	-- local wheelToBodyJoint = {}
 
-	rover = act:newImage( "rover_body.png", 
-		{ parent = dynamicGrp, x = act.xMin + 100, y = roverY, width = 65, height = 50 } )
+	-- create rover
+	local roverData = { 
+		parent = dynamicGrp, 
+		x = act.xMin + 100, 
+		y = roverY, 
+		width = 65, 
+		height = 50 
+	} 
+	
+	rover = act:newImage( "rover_body.png", roverData )
 	rover.anchorY = 1.0
 	rover.angularV = 0
+	rover.distOldX = rover.x -- previous x for distance traveled calculation
+	rover.speedOldX = rover.x -- previous x for speed calculation
+	rover.kph = 0 
+	rover.accelerate = false
+	rover.brake = false
 
 	-- rover body physics: low density for minimal sway & increased stability
-	physics.addBody( rover, "dynamic", { density = 0.2, friction = 0.3, 
-		bounce = 0.2, isSensor = false } )
+	physics.addBody( rover, "dynamic", { density = 0.2, friction = 0.3, bounce = 0.2 } )
 
-	-- create 4 wheels
-	for i = 1, 4 do
-		wheel[i] = act:newImage( "tonka_wheel.png", 
-			{ parent = dynamicGrp, x = rover.x - 27 + (i - 1) * 18 , y = rover.y + 5, width = 15, height = 15 } )
+	-- create an image sheet for rover wheel sprites
+	local options = {
+		width = 175,
+		height = 175,
+		numFrames = 7
+	}
 
-		-- wheel physics: lower density decreases translation in violent events but also
-		-- decreases stability & increases acceleration response. 0.5-1.5 seems to give the
-		-- best results. Increased friction also increases acceleration response. 
-		physics.addBody( wheel[i], "dynamic", { density = 1.0, friction = 0.5, 
-			bounce = 0.2, isSensor = false, radius = 7.5 } )
+	local wheelSheet = graphics.newImageSheet( 'media/rover/tonka_wheel_sheet.png', options )
 
-		-- xAxis & yAxis values influence wheel translation; 25-50 y-axis gives best results
-		suspension[i] = physics.newJoint( "wheel", rover, wheel[i], 
-			wheel[i].x, wheel[i].y, 1, 30 )
-	end
+	-- create 4 wheel sprites situated along rover body
+	local sequenceData = {
+		name = "wheelSequence",
+		start = 1,
+		count = 7,
+	}
 
-	-- wheel-to-wheel distance joints to moderate wheel translation 
 	for i = 1, 3 do
-		wheelToWheelJoint[i] = physics.newJoint( 'distance', wheel[i], wheel[i+1],
-			wheel[i].x, wheel[i].y, wheel[i+1].x, wheel[i+1].y )
+		wheelSprite[i] = display.newSprite( dynamicGrp, wheelSheet, sequenceData )
+		wheelSprite[i].x = rover.x - 27 + (i - 1) * 27
+		wheelSprite[i].y = rover.y + 4
+		wheelSprite[i]:scale( 0.12, 0.12 )
+
+		-- wheel physics
+		-- higher density increases translation & stability; 0.5-1.5 gives best results.
+		-- higher friction increases acceleration and decreases stability.
+		local wheelPhysicsData = {
+			density = 1.0, 
+			friction = 1.0, 
+			bounce = 0.2, 
+			radius = 9.25
+		}
+
+		physics.addBody( wheelSprite[i], "dynamic", wheelPhysicsData )
+
+		-- x-axis & y-axis values affect wheel translation in combination with wheel-to-wheel joints
+		-- per x-axis, a higher y-axis value decreases translation; 25-50 y-axis gives best results
+		suspension[i] = physics.newJoint( "wheel", rover, wheelSprite[i], 
+			wheelSprite[i].x, wheelSprite[i].y, 1, 30 )
 	end
+
+	-- wheel-to-wheel distance joints to limit lateral wheel translation 
+	for i = 1, 2 do
+		wheelToWheelJoint[i] = physics.newJoint( "distance", wheelSprite[i], wheelSprite[i+1],
+			wheelSprite[i].x, wheelSprite[i].y, wheelSprite[i+1].x, wheelSprite[i+1].y )
+	end
+
 --[[
 	-- wheel-to-body distance joints to reduce wheel translation
 	-- seems ineffective and decreases stability 
@@ -180,22 +213,177 @@ function NewRover( roverY )
 		wheelToBodyJoint[1].frequency = 0.5
 	end
 --]]
+	-- create rover map location tracking dot
+	local dotData = { 
+		parent = staticGrp, 
+		x = game.saveState.roverCoord.x1, 
+		y = game.saveState.roverCoord.y1, 
+		width = 7, 
+		height = 7 
+	} 
+
+	map.rover = act:newImage( "tracking_dot1.png", dotData )
+	map.rover.x = game.saveState.roverCoord.x1 
+	map.rover.y = game.saveState.roverCoord.y1 
 end
 
--- function to adjust wheel angular velocity
-function MoveRover()
-	if rover.angularV < 800 then -- increase initial acceleration
-		rover.angularV = rover.angularV + 500 
-	elseif rover.angularV > 8000 then -- limit angular velocity (i.e. top speed)
+-- Accelerate the rover up to angular velocity of 8000 w/higher initial acceleration
+local function accelRover()
+	if rover.angularV <= 150 then -- higher initial acceleration
+		rover.angularV = rover.angularV + 50 
+	--elseif rover.angularV > 700 and rover.angularV < 2000 then
+	--	rover.angularV = rover.angularV + 100
+	elseif rover.angularV + 20 > 8000 then -- top speed
 		rover.angularV = 8000
 	else
 		rover.angularV = rover.angularV + 20 -- typical acceleration
 	end
 end
 
--- function to scroll the ground to the left
-function MoveTerrain()
-    -- recycle terrain rectangle if sufficiently offscreen
+-- Decelerate the rover; deceleration varies inversely with speed for stability
+local function brakeRover()
+	if rover.kph < 20 then
+		rover.angularV = 0
+	else 
+		rover.angularV = rover.angularV * rover.kph/500
+	end
+end
+
+-- Let the rover coast, with increased deceleration during high AOA (wheelie) instances
+local function coastRover()
+	local aoa = rover.rotation % 360
+
+	-- if high angle-of-attack, then greater deceleration for stability
+	if (aoa > -100 and aoa < -60) or (aoa > 260 and aoa < 300) then
+		wheelSprite[1].linearDampening = 1000
+		if rover.kph < 10 then
+			rover.angularV = 0
+		else
+			rover.angularV = rover.angularV * 0.9 
+		end
+	elseif rover.angularV > 100 then
+		rover.angularV = rover.angularV * 0.99 -- normal deceleration
+	elseif rover.angularV - 1 > 0 then
+		rover.angularV = rover.angularV - 1 -- final deceleration to 0
+	else
+		rover.angularV = 0
+	end
+end
+
+-- Acceleration touch event handler
+local function bgTouched( event )
+	if event.phase == "began" then
+		rover.accelerate = true
+	elseif event.phase == "ended" or event.phase == "cancelled" then
+		rover.accelerate = false
+	end
+end
+
+-- Map touch event handler
+local function mapTouched( event )
+	if event.phase == "began" then
+		local x1 = game.saveState.roverCoord.x1
+		local y1 = game.saveState.roverCoord.y1
+		local x2 = event.x
+		local y2 = event.y
+
+		-- set global variables to new destination coordinates
+		game.saveState.roverCoord.x2 = x2
+		game.saveState.roverCoord.y2 = y2
+
+		-- remove old course, draw new course
+		display.remove( map.course )
+		map.course = display.newLine( staticGrp, x1, y1, x2, y2 )
+		map.course:setStrokeColor( 1, 1, 1, 0.7 )
+		map.course.strokeWidth = 1.5
+		map.rover:toFront()
+		map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
+
+		-- if a course has been selected, calculate unit vectors, else set to zero
+		if map.courseLength > 0 then
+			map.courseVX = (x2 - x1)/map.courseLength
+			map.courseVY = (y2 - y1)/map.courseLength
+		else
+			map.courseVX = 0
+			map.courseVY = 0
+		end
+	end
+	return true
+end
+
+-- Adjust and apply rover wheel angular velocity
+local function moveRover()
+
+	if map.courseLength > 0 then
+		-- accelerate, brake, or coast rover
+		if rover.accelerate then
+			accelRover()
+		elseif rover.brake then
+			brakeRover()
+		else
+			coastRover()
+		end
+
+		-- determine wheel sprite frame
+		local wheelFrame
+		if rover.angularV > 700 then 
+			wheelFrame = 7
+		elseif rover.angularV < 200 then 
+			wheelFrame = 1
+		else
+			wheelFrame = math.floor( rover.angularV/100 )
+		end
+
+		-- apply wheel angular velocity & sprite frame to the wheel sprites
+		-- rear wheel at half speed for stability
+		wheelSprite[1].angularVelocity = rover.angularV/2
+		wheelSprite[1]:setFrame( wheelFrame )
+
+		for i = 2, 3 do
+			wheelSprite[i].angularVelocity = rover.angularV
+			wheelSprite[i]:setFrame( wheelFrame )
+		end
+
+		-- calculate distance rover has moved and new course length
+		local distMoved = ( rover.x - rover.distOldX )/100
+		map.courseLength = map.courseLength - distMoved
+
+		-- if the rover has moved and still has a course (has not reached its destination)
+		if map.courseLength > 0 and distMoved ~= 0 then
+
+			-- calculate new current position coordinates
+			local x1 = game.saveState.roverCoord.x1 + distMoved * map.courseVX
+			local y1 = game.saveState.roverCoord.y1 + distMoved * map.courseVY
+			local x2 = game.saveState.roverCoord.x2
+			local y2 = game.saveState.roverCoord.y2
+			game.saveState.roverCoord.x1 = x1
+			game.saveState.roverCoord.y1 = y1
+
+			-- replace old course with new course
+			display.remove( map.course )
+			map.course = display.newLine( staticGrp, x1, y1, x2, y2 )
+			map.course:setStrokeColor( 1, 1, 1, 0.7 )
+			map.course.strokeWidth = 1.5
+			map.rover:toFront()
+			map.rover.x = game.saveState.roverCoord.x1
+			map.rover.y = game.saveState.roverCoord.y1
+		-- if rover has reached destination, then stop & set coords to destination coords
+		elseif map.courseLength <= 0 then
+			game.saveState.roverCoord.x1 = game.saveState.roverCoord.x2
+			game.saveState.roverCoord.y1 = game.saveState.roverCoord.y2
+			map.rover.x = game.saveState.roverCoord.x1
+			map.rover.y = game.saveState.roverCoord.y1
+			display.remove( map.course )
+			rover.angularV = 0
+		end
+	end
+
+	rover.distOldX = rover.x	
+end
+
+-- Scroll the terrain to the left
+local function moveTerrain()
+	-- recycle terrain rectangle if sufficiently offscreen
     for i = 1, #terrain do
 		if terrain[i].contentBounds.xMax < act.xMin + terrainOffset then
 			terrain[i].x = terrain[i].x + act.width + terrainExcess
@@ -203,29 +391,33 @@ function MoveTerrain()
 	end
 
 	-- remove obstacle if sufficiently offscreen x left
-	-- create new obstacle at random offscreen x right
+	-- create new random obstacle of random size at random offscreen x right
 	for i = 1, #obstacle do
 		if obstacle[i].contentBounds.xMax < act.xMin + terrainOffset then
-			local zoneLength = math.floor( (act.width + terrainExcess)/#obstacle )	
 			local x = math.random( 
-				obstacle[i].x + act.width - terrainOffset + 1, 
-				obstacle[i].x + act.width - terrainOffset + zoneLength + 1 )
+				obstacle[i].x + act.width + terrainExcess, 
+				obstacle[i].x + 2 * ( act.width + terrainExcess ) )
+			local size = math.random( 5, 10 )
 			display.remove( obstacle[i] )
-			obstacle[i] = shape[math.random(1, 4)]( x, act.yMax - elevation )
+			obstacle[i] = shape[math.random(1, 4)]( x, act.yMax - elevation, size )
+			obstacle[i]:setFillColor( unpack(obstacleColor)  )
+			obstacle[i]:toBack()
+			physics.addBody( obstacle[i], "static", { friction = 1.0 } )
 		end
 	end
 end
 
--- touch event handler
-local function touched( event )
-	if event.phase == "began" then
-		MoveRover()
-	elseif event.phase == "ended" or event.phase == "cancelled" then
-		rover.angularV = 0
-	end
+-- Stop button event handler
+local function onStopPress( event )
+	rover.brake = true
 end
 
--- reset button event handler
+-- Stop button event handler
+local function onStopRelease( event )
+	rover.brake = false
+end
+
+-- Reset button event handler
 local function onResetPress( event )
 	-- reposition terrain
 	for i = 1, #terrain do
@@ -242,14 +434,57 @@ local function onResetPress( event )
 	rover = nil
 
 	-- remove rover wheels
-	for i = 1, #wheel do
-		wheel[i]:removeSelf()
-		wheel[i] = nil
+	for i = 1, #wheelSprite do
+		wheelSprite[i]:removeSelf()
+		wheelSprite[i] = nil
 	end
 
-	-- create new rover
-	NewRover( act.yMax - 111 )
+	-- remove map tracking dot
+	map.rover:removeSelf()
+	map.rover = nil
 
+	-- create new rover
+	newRover( act.yMax - 111 )
+
+	-- reset speed display
+	rover.speedOldX = rover.x
+	speedText.text = string.format( speedText.format, 0, "kph" )
+end
+
+-- Create the speed display text
+local function newDisplay()
+	local format = "%4d %s"
+	local options = 
+	{
+		parent = staticGrp,
+		text = string.format( format, 0, "kph" ),
+		x = act.xMax - 20,
+		y = 20,
+		font = native.systemFontBold,
+		fontSize = 18,
+	}
+
+	speedText = display.newText( options )
+	speedText:setFillColor( 0.0, 1.0, 0.0 )
+	speedText.anchorX = 1
+	speedText.anchorY = 0
+	speedText.x = act.xMax - 20
+	speedText.y = act.yMin + 10
+	speedText.format = format
+end
+
+-- Update the speed display
+local function updateDisplay()
+	local kmPerCoronaUnit = 0.00006838462 -- based on estimated rover length
+	local elapsedTimePerHr = 7200 -- every 0.5 seconds
+	rover.kph = ( rover.x - rover.speedOldX ) * kmPerCoronaUnit * elapsedTimePerHr
+
+	if rover.kph < 0 then 
+		rover.kph = 0 
+	end
+
+	speedText.text = string.format( speedText.format, rover.kph, "kph" )
+	rover.speedOldX = rover.x
 end
 
 -- Init the act
@@ -268,21 +503,68 @@ function act:init()
 
 	math.randomseed( os.time() )
 
-	staticGrp = act:newGroup() -- display group for static foreground objects
-	dynamicGrp = act:newGroup() -- display group for dynamic objects
+	-- create display groups for dynamic objects & static foreground objects
+	staticGrp = act:newGroup()
+	dynamicGrp = act:newGroup()
 
-	bg = display.newRect( dynamicGrp, act.xMin, act.yMin, act.width, act.height )
-	bg.x = act.xCenter
-	bg.y = act.yCenter
-	bg:setFillColor( 0.5, 0.5, 0.5 )
+	-- initialize rover map starting coordinates to map center
+	game.saveState.roverCoord.x1 = act.xCenter
+	game.saveState.roverCoord.y1 = act.yMin + 150
+
+	-- set sky background
+	local skyData = { 
+		parent = dynamicGrp, 
+		x = act.xMin, 
+		y = act.yMin, 
+		width = act.width, 
+		height = act.height 
+	} 
+
+	sky = act:newImage( "sky2.jpg", skyData )
+	sky.x = act.xCenter
+	sky.y = act.yCenter
 
 	-- add touch event listener to background image
-	bg:addEventListener( "touch", touched )
+	sky:addEventListener( "touch", bgTouched )
+	timer.performWithDelay( 500, updateDisplay, 0 )
+
+	-- create map
+	local mapData = { 
+		parent = staticGrp, 
+		x = act.xCenter, 
+		y = act.yMin + 150, 
+		width = 320, 
+		height = 300
+	} 
+
+	map = act:newImage( "valles_marineris1.jpg", mapData )
+	map.x = act.xCenter
+	map.y = act.yMin + 150
+	map.course = nil
+	map.courseLength = 0
+	map.courseVX = 0
+	map.courseVY = 0
+
+	-- add touch event listener to background image
+	map:addEventListener( "touch", mapTouched )
+
+	-- create the stop button
+	local stopButton = widget.newButton
+	{
+		x = act.xMax - 30,
+		y = act.yMax - 60,
+		width = 40,
+		height = 40,
+		defaultFile = "media/rover/stop_unpressed.png",
+		overFile = "media/rover/stop_pressed.png",
+		onPress = onStopPress,
+		onRelease = onStopRelease
+	}
 
 	-- create the reset button
 	local resetButton = widget.newButton
 	{
-		x = act.xMax - 20,
+		x = act.xMax - 30,
 		y = act.yMax - 20,
 		width = 30,
 		height = 30,
@@ -292,27 +574,29 @@ function act:init()
 	}
 
 	-- create the terrain and the rover
-	NewTerrain( 5 )
-	NewRover( act.yMax - 112 )
+	newTerrain( 5 )
+	newRover( act.yMax - 112 )
+	newDisplay()
+	staticGrp:insert( stopButton )
 	staticGrp:insert( resetButton )
 end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
+	-- adjust and apply rover wheel angular velocity
+	moveRover() 
+
 	-- move dynamicGrp along the x-axis the distance the rover has moved
 	dynamicGrp.x = act.xMin + 100 - rover.x
 
-	-- recycle and regenerate the terrain
-	MoveTerrain()
+	-- recycle and generate the terrain
+	moveTerrain()
 	
 	-- move the background along the x-axis the distance the rover has moved
-	bg.x = act.xCenter + rover.x - 100
+	sky.x = act.xCenter + rover.x - 100
 
-	-- rotate the rover's wheels
-	for i = 1, 4 do
-		wheel[i].angularVelocity = rover.angularV * 10
-	end
 	-- move the static group to the foreground
+	sky:toBack()
 	staticGrp:toFront()
 end
 
