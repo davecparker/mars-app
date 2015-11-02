@@ -1,0 +1,3 @@
+The ship’s critical circuits are located inside sealed panels. Access requires removing the panel bolts with a wrench then sliding the panel cover to the side. 
+
+When a circuit is working properly, the color of the circuit indicator lights should match the pattern shown on the diagram inside.
