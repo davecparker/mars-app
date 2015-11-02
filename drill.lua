@@ -36,11 +36,7 @@ local reset
 
 --Declare file local tables to be used
 local bg -- Background image
-local idealRange -- Ideal range for the bar
-local goodRange -- Good range for the bar
-local mediocreRange -- Mediocre range for the bar
-local badRange -- Bad range for the bar
-local horribleRange -- Horrible range for the bar
+local drillSpot -- Effectiveness of drill usage
 local bar -- The bar being adjusted
 local splash -- Splash screen for when the player finishes
 local startTimer -- Timer when beginning
@@ -53,12 +49,12 @@ function act:init()
 
 	-- Setup the background
 	bg = display.newRect( act.group, XC, YC, W, H )
-	bg.fill = { type = "image", filename = "/media/drill/DrillOp.jpg" }
+	bg.fill = { type = "image", filename = "media/drill/DrillOp.jpg" }
 
 	-- Create the worst range
-	horribleRange = display.newRect( act.group, 0, YC, W / 8, H )
-	horribleRange.anchorX = 0
-	horribleRange.fill = { type = "image", filename = "/media/drill/DrillSpot.png" }
+	drillSpot = display.newRect( act.group, 0, YC, W / 8, H )
+	drillSpot.anchorX = 0
+	drillSpot.fill = { type = "image", filename = "media/drill/DrillSpot.png" }
 
 	-- Create the bar
 	bar = display.newRect( act.group, 0, H - 25, W / 7, H / 4 )
@@ -142,6 +138,11 @@ function act:prepare()
 	resetButton.isVisible = false
 	start()
 
+end
+
+function act:stop()
+
+	game.removeAct( "drill" )
 
 end
 
