@@ -22,7 +22,6 @@ local game = globalGame
 
 -- Create the act object
 local act = game.newAct()
-local widget = require( "widget" )  -- need to make buttons
 
 -- try image.fill to change images...
 --  create a rect then fill with image.fill
@@ -67,6 +66,7 @@ end
 -- function to send you back when you press the back button
 local function backButtonPress ( event )
 	game.gotoAct ( "mainAct" )
+	return true
 end
 
 -- Handle touches on the background by updating the text displays
@@ -303,14 +303,7 @@ function act:init()
 	local backButton = act:newImage( "backButton.png", { width = 40 } )
 	backButton.x = act.xMin + 30
 	backButton.y = act.yMin + 30
-	backButton.button = widget.newButton 
-	{
-		 x = act.xMin + 30,
-		 y = act.yMin + 30,
-		 width = 50, 
-		 height = 50,
-		 onPress = backButtonPress 
-	}
+	backButton:addEventListener( "tap", backButtonPress )
 end
 
 -- draw arrow toward mars
