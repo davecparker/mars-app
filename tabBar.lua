@@ -11,8 +11,9 @@ local game = globalGame
 -- Corona modules needed
 local widget = require( "widget" )
 
--- The tab bar widget
-local tabBar
+-- The tab bar widget and info
+local tabBar          -- the tab bar widget
+local selectedTab     -- the tab id of the currently selected tab
 
 -- The tab bar buttons
 local buttons = {
@@ -23,16 +24,22 @@ local buttons = {
     { id = "menu",       defaultFile = "media/game/menu.png", selected = true, },
 }
 
+-- Table that keeps track of the currnet act viewed on each tab, indexed by tab id.
+-- If an entry is nil, the default (act = id) is used.
+local currentActForTab = {}
+
 
 -- Handle tab bar button events
 local function handleTabBarEvent( event )
-    local tab = event.target._id
-    game.gotoAct( tab )     -- button id is the Lua module name to run
+    -- Go to the current (or default) act for this tab
+    selectedTab = event.target._id
+    local act = currentActForTab[selectedTab] or selectedTab  -- tab id is default act
+    game.gotoAct( act )
 end
 
 -- Initialize the app tab bar on the bottom of the screen
 function initTabBar()
-    -- Assign properties common to all buttons
+    -- Assign properties common to all buttons and set the selectedTab
     local dxyIcon = game.dyTabBar - 10
     for i = 1, #buttons do
         local b = buttons[i]
@@ -40,7 +47,11 @@ function initTabBar()
         b.overFile = b.defaultFile
         b.width = dxyIcon
         b.height = dxyIcon
+        if b.selected then
+            selectedTab = b.id
+        end
     end
+    assert( selectedTab )
 
     -- Create the tab bar widget
     tabBar = widget.newTabBar
@@ -59,9 +70,15 @@ function initTabBar()
     }
 end
 
+-- Set the current act for the currently selected tab to name
+function game.setCurrentTabAct( name )
+    currentActForTab[selectedTab] = name
+end
+
 -- Select the given tab (1 = main tab) on the tab bar, and press it if press is true
 function game.selectGameTab( index, press )
     tabBar:setSelected( index, press )
+    selectedTab = buttons[index].id
 end
 
 -- Create and return a new item indicator badge at the given screen position, initially hidden

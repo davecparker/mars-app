@@ -151,6 +151,7 @@ end
 
 -- Go to a given act, with transition options (see composer.gotoScene for parameters)
 function game.gotoAct( name, options )
+    game.setCurrentTabAct( name )
     composer.gotoScene( name, options )  -- CRASH? If you get 'sceneName' nil here then you
                                          -- forgot to return act.scene from your act file.
 end
