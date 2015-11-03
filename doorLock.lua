@@ -11,6 +11,7 @@ local game = globalGame
 -- Create the act object
 local act = game.newAct()
 
+local widget = require( "widget" )
 
 ------------------------- Start of Activity --------------------------------
 local screen = {}
@@ -29,10 +30,11 @@ local keyPressed
 
 local colorNumbers = display.newGroup()
 
+local sound = {}
 
 -- When the Back Button is Pushed
 function backTapped()
-	game.gotoAct( "mainAct", { effect = "slideUp", time = 800 } )
+	game.gotoAct( "mainAct", { effect = "slideRight", time = 800 } )
 end
 
 -- Checks to see if the numbers entered match the lock code
@@ -53,10 +55,10 @@ end
 -- Number Spritesheet Options
 local options =
 {
-    width = 25,
+    width = 27,
     height = 50,
     numFrames = 10,
-    sheetContentWidth = 250,
+    sheetContentWidth = 270,
     sheetContentHeight = 50
 }
 
@@ -108,8 +110,8 @@ function colorToFlash( flashColor )
 	end
 
 	-- Blink the Numbers and then Destroy
-	timer.performWithDelay( 400, flashTheNumbers, 4 )
-	timer.performWithDelay( 2000, removeFlashedNumbers )
+	timer.performWithDelay( 200, flashTheNumbers, 6 )
+	timer.performWithDelay( 1200, removeFlashedNumbers )
 end
 
 
@@ -135,6 +137,7 @@ function refreshScreen( )
 		table.remove(numberCreate, i)
 	end
 
+--  Flash Green if Correct, Flash Red if Incorrect, or Add a New Number to the Display
 	if keyedCorrectly == true then 			-- Create Green Numbers if Correct
 		game.doorUnlocked = true            -- Tell mainAct that we unlocked the door
 		keyedCorrectly = nil
@@ -142,22 +145,23 @@ function refreshScreen( )
 	elseif keyedCorrectly == false then 	-- Create Red Numbers if Wrong
 		keyedCorrectly = nil
 		colorToFlash( "Red" )
-	else 									--	Else Create Normal Numbers
-		for i = 1, #numberDisplay, 1 do
-			local newNumber = display.newImage( act.group, number, numberDisplay[i]+1)
-			newNumber.x = numberLocation( i )
-			newNumber.y = screen.y
-			newNumber.blink = function( self )
-				if self.isVisible then
-					self.isVisible = false
-				else 
-					self.isVisible = true
+	else
+		if table.maxn(numberDisplay) <= 4 then 		--	Else Create Normal Red Numbers
+			for i = 1, #numberDisplay, 1 do
+				local newNumber = display.newImage( act.group, number, numberDisplay[i]+1)
+				newNumber.x = numberLocation( i )
+				newNumber.y = screen.y
+				newNumber.blink = function( self )
+					if self.isVisible then
+						self.isVisible = false
+					else 
+						self.isVisible = true
+					end
 				end
+				table.insert( numberCreate, newNumber )
 			end
-			table.insert( numberCreate, newNumber )
 		end
 	end
-
 end
 
 -- Clears the Screen
@@ -169,26 +173,43 @@ end
 
 -- The Listener for the Buttons
 function keyPressed( event )
-
 	local key = event.target.name
+
+	local r = math.random( 1, 4 )
+	audio.play( sound.button[r] )
 
 	if key == "clr" then
 		clearKeyPad()
-	end
-
-	if key == "ent" then
+	elseif key == "ent" then
 		if checkKey() then
 			keyedCorrectly = true
+			audio.play( sound.beep1 )
 		else
 			keyedCorrectly = false
+			audio.play( sound.beep2 )
+		end
+	elseif key ~= "clr" and key ~= "ent" then
+		if table.maxn(numberDisplay) < 4 then
+			table.insert( numberDisplay, key )
 		end
 	end
 
-	if key ~= "clr" and key ~= "ent" then
-		table.insert( numberDisplay, key ) -- Remove else statement if screen should wrap
-	end
+	if table.maxn(numberDisplay) <= 4 then
+		refreshScreen()
+	end 
+end
 
-	refreshScreen()
+local function createButton( name, x, y, file, file2 )
+	local b = widget.newButton {
+		defaultFile = file,
+		overFile = file2,
+		width = 50,
+		height = 50,
+		x = x, y = y,
+		onPress = keyPressed
+	}
+	b.name = name
+	return b
 end
 
 -- Init the act
@@ -200,6 +221,19 @@ function act:init()
 	-- Background
 	--...
 
+	-- Sound
+	sound.button = {
+		audio.loadSound( "media/doorLock/sounds/button1.wav" ),
+		audio.loadSound( "media/doorLock/sounds/button2.wav" ),
+		audio.loadSound( "media/doorLock/sounds/button3.wav" ),
+		audio.loadSound( "media/doorLock/sounds/button4.wav" )
+	}
+
+	sound.beep1 = audio.loadSound( "media/doorLock/sounds/beep1.wav" )
+	sound.beep2 = audio.loadSound( "media/doorLock/sounds/beep2.wav" )
+
+	audio.setVolume( 0.6 )
+
 	-- Screen
 	screen = act:newImage( "screen.png", { width=200 })
 	screen.x = act.xCenter
@@ -210,77 +244,56 @@ function act:init()
 	panel.x = act.xCenter
 	panel.y = act.yCenter + 50
 
-	button.one = act:newImage( "1key.png", { width=50 } )
-	button.one.x = panel.x - 60
-	button.one.y = panel.y - 90
-	button.one.name = 1
-	button.one:addEventListener( "tap", keyPressed )
+	-- Buttons
+	button.one = createButton( 1, panel.x - 60, panel.y - 90, 
+		"media/doorLock/buttons/1key.png", "media/doorLock/buttons/1key_p.png" )
 
-	button.two = act:newImage( "2key.png", { width=50 } )
-	button.two.x = panel.x
-	button.two.y = panel.y - 90
-	button.two.name = 2
-	button.two:addEventListener( "tap", keyPressed )
+	button.two = createButton( 2, panel.x, panel.y - 90, 
+		"media/doorLock/buttons/2key.png", "media/doorLock/buttons/2key_p.png" )
 
-	button.three = act:newImage( "3key.png", { width=50 } )
-	button.three.x = panel.x + 60
-	button.three.y = panel.y - 90
-	button.three.name = 3
-	button.three:addEventListener( "tap", keyPressed )
+	button.three = createButton( 3, panel.x + 60, panel.y - 90, 
+		"media/doorLock/buttons/3key.png", "media/doorLock/buttons/3key_p.png" )
 
-	button.four = act:newImage( "4key.png", { width=50 } )
-	button.four.x = panel.x - 60
-	button.four.y = panel.y - 30
-	button.four.name = 4
-	button.four:addEventListener( "tap", keyPressed )
+	button.four = createButton( 4, panel.x - 60, panel.y - 30, 
+		"media/doorLock/buttons/4key.png", "media/doorLock/buttons/4key_p.png" )
 
-	button.five = act:newImage( "5key.png", { width=50 } )
-	button.five.x = panel.x
-	button.five.y = panel.y - 30
-	button.five.name = 5
-	button.five:addEventListener( "tap", keyPressed )
+	button.five = createButton( 5, panel.x, panel.y - 30, 
+		"media/doorLock/buttons/5key.png", "media/doorLock/buttons/5key_p.png" )
 
-	button.six = act:newImage( "6key.png", { width=50 } )
-	button.six.x = panel.x + 60
-	button.six.y = panel.y - 30
-	button.six.name = 6
-	button.six:addEventListener( "tap", keyPressed )
+	button.six = createButton( 6, panel.x + 60, panel.y - 30, 
+		"media/doorLock/buttons/6key.png", "media/doorLock/buttons/6key_p.png" )
 
-	button.seven = act:newImage( "7key.png", { width=50 } )
-	button.seven.x = panel.x - 60
-	button.seven.y = panel.y + 30
-	button.seven.name = 7
-	button.seven:addEventListener( "tap", keyPressed )
+	button.seven = createButton( 7, panel.x - 60, panel.y + 30, 
+		"media/doorLock/buttons/7key.png", "media/doorLock/buttons/7key_p.png" )
 
-	button.eight = act:newImage( "8key.png", { width=50 } )
-	button.eight.x = panel.x
-	button.eight.y = panel.y + 30
-	button.eight.name = 8
-	button.eight:addEventListener( "tap", keyPressed )
+	button.eight = createButton( 8, panel.x, panel.y + 30, 
+		"media/doorLock/buttons/8key.png", "media/doorLock/buttons/8key_p.png" )
 
-	button.nine = act:newImage( "9key.png", { width=50 } )
-	button.nine.x = panel.x + 60
-	button.nine.y = panel.y + 30
-	button.nine.name = 9
-	button.nine:addEventListener( "tap", keyPressed )
+	button.nine = createButton( 9, panel.x + 60, panel.y + 30, 
+		"media/doorLock/buttons/9key.png", "media/doorLock/buttons/9key_p.png" )
 
-	button.clear = act:newImage( "clear.png", { width=50 } )
-	button.clear.x = panel.x - 60
-	button.clear.y = panel.y + 90
-	button.clear.name = "clr"
-	button.clear:addEventListener( "tap", keyPressed )
+	button.clear = createButton( "clr", panel.x - 60, panel.y + 90, 
+		"media/doorLock/buttons/clear.png", "media/doorLock/buttons/clear_p.png" )
 
-	button.zero = act:newImage( "0key.png", { width=50 } )
-	button.zero.x = panel.x
-	button.zero.y = panel.y + 90
-	button.zero.name = 0
-	button.zero:addEventListener( "tap", keyPressed )
+	button.zero = createButton( 0, panel.x, panel.y + 90, 
+		"media/doorLock/buttons/0key.png", "media/doorLock/buttons/0key_p.png" )
 
-	button.enter = act:newImage( "enter.png", { width=50 } )
-	button.enter.x = panel.x + 60
-	button.enter.y = panel.y + 90
-	button.enter.name = "ent"
-	button.enter:addEventListener( "tap", keyPressed )
+	button.enter = createButton( "ent", panel.x + 60, panel.y + 90, 
+		"media/doorLock/buttons/enter.png", "media/doorLock/buttons/enter_p.png" )
+
+	act.group:insert( button.one )
+	act.group:insert( button.two )
+	act.group:insert( button.three )
+	act.group:insert( button.four )
+	act.group:insert( button.five )
+	act.group:insert( button.six )
+	act.group:insert( button.seven )
+	act.group:insert( button.eight )
+	act.group:insert( button.nine )
+	act.group:insert( button.clear )
+	act.group:insert( button.zero )
+	act.group:insert( button.enter )
+
 end
 
 
