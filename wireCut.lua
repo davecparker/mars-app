@@ -30,13 +30,21 @@ local function backButtonPress ( event )
 	game.gotoAct ( "mainAct" )
 end
 
+-- function to remove everything when the toolbox closes
+local function toolBoxClose ()
+	toolWindow:removeSelf()
+	toolWindow = nil
+end
+
 -- function for the toolbox touch
 local function toolboxTouch (event) 
 	if event.phase == "began" then
 		if toolWindow == nil then
 			transition.cancel( toolbox ) -- kill the blinking
 			toolbox.alpha = 1   -- set the alpha of the toolbox back to 1
-			toolWindow = display.newRect( act.group, act.xCenter, act.yCenter, 300, 300 )
+			toolWindow = act:newImage ( "toolboxInside.png", { width = 300, folder = "media/circuit" } )
+			toolWindow.x = act.xCenter
+			toolWindow.y = act.yCenter
 		end
 	end
 	return true
@@ -138,6 +146,15 @@ local function wireNoCut ( x, y )
 	return w
 end
 
+-- function for closing the toolbox by touching the screen
+local function bgTouch (event) 
+	if event.phase == "began" then
+		if toolWindow then
+			toolBoxClose()
+		end
+	end
+end
+
 -- Handle touches on the background by updating the text displays=============================================================
 --local function touched( event )
 --	-- Get touch location but pin to the act bounds
@@ -156,6 +173,7 @@ function act:init()
 
 	-- background image
 	local wireCutBG = act:newImage ( "wireCutBG.jpg", { width = 320} )
+	wireCutBG:addEventListener( "touch", bgTouch )
 	wireCutBG.y = act.yCenter + 20
 	wireCutBG.x = act.xCenter
 	--wireCutBG:addEventListener( "touch", touched )--====================================================================================
