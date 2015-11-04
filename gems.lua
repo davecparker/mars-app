@@ -54,7 +54,7 @@ end
 -- Grab the gem with the given icon, display it for the user in a message box, 
 -- then mark it as used and remove it from the screen.
 function gems.grabGemIcon( icon )
-    -- Make text for the message box and display it
+    -- Make text for the message box
     local text
     local gem = icon.gem
     if gem.t == "doc" then
@@ -77,7 +77,10 @@ function gems.grabGemIcon( icon )
     else
         return  -- not a grabable gem
     end
-    game.messageBox( text )
+
+    -- Display message box zooming out from the gem's location
+    local x, y = icon:localToContent( 0, 0 )
+    game.messageBox( text, { x = x, y = y } )
 
     -- Use and remove the gem
 	game.saveState.usedGems[icon.name] = true

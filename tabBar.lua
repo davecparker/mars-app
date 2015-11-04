@@ -57,7 +57,7 @@ function initTabBar()
     tabBar = widget.newTabBar
     {
     	left = game.xMin,
-        top = game.yMax - game.dyTabBar,
+        top = game.yMax - game.dyTabBar + 1,
         width = game.width,
         height = game.dyTabBar,
         backgroundFile = "media/game/redGradient.png",
