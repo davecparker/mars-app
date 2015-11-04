@@ -17,6 +17,8 @@ game.addOxygen( liters )              -- Add or subtract oxygen
 game.addWater( liters )               -- Add or subtract water
 game.addEnergy( kWh )                 -- Add or subtract energy
 game.addFood( kg )                    -- Add or subtract food
+game.messageBox( text, options )      -- Display message box
+game.endMessageBox()                  -- Dismiss active message box if any
 
 -- Game functions defined in Act.lua
 game.gotoAct( name, options )         -- Run a given activity/view
