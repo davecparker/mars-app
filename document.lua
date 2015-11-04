@@ -27,6 +27,7 @@ local function backTapped()
 	-- "Close" the document being viewed, and go back to the documents list view
 	game.openDoc = nil
 	game.gotoAct( "documents", { effect = "slideRight", time = 300 } )
+	return true
 end
 
 -- Init the act

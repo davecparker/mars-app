@@ -19,6 +19,7 @@ local act = game.newAct()
 
 -- List of activities that can be run directly from the debug menu
 local debugActs = {
+	"mainAct",
 	"layoutTool",
 	"sampleAct",
 	"blankAct",
@@ -57,8 +58,7 @@ function onRowTouch( event )
 	--if event.phase == "tap" or event.phase == "release" then
 		-- Run the selected activity module and remember it for next startup
 		local actName = debugActs[event.target.index]
-		game.saveState.startAct = actName
-		game.selectGameTab( 0 )  -- Pretend that no actual tab is selected
+		game.selectGameTab( 1 )  -- Debug acts run off the main tab
 		game.gotoAct( actName )  
 	--end
 end
