@@ -29,10 +29,8 @@ local toolbox
 
 -- function to remove everything when the toolbox closes
 local function toolBoxClose ()
-	wrench.button:removeSelf()
-	wrench.button = nil
-	wrench:removeSelf()
-	wrench = nil
+	toolWindow.wrenchButton:removeSelf()
+	toolWindow.wrenchButton = nil
 	toolWindow:removeSelf()
 	toolWindow = nil
 end
@@ -60,14 +58,17 @@ local function toolboxTouch (event)
 			end
 			transition.cancel( toolbox ) -- kill the blinking
 			toolbox.alpha = 1   -- set the alpha of the toolbox back to 1
-			toolWindow = display.newRect( act.group, act.xCenter, act.yCenter, 300, 300 )
-			wrench = act:newImage( "wrench.png",  { width = 120 } )
-			wrench.rotation = 45
-			wrench.x = act.xCenter - 80
-			wrench.y = act.yCenter - 80
-			wrench.button = widget.newButton { width = 100, height = 100, onEvent = wrenchTouch }
-			wrench.button.x = act.xCenter - 80
-			wrench.button.y = act.yCenter - 80
+			--toolWindow = display.newRect( act.group, act.xCenter, act.yCenter, 300, 300 )
+			toolWindow = act:newImage ( "toolboxInside.png", { width = 300 } )
+			toolWindow.x = act.xCenter
+			toolWindow.y = act.yCenter
+			--wrench = act:newImage( "wrench.png",  { width = 120 } )
+			--wrench.rotation = 45
+			--wrench.x = act.xCenter - 80
+			--wrench.y = act.yCenter - 80
+			toolWindow.wrenchButton = widget.newButton { width = 100, height = 120, onEvent = wrenchTouch }
+			toolWindow.wrenchButton.x = act.xCenter - 80
+			toolWindow.wrenchButton.y = act.yCenter - 80
 		end
 	end
 	return true
