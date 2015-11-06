@@ -58,7 +58,7 @@ local speedText
 local elevation = 100 -- terrain elevation
 local terrainExcess = 100 -- off display terrain amount
 local terrainOffset = -80 -- terrain offset
-local terrainColor = { 0.7, 0.35, 0.25 }
+local terrainColor = { 0.8, 0.35, 0.25 }
 local obstacleColor = { 0.3, 0.1, 0.1 }
 
 -- Create new 1-corona unit wide terrain component rectangle 
@@ -74,24 +74,27 @@ end
 -- Create new circle terrain component
 -- Accepts circle x, y coordinates, returns circle display object
 local function randCircle( x, y, r )
-	local yDev = math.random( r * 0.5, r * 0.7 ) -- randomly vary y coord w/radius
+	local yDev = math.random( r * 0.7, r * 0.9 ) -- randomly vary y coord w/radius
 	local circle = display.newCircle( dynamicGrp, x, y + yDev, r )
+	physics.addBody( circle, "static", { friction = 1.0, radius = r } )
 	return circle
 end
 
 -- Create new square of random side length
 -- Accepts square x, y coordinates, returns square display object
 local function randSquare( x, y, s )
-	local square = display.newRect( dynamicGrp, x, y + s/10, s, s )
+	local square = display.newRect( dynamicGrp, x, y + s/3, s, s )
 	square.rotation = math.random( 30, 60 ) -- random rotation for variation
+	physics.addBody( square, "static", { friction = 1.0 } )
 	return square
 end
 
 -- Create new rounded square of random side length
 -- Accepts square x, y coordinates, returns rounded square display object
 local function randRoundSquare( x, y, s )
-	local square = display.newRoundedRect( dynamicGrp, x, y + s/10, s, s, s/4 )
+	local square = display.newRoundedRect( dynamicGrp, x, y + s/3, s, s, s/4 )
 	square.rotation = math.random( 30, 60 )
+	physics.addBody( square, "static", { friction = 1.0 } )
 	return square
 end
 
@@ -101,8 +104,9 @@ local function randPoly( x, y, s )
 	local l = math.random( 3, 10 )
 	local vertices = { x, y, x + s, y - s, x + s + l, y - s, x + 2 * s + l, y }
 	local rotation = math.random( -20, 20 )
-	local poly = display.newPolygon( dynamicGrp, x, y - 1 + math.abs( rotation/15 ), vertices )
+	local poly = display.newPolygon( dynamicGrp, x, y + 1.5, vertices )
 	poly.rotation = rotation
+	physics.addBody( poly, "static", { friction = 1.0 } )
 	return poly
 end
 
@@ -116,16 +120,31 @@ local function newTerrain( nObstacles)
 	for i = 1, nObstacles do
 		-- obsolete: local x = math.random( (i - 1) * zoneLength, i * zoneLength ) + terrainOffset
 		local x = math.random( (i - 1) + terrainOffset, act.width + terrainExcess + terrainOffset )
+		local y = act.yMax - elevation
 		local size = math.random( 5, 10 )
-		obstacle[i] = shape[math.random(1, 4)]( x, act.yMax - elevation, size )
+		obstacle[i] = shape[math.random(1, 4)]( x, y, size )
 		obstacle[i]:setFillColor( unpack(obstacleColor)  )
-		physics.addBody( obstacle[i], "static", { friction = 1.0 } )
 	end
 
 	-- fill terrain with rectangles to span display width plus terrainExcess
 	for i = 1, act.width + terrainExcess do
 		terrain[i] = newRectangle( i - 1 + terrainOffset, elevation )
 	end
+end
+
+-- create new rover map location tracking dot
+local function newMapDot()
+	local dotData = { 
+		parent = staticGrp, 
+		x = game.saveState.roverCoord.x1, 
+		y = game.saveState.roverCoord.y1, 
+		width = 6, 
+		height = 6 
+	} 
+
+	map.rover = act:newImage( "tracking_dot1.png", dotData )
+	map.rover.x = game.saveState.roverCoord.x1 
+	map.rover.y = game.saveState.roverCoord.y1 
 end
 
 -- Create the rover
@@ -213,18 +232,7 @@ local function newRover( roverY )
 		wheelToBodyJoint[1].frequency = 0.5
 	end
 --]]
-	-- create rover map location tracking dot
-	local dotData = { 
-		parent = staticGrp, 
-		x = game.saveState.roverCoord.x1, 
-		y = game.saveState.roverCoord.y1, 
-		width = 7, 
-		height = 7 
-	} 
-
-	map.rover = act:newImage( "tracking_dot1.png", dotData )
-	map.rover.x = game.saveState.roverCoord.x1 
-	map.rover.y = game.saveState.roverCoord.y1 
+	newMapDot()
 end
 
 -- Accelerate the rover up to angular velocity of 8000 w/higher initial acceleration
@@ -287,26 +295,51 @@ local function mapTouched( event )
 		local x2 = event.x
 		local y2 = event.y
 
+		map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
+
+		-- if course exists, calculate unit vectors & find map boundary intersection point
+		if map.courseLength > 0 then
+			map.courseVX = (x2 - x1)/map.courseLength
+			map.courseVY = (y2 - y1)/map.courseLength
+
+			for i = 1, math.max(map.width, map.height) do
+				if game.xyInRect(x2 + map.courseVX, y2 + map.courseVY, map) then
+					x2 = x2 + map.courseVX
+					y2 = y2 + map.courseVY
+				else
+					x2 = x2 - 2 * map.courseVX
+					y2 = y2 - 2 * map.courseVY
+					break
+				end
+			end
+		else
+			map.courseVX = 0
+			map.courseVY = 0
+		end
+
 		-- set global variables to new destination coordinates
 		game.saveState.roverCoord.x2 = x2
 		game.saveState.roverCoord.y2 = y2
 
 		-- remove old course, draw new course
 		display.remove( map.course )
+		display.remove( map.courseArrow )
 		map.course = display.newLine( staticGrp, x1, y1, x2, y2 )
-		map.course:setStrokeColor( 1, 1, 1, 0.7 )
-		map.course.strokeWidth = 1.5
-		map.rover:toFront()
-		map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
+		map.course:setStrokeColor( 1, 1, 1 )
+		map.course.strokeWidth = 2
 
-		-- if a course has been selected, calculate unit vectors, else set to zero
-		if map.courseLength > 0 then
-			map.courseVX = (x2 - x1)/map.courseLength
-			map.courseVY = (y2 - y1)/map.courseLength
-		else
-			map.courseVX = 0
-			map.courseVY = 0
-		end
+		-- create course arrow and rotate according to course direction
+		local arrowData = { 
+			parent = staticGrp, 
+			x = x2 + 2 * map.courseVX, 
+			y = y2 + 2 * map.courseVY, 
+			height = 10 
+		} 
+		
+		map.courseArrow = act:newImage( "arrow.png", arrowData )
+		map.courseArrow.anchorY = 0
+		map.courseArrow.rotation = math.deg(math.atan2(y2 - y1, x2 - x1)) + 90
+		map.rover:toFront()	
 	end
 	return true
 end
@@ -361,10 +394,24 @@ local function moveRover()
 
 			-- replace old course with new course
 			display.remove( map.course )
+			display.remove( map.courseArrow )
 			map.course = display.newLine( staticGrp, x1, y1, x2, y2 )
-			map.course:setStrokeColor( 1, 1, 1, 0.7 )
-			map.course.strokeWidth = 1.5
-			map.rover:toFront()
+			map.course:setStrokeColor( 1, 1, 1 )
+			map.course.strokeWidth = 2
+
+			-- create course arrow
+			local arrowData = { 
+				parent = staticGrp, 
+				x = x2 + 2 * map.courseVX, 
+				y = y2 + 2 * map.courseVY, 
+				height = 10 
+			} 
+			
+			map.courseArrow = act:newImage( "arrow.png", arrowData )
+			map.courseArrow.anchorY = 0
+			map.courseArrow.rotation = math.deg(math.atan2(y2 - y1, x2 - x1)) + 90
+			map.rover:toFront()	
+
 			map.rover.x = game.saveState.roverCoord.x1
 			map.rover.y = game.saveState.roverCoord.y1
 		-- if rover has reached destination, then stop & set coords to destination coords
@@ -374,6 +421,7 @@ local function moveRover()
 			map.rover.x = game.saveState.roverCoord.x1
 			map.rover.y = game.saveState.roverCoord.y1
 			display.remove( map.course )
+			display.remove( map.courseArrow )
 			rover.angularV = 0
 		end
 	end
@@ -458,7 +506,7 @@ local function newDisplay()
 	{
 		parent = staticGrp,
 		text = string.format( format, 0, "kph" ),
-		x = act.xMax - 20,
+		x = act.xMax - 10,
 		y = 20,
 		font = native.systemFontBold,
 		fontSize = 18,
@@ -468,7 +516,7 @@ local function newDisplay()
 	speedText:setFillColor( 0.0, 1.0, 0.0 )
 	speedText.anchorX = 1
 	speedText.anchorY = 0
-	speedText.x = act.xMax - 20
+	speedText.x = act.xMax - 10
 	speedText.y = act.yMin + 10
 	speedText.format = format
 end
@@ -509,7 +557,7 @@ function act:init()
 
 	-- initialize rover map starting coordinates to map center
 	game.saveState.roverCoord.x1 = act.xCenter
-	game.saveState.roverCoord.y1 = act.yMin + 150
+	game.saveState.roverCoord.y1 = act.yMin + act.height/6
 
 	-- set sky background
 	local skyData = { 
@@ -532,15 +580,20 @@ function act:init()
 	local mapData = { 
 		parent = staticGrp, 
 		x = act.xCenter, 
-		y = act.yMin + 150, 
-		width = 320, 
-		height = 300
+		y = act.yMin, 
+		height = act.height/3
 	} 
 
 	map = act:newImage( "valles_marineris1.jpg", mapData )
+	map.anchorY = 0
 	map.x = act.xCenter
-	map.y = act.yMin + 150
+	map.y = act.yMin
+	map.left = act.xCenter - map.width/2
+	map.right = map.left + map.width
+	map.top = act.yMin
+	map.bottom = map.top + map.height
 	map.course = nil
+	map.courseArrow = nil
 	map.courseLength = 0
 	map.courseVX = 0
 	map.courseVY = 0
@@ -574,7 +627,7 @@ function act:init()
 	}
 
 	-- create the terrain and the rover
-	newTerrain( 5 )
+	newTerrain( 20 )
 	newRover( act.yMax - 112 )
 	newDisplay()
 	staticGrp:insert( stopButton )
