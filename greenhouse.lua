@@ -47,14 +47,6 @@ local function waterPlant( plant )
 			time = 500, onComplete = dropsDone } )
 end
 
--- Remove the plant
-local function removePlant( plant )
-	if plant.flowers then
-		plant.flowers:removeSelf()
-	end
-	plant:removeSelf()
-end
-
 -- Touch handler for plants
 local function touchPlant( event )
 	if event.phase == "began" then
@@ -62,16 +54,27 @@ local function touchPlant( event )
 
 		-- Process plant based on its state
 		if plant.health <= 0 then
-			removePlant( plant )    -- Remove dead plant
+			-- Remove dead plant
+			if not plant.beingRemoved then
+				plant.beingRemoved = true
+				transition.to( plant, { xScale = 1, yScale = 1, alpha = 0, 
+						time = 500, onComplete = game.removeObj })
+			end
 		elseif plant.flowers then
-			-- Harvest this plant
-			removePlant( plant )
-			game.addFood( 10 )
-			game.messageBox( "10 kg of food")
-		elseif game.water() <= 0 then
-			game.messageBox( "Out of water!" )
+			-- Harvest mature plant
+			if not plant.beingHarvested then 
+				plant.beingHarvested = true
+				transition.fadeOut( plant, { time = 500, onComplete = game.removeObj } )
+				game.addFood( 10 )
+				game.floatMessage( "10 kg food", event.x, event.y )
+			end
 		else
-			waterPlant( plant )
+			-- Water the plant
+			if game.water() <= 0 then
+				game.messageBox( "Out of water!" )
+			else
+				waterPlant( plant )
+			end
 		end
 	end
 	return true
@@ -80,11 +83,13 @@ end
 -- Make a new plant at the given location
 local function makePlant( x, y )
 	local size = 40
-	local plant = act:newImage( "plant.png", { parent = plants, height = size } )
+	local plant = act:newGroup( plants )
 	plant.x = x
 	plant.y = y + size / 2
-	plant.anchorY = 1   -- grow from bottom up
-	plant:setFillColor( 0, 0.6, 0 )
+	local leaves = act:newImage( "plant.png", { parent = plant, height = size, x = 0, y = 0 } )
+	leaves.anchorY = 1   -- grow from bottom up
+	leaves:setFillColor( 0, 0.6, 0 )
+	plant.leaves = leaves
 	plant.health = maxHealth
 	plant:addEventListener( "touch", touchPlant )
 end
@@ -101,7 +106,7 @@ end
 local function adjustPlantColor( plant )
 	if plant.health <= 0 then
 		-- Color dead plants dark brown and remove flowers
-		plant:setFillColor( 0.5, 0.25, 0 )
+		plant.leaves:setFillColor( 0.5, 0.25, 0 )
 		if plant.flowers then
 			plant.flowers:removeSelf()
 		end
@@ -114,7 +119,7 @@ local function adjustPlantColor( plant )
 		local r = ihf * deadColor.r + hf * goodColor.r 
 		local g = ihf * deadColor.g + hf * goodColor.g 
 		local b = ihf * deadColor.b + hf * goodColor.b 
-		plant:setFillColor( r, g, b )
+		plant.leaves:setFillColor( r, g, b )
 		-- TODO: wither flowers  
 	end
 end
@@ -122,13 +127,11 @@ end
 -- Add flowers to the plant if it doesn't already have them
 local function addFlowers( plant )
 	if not plant.flowers then
-		local flowers = act:newGroup()
-		flowers.x = plant.x
-		flowers.y = plant.y
-		local size = 25
-		act:newImage( "flower.png", { parent = flowers, width = size, x = 0, y = -50 } )
-		act:newImage( "flower.png", { parent = flowers, width = size, x = 20, y = -30} )
-		act:newImage( "flower.png", { parent = flowers, width = size, x = -10, y = -20 } )
+		local flowers = act:newGroup( plant )
+		local size = 8   -- in unscaled plant units
+		act:newImage( "flower.png", { parent = flowers, width = size, x = 0, y = -20 } )
+		act:newImage( "flower.png", { parent = flowers, width = size, x = 7, y = -15} )
+		act:newImage( "flower.png", { parent = flowers, width = size, x = -5, y = -10 } )
 		plant.flowers = flowers
 	end
 end
@@ -180,6 +183,7 @@ end
 -- Prepare the act
 function act:prepare()
 	-- Start a repeating timer for time action
+	assert( timerID == nil )
 	timerID = timer.performWithDelay( msTimer, timerTick, 0 )
 end
 
