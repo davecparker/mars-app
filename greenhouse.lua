@@ -23,14 +23,14 @@ local timerID  -- repeating timer
 
 
 -- Called when the drops are done animating
-function dropsDone( drops )
+local function dropsDone( drops )
 	-- Water increases the plant's health
-	drops.plant.health = game.pinValue( drops.plant.health + 20, 0, maxHealth )
+	drops.plant.health = game.pinValue( drops.plant.health + 25, 0, maxHealth )
 	drops:removeSelf()
 end
 
 -- Water the plant
-function waterPlant( plant )
+local function waterPlant( plant )
 	-- Make a group of 3 drops
 	local drops = act:newGroup()
 	drops.x = plant.x
@@ -48,7 +48,7 @@ function waterPlant( plant )
 end
 
 -- Remove the plant
-function removePlant( plant )
+local function removePlant( plant )
 	if plant.flowers then
 		plant.flowers:removeSelf()
 	end
@@ -56,7 +56,7 @@ function removePlant( plant )
 end
 
 -- Touch handler for plants
-function touchPlant( event )
+local function touchPlant( event )
 	if event.phase == "began" then
 		local plant = event.target
 
@@ -78,7 +78,7 @@ function touchPlant( event )
 end
 
 -- Make a new plant at the given location
-function makePlant( x, y )
+local function makePlant( x, y )
 	local size = 40
 	local plant = act:newImage( "plant.png", { parent = plants, height = size } )
 	plant.x = x
@@ -90,7 +90,7 @@ function makePlant( x, y )
 end
 
 -- Touch handler for the dirt background
-function touchDirt( event )
+local function touchDirt( event )
 	if event.phase == "began" then
 		makePlant( event.x, event.y )
 	end
@@ -98,7 +98,7 @@ function touchDirt( event )
 end
 
 -- Set a plant's color based on its health
-function adjustPlantColor( plant )
+local function adjustPlantColor( plant )
 	if plant.health <= 0 then
 		-- Color dead plants dark brown and remove flowers
 		plant:setFillColor( 0.5, 0.25, 0 )
@@ -120,7 +120,7 @@ function adjustPlantColor( plant )
 end
 
 -- Add flowers to the plant if it doesn't already have them
-function addFlowers( plant )
+local function addFlowers( plant )
 	if not plant.flowers then
 		local flowers = act:newGroup()
 		flowers.x = plant.x
@@ -134,7 +134,7 @@ function addFlowers( plant )
 end
 
 -- Called for each timer tick
-function timerTick()
+local function timerTick()
 	-- Grow/adjust all the plants
 	for i = 1, plants.numChildren do
 		-- Time decreases plant health due to need for more water
@@ -145,13 +145,19 @@ function timerTick()
 		if plant.xScale >= 3 and plant.health >= 70 then
 			-- Large, healthy plants make flowers and are ready to pick for food
 			addFlowers( plant )
-		elseif plant.xScale < 3 and plant.health > 50 then
+		elseif plant.xScale < 3 and plant.health > 80 then
 			-- Healthy plants grow (up to a certain size)
 			local newScale = plant.xScale * 1.02
 			transition.cancel( plant )
 			transition.to( plant, { xScale = newScale, yScale = newScale, time = msTimer } )
 		end
 	end
+end
+
+-- Handle tap on the back button
+local function backButtonPress ( event )
+	game.gotoAct ( "mainAct" )
+	return true
 end
 
 -- Init the act
@@ -163,6 +169,12 @@ function act:init()
 	-- Group for plants
 	plants = act:newGroup()
 
+	-- back button
+	local backButton = act:newImage( "backButton.png", { width = 50 } )
+	backButton.x = act.xMin + 30
+	backButton.y = act.yMin + 30
+	backButton:addEventListener( "tap", backButtonPress )
+	backButton:addEventListener( "touch", game.eatTouch )
 end
 
 -- Prepare the act
