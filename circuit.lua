@@ -219,6 +219,7 @@ end
 -- function to send you back when you press the back button
 local function backButtonPress ( event )
 	game.gotoAct ( "mainAct" )
+	return true
 end
 
 ------------------------- Start of Activity ----------------------------------------------------
