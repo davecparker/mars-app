@@ -38,6 +38,13 @@ local game = {
             y2 = 0
         },
 
+        thrustNav = {
+            onTarget = false,
+            latestXTargetDelta = 100,
+            latestYTargetDelta = 100
+            shipSpinning = true
+        },
+            
         -- List of document filenames that user has found
         docs = {},
     },     
