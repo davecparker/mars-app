@@ -80,8 +80,8 @@ local function checkNewMsg()
 		msgs[#msgs + 1] = id
 		local str = msgText[id]
 
-		-- Calculate x metrics for the messages
-		local x = act.xMin + dxyMargin
+		-- Calculate x metrics for the messages (wrt the scrollView)
+		local x = dxyMargin
 		local textWidth = act.width - dxyMargin * 2 - dxyMarginText * 2
 
 		-- Create a multi-line wrapped text object for the message string

@@ -164,9 +164,9 @@ local function zoomToRoom( room )
 	iconGroup = act:newGroup( shipGroup )   -- icons are centered on the ship
 	iconGroup.alpha = 0   -- will be faded in
 
-	-- Find all unused gems that are in the bounds of the zoomed room
+	-- Find all active gems that are in the bounds of the zoomed room
 	for name, gem in pairs( gems.onShip ) do
-		if not gems.gemIsUsed( name ) and game.xyInRect( gem.x, gem.y, room ) then
+		if gems.shipGemIsActive( name ) and game.xyInRect( gem.x, gem.y, room ) then
 			local icon = gems.newGemIcon( iconGroup, name, gem )
 			icon:addEventListener( "tap", gemTapped )
 		end
@@ -257,7 +257,8 @@ local function touchMap( event )
 						-- Use the doorLock act
 						game.lockedRoom = room
 						game.doorCode = room.doorCode
-						game.gotoAct( "doorLock" ) 
+						game.gotoAct( "doorLock" )
+						gems.enableShipGem( "codeDoc1" )   -- TODO: Temp 
 					else
 						-- Not locked, just go inside
 						zoomToRoom( room )

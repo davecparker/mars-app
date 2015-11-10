@@ -68,12 +68,6 @@ end
 
 -- Prepare the view before it shows
 function act:prepare()
-	-- If a document is open then go to single document view
-	if game.openDoc then 
-		game.gotoAct( "document" )
-		return
-	end
-
 	-- Make sure that there are enough rows for the list of found docs
 	-- (Note that documents never get deleted so the list never shrinks)
 	local docs = game.saveState.docs

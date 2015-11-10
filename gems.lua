@@ -9,36 +9,44 @@
 local game = globalGame
 
 
--- The different gem data table formats are:
---    Act link: { x = xCoord, y = yCoord, t = "act", act = actName, param = optionalData }
---    Document: { x = xCoord, y = yCoord, t = "doc", file = fileName }
---    Resource: { x = xCoord, y = yCoord, t = "res", res = "o2"/"h2o"/"kWh"/"food", amount = n }
+-- The gem data table formats all include: 
+--    { x = xCoord, y = yCoord, enabled = true/nil }
+-- plus additional data depending on the type of the gem:
+--    Act link: { t = "act", act = actName, param = optionalData }
+--    Document: { t = "doc", file = fileName }
+--    Resource: { t = "res", res = "o2"/"h2o"/"kWh"/"food", amount = n }
 
 -- All gems in the game
 local gems = {
 	-- Gems on the ship
 	onShip = {
         -- In Bridge
-        fly1 =      { x = 0, y = -230, t = "act", act = "thrustNav", param = 1 },
+        fly1 =      { x = 0, y = -230, t = "act", act = "thrustNav", param = 1, enabled = true },
 
         -- In Rover Bay
-        rover =     { x = -125, y = 125, t = "act", act = "rover" },
-        battR1 =    { x = -120, y = 90, t = "res", res = "kWh", amount = 100 },
-        battR2 =    { x = -100, y = 90, t = "res", res = "kWh", amount = 100 },
-        battR3 =    { x = -80,  y = 90, t = "res", res = "kWh", amount = 100 },
+        rover =     { x = -125, y = 125, t = "act", act = "rover", enabled = true },
+        battR1 =    { x = -120, y = 90, t = "res", res = "kWh", amount = 100, enabled = true  },
+        battR2 =    { x = -100, y = 90, t = "res", res = "kWh", amount = 100, enabled = true  },
+        battR3 =    { x = -80,  y = 90, t = "res", res = "kWh", amount = 100, enabled = true  },
 
         -- In Lab
-        h2oL1 =     { x = 130,  y = 10, t = "res", res = "h2o", amount = 50 },
-        o2L1 =      { x = 130,  y = 30, t = "res", res = "o2", amount = 50 },     
-        foodL1 =    { x = 130,  y = 50, t = "res", res = "food", amount = 50 },     
+        h2oL1 =     { x = 130,  y = 10, t = "res", res = "h2o", amount = 50, enabled = true  },
+        o2L1 =      { x = 130,  y = 30, t = "res", res = "o2", amount = 50, enabled = true  },     
+        foodL1 =    { x = 130,  y = 50, t = "res", res = "food", amount = 50, enabled = true  },     
         codeDoc1 =  { x = 80, y = 70, t = "doc", file = "Security Announcement" },
-        resDoc1 =   { x = 110, y = 70, t = "doc", file = "Resource Management" },
+        resDoc1 =   { x = 110, y = 70, t = "doc", file = "Resource Management", enabled = true  },
+
+        -- In Greenhouse
+        h2oG1 =     { x = 30,  y = 120, t = "res", res = "h2o", amount = 20, enabled = true  },
+        h2oG2 =     { x = 30,  y = 150, t = "res", res = "h2o", amount = 20, enabled = true  },
+        h2oG3 =     { x = 30,  y = 180, t = "res", res = "h2o", amount = 20, enabled = true  },
+        plants =    { x = 80,  y = 130, t = "act", act = "greenhouse", enabled = true },
  
 		-- In Engineering room 
-		panel1 =	{ x = -10, y = 230, t = "act", act = "circuit", param = 1, },
-		panel2 =	{ x = -40, y = 230, t = "act", act = "circuit", param = 2, },
-		panelDoc = 	{ x = -85, y = 230, t = "doc", file = "Circuit Manual" },
-		battE1 = 	{ x = -50, y = 170, t = "res", res = "kWh", amount = 150 },
+		panel1 =	{ x = -10, y = 230, t = "act", act = "circuit", param = 1, enabled = true },
+		panel2 =	{ x = -40, y = 230, t = "act", act = "circuit", param = 2, enabled = true  },
+		panelDoc = 	{ x = -85, y = 230, t = "doc", file = "Circuit Manual", enabled = true  },
+		battE1 = 	{ x = -50, y = 170, t = "res", res = "kWh", amount = 150, enabled = true  },
 	},
 
 	-- Gems on Mars
@@ -46,15 +54,21 @@ local gems = {
 	},
 }
 
--- Return true if the gem with the given name has been used
-function gems.gemIsUsed( name )
-	return game.saveState.usedGems[name]
+
+-- Return true if the ship gem with the given name is active (enabled and not used)
+function gems.shipGemIsActive( name )
+    return gems.onShip[name].enabled and not game.saveState.usedGems[name]
+end
+
+-- Enable or disable (default enable) the ship gem with the given name
+function gems.enableShipGem( name, enable )
+    gems.onShip[name].enabled = enable or true
 end
 
 -- Grab the gem with the given icon, display it for the user in a message box, 
 -- then mark it as used and remove it from the screen.
 function gems.grabGemIcon( icon )
-    -- Make text for the message box and display it
+    -- Make text for the message box
     local text
     local gem = icon.gem
     if gem.t == "doc" then
@@ -77,7 +91,10 @@ function gems.grabGemIcon( icon )
     else
         return  -- not a grabable gem
     end
-    game.messageBox( text )
+
+    -- Display message box zooming out from the gem's location
+    local x, y = icon:localToContent( 0, 0 )
+    game.messageBox( text, { x = x, y = y } )
 
     -- Use and remove the gem
 	game.saveState.usedGems[icon.name] = true
