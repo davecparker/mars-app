@@ -9,8 +9,7 @@
 -- 
 -- Rocket controls act as if they are attached to nose of ship 
 -- Things to solve:
---    How to make space continuous for 360 degrees?
---    How to locate mars and put an arrow towards it
+--    How to move Mars with background when we go 360 around
 --    How to locate earth when it is targetted and say something funny
 --    Where to put sun, venus, ..
 --    Need little retro rocket image for buttons when pressed
@@ -39,6 +38,7 @@ local xyCenterText		-- text display object for touch location relative to center
 local ufo       		-- flying UFO object
 local mars           	-- planet mars
 local earth         	-- earth
+local sun         		-- sun
 local buttonTurnLeft   	-- button to turn ship left
 local buttonTurnRight  	-- button to turn ship right
 local buttonRollLeft   	-- button to Roll ship left
@@ -47,8 +47,8 @@ local buttonPitchUp    	-- button to pitch ship up
 local buttonPitchDown  	-- button to pitch ship down
 local ship             	-- ship object
 local spaceGroup    	-- group for rotating space background
-local xDelta, yDelta, rotDelta  -- positional deltas used on each enter frame
-local xDeltaInc, yDeltaInc, rotDeltaInc  -- increments for the deltas
+local xVelocity, yVelocity, rotVelocity  -- positional deltas used on each enter frame
+local xVelocityInc, yVelocityInc, rotVelocityInc  -- increments for the deltas
 local xTargetDelta, yTargetDelta  -- delta from Target
 local navStatsText     -- text string for nav stats
 local targetRect       -- Rectangle target area
@@ -67,10 +67,21 @@ end
 local function backButtonPress ( event )
 	if( ( math.abs( yTargetDelta ) < 2 ) and 
 		( math.abs( xTargetDelta ) < 2 ) and 
-		( xDelta == 0 ) ) then
+		( math.abs( xVelocity ) < 0.00001 ) and 
+		( math.abs( yVelocity ) < 0.00001 ) ) then
+		game.saveState.onTarget = true
 		game.messageBox( "Nicely Done!")
+	else
+		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
+			( math.abs( yVelocity )  > 0.00001) ) then
+			-- print ( xVelocity, yVelocity ) 
+			game.messageBox( "Still Spinning!")
+		elseif ( ( math.abs( yTargetDelta ) >= 2 ) or 
+			( math.abs( xTargetDelta ) >= 2 ) ) then
+			game.messageBox( "Still Off Target!")
+		end
 	end
-	if ( xDelta == 0 ) then
+	if ( xVelocity == 0 ) then
 		game.saveState.thrustNav.shipSpinning = false
 	end
 	-- saved for use in messages
@@ -102,7 +113,7 @@ end
 function buttonTurnLeftTouch (event)
 	if event.phase == "began" then
 		print("Turn Left Button")
-		xDelta = xDelta + xDeltaInc
+		xVelocity = xVelocity + xVelocityInc
 		printPositions()
 		updateEnergy()
 	end
@@ -113,7 +124,7 @@ end
 function buttonTurnRightTouch (event)
 	if event.phase == "began" then
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
-		xDelta = xDelta - xDeltaInc
+		xVelocity = xVelocity - xVelocityInc
 		printPositions()
 		updateEnergy()
 	end
@@ -124,7 +135,7 @@ end
 function buttonRollLeftTouch (event)
 	if event.phase == "began" then
 		print("Roll Left Button")
-		rotDelta = rotDelta + rotDeltaInc
+		rotVelocity = rotVelocity + rotVelocityInc
 		printPositions()
 		updateEnergy()
 	end
@@ -135,7 +146,7 @@ end
 function buttonRollRightTouch (event)
 	if event.phase == "began" then
 		print("Roll Right Button, rotation= ", spaceGroup.rotation )
-		rotDelta = rotDelta - rotDeltaInc
+		rotVelocity = rotVelocity - rotVelocityInc
 		printPositions()
 		updateEnergy()
 	end
@@ -146,7 +157,7 @@ end
 function buttonPitchUpTouch (event)
 	if event.phase == "began" then
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
-		yDelta = yDelta + yDeltaInc
+		yVelocity = yVelocity + yVelocityInc
 		printPositions()
 		updateEnergy()
 	end
@@ -157,7 +168,7 @@ end
 function buttonPitchDownTouch (event)
 	if event.phase == "began" then
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
-		yDelta = yDelta - yDeltaInc
+		yVelocity = yVelocity - yVelocityInc
 		printPositions()
 		updateEnergy()
 	end
@@ -227,7 +238,7 @@ function act:init()
 	print("bg=", bg )
 
 	local yText = act.yMin + 10
-	navStatsText = display.newText( act.group, "Hello", act.xCenter+10, yText, native.systemFont, 14 )
+	navStatsText = display.newText( act.group, "Hello", (act.xCenter-act.xMin) / 2, yText, native.systemFont, 14 )
 	navStatsText.anchorX = 0
 	navStatsText.anchorY = 0
 	print( "navStatsText=" , navStatsText )
@@ -243,11 +254,15 @@ function act:init()
     print("Mars anchorX=", mars.anchorX, "anchorY=", mars.anchorY )
     print("Mars is placed at ", mars.x, ",", mars.y , " in spaceGroup before move") 
 
-    earth = display.newImageRect( spaceGroup, "media/thrustNav/earth.png", 20, 20 )
-    earth.x = act.xMin + 2*act.width
-    earth.y = act.yMax - 100
+    earth = display.newImageRect( spaceGroup, "media/thrustNav/earth.png", 30, 30 )
+    earth.x = mars.x + ( 2 * act.width )
+    earth.y = mars.y - 10
     print("Earth anchorX=", earth.anchorX, "anchorY=", earth.anchorY )
     print("Earth is placed at ", earth.x, ",", earth.y , " in spaceGroup before move") 
+
+    sun = display.newImageRect( spaceGroup, "media/thrustNav/sun.png", 60, 60 )
+    sun.x = mars.x + ( 1.3 * act.width )
+    sun.y = act.yCenter 
 
 	-- place ship at center of lines
 	-- ship.x = 0
@@ -260,13 +275,12 @@ function act:init()
     -- spaceGroup.anchorY =spaceGroup.y
     -- spaceGroup.rotation = 10
 
-	xDelta = 0.1
-	yDelta = 0
-	-- rotDelta = 0.02
-	rotDelta = 0
-	xDeltaInc = 0.1
-	yDeltaInc = 0.1
-	rotDeltaInc = 0.01
+	xVelocity = 0.5
+	yVelocity = 0.1
+	rotVelocity = 0
+	xVelocityInc = 0.1
+	yVelocityInc = 0.1
+	rotVelocityInc = 0.01
 
 	-- Could try transition with iterations=-1 for continuous
 	--- transition.to(fuseObj, { iterations=-1,rotation=-360,time=250})
@@ -336,75 +350,87 @@ function updateNavStats()
 	local xStr = ""
 	local yStr = ""
 	local rotStr = ""
-	local xScore = 0
-	local yScore = 0
-	local rotScore = 0
-	local totalScore = 0
-
+	
 	xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter
 	yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
-	
 
-	xScore = 100 - math.abs( xTargetDelta )
-	yScore = 100 - math.abs( yTargetDelta )
-	-- special treatment for mars
-   	if( hasCollided( mars, targetRect ) ) then
-   		xStr = "ON TARGET"
-		yStr = "ON TARGET"
+	if( math.abs( xTargetDelta ) < 2  ) then 
+		xStr = xStr .. " On Target" 
+	elseif( math.abs( xTargetDelta ) < 5  ) then 
+		xStr = xStr .. " Getting close" 
 	end
-	if( xTargetDelta < 5  and xTargetDelta > -5 ) then xStr = xStr .. " Getting close" end
-
-	rotScore = 100 * (1 - math.abs( rotDelta ) ) 
-	if( rotDelta == 0 ) then
-		rotStr = string.format( "Spin Stopped   %3d", rotScore )
-	else
-		rotStr = string.format( "               %3d", rotScore )
+	if( math.abs( yTargetDelta ) < 2  ) then 
+		yStr = yStr .. " On Target" 
+	elseif( math.abs( yTargetDelta ) < 5  ) then 
+		yStr = yStr .. " Getting close" 
 	end
-	energyScore = 100 - totalRocketImpulses
-	totalScore = ( xScore + yScore + rotScore + energyScore ) / 4
 
 	if( hasCollided( earth, targetRect ) ) then
 		navStatsText.text = "Where are you going?  Home?"	
+	elseif( hasCollided( sun, targetRect ) ) then
+		navStatsText.text = "That will be VERY HOT!"	
 	else
 		navStatsText.text = string.format("%s  %3d %5.1f   %s\n%s  %3d %5.1f  %s\n%s %3d",  
-		"xDelta=", xTargetDelta , xDelta, xStr,
-		"yDelta=", yTargetDelta , yDelta, yStr,
-		--- "rotation=", spaceGroup.rotation % 360, rotDelta, rotStr,
+		"xDelta=", xTargetDelta , xVelocity, xStr,
+		"yDelta=", yTargetDelta , yVelocity, yStr,
 		"totalImpulses= ", totalRocketImpulses )
 	end
 end
 
 --  Move and update space background 
 function updatePosition()
-	spaceGroup.x = spaceGroup.x + xDelta
-	spaceGroup.y = spaceGroup.y + yDelta
-	spaceGroup.rotation = spaceGroup.rotation + rotDelta
+	spaceGroup.x = spaceGroup.x + xVelocity
+	spaceGroup.y = spaceGroup.y + yVelocity
+	spaceGroup.rotation = spaceGroup.rotation + rotVelocity
 
 	-- check on back ground image bounds
 	local bgTemp
 	if( bgLeft.contentBounds.xMin > act.xMin - 10 ) then
 		print( "Move right tile to left" )
-		bgRight.x = bgRight.x - (4*act.width)
+		if( hasCollided( bgRight, mars ) ) then   -- move mars as needed
+			print( "move mars with right tile to left")
+			mars.x = mars.x - ( 4 * act.width )
+		end
+		if( hasCollided( bgRight, earth ) ) then   -- move earth as needed
+			print( "move Earth with right tile to left")
+			earth.x = earth.x - ( 4 * act.width )
+		end
+		if( hasCollided( bgRight, sun ) ) then   -- move sun as needed
+			print( "move Sun with right tile to left")
+			sun.x = sun.x - ( 4 * act.width )
+		end
+		bgRight.x = bgRight.x - ( 4 * act.width )
 		bgTemp = bgRight
 		bgRight = bgLeft
 		bgLeft = bgTemp
 	elseif ( bgRight.contentBounds.xMax < act.xMax + 10 ) then
 		print( "Move left tile to right" )
-		bgLeft.x = bgLeft.x + (4*act.width)
+		if( hasCollided( bgLeft, mars ) ) then  -- move mars as needed
+			print( "Move Mars with left tile to right")
+			mars.x = mars.x + ( 4 * act.width )
+		end
+		if( hasCollided( bgLeft, earth ) ) then  -- move earth as needed
+			print( "Move Earth with left tile to right")
+			earth.x = earth.x + ( 4 * act.width )
+		end
+		if( hasCollided( bgLeft, sun ) ) then  -- move Sun as needed
+			print( "Move Sun with left tile to right")
+			sun.x = sun.x + ( 4 * act.width )
+		end
+		bgLeft.x = bgLeft.x + ( 4 * act.width )
 		bgTemp = bgRight
 		bgRight = bgLeft
 		bgLeft = bgTemp
 	end
 	--- Vertical stability override
-	if( ( ( bgLeft.contentBounds.yMin > act.yMin - 10 ) and ( yDelta > 0 ) )
-	or ( ( bgLeft.contentBounds.yMax < act.yMax + 10 ) and ( yDelta < 0 ) ) ) then
+	if( ( ( bgLeft.contentBounds.yMin > act.yMin - 10 ) and ( yVelocity > 0 ) )
+	or ( ( bgLeft.contentBounds.yMax < act.yMax + 10 ) and ( yVelocity < 0 ) ) ) then
 		print( "msg about computer assisted vertical stabilization") 
-		yDelta = 0
+		yVelocity = 0
 		game.messageBox( "Vertical Stability Activated")
-		print( string.format("yDelta = %5.3f", yDelta) )
+		print( string.format("yVelocity = %5.3f", yVelocity) )
 	end
 
-	
 end
 
 -- print debug positon information to console
@@ -422,7 +448,7 @@ function act:enterFrame( event )
 		updateNavStats()
 	end
 
-	if ( xDelta and yDelta and rotDelta ) then
+	if ( xVelocity and yVelocity and rotVelocity ) then
 		updatePosition()
 	end
 	updateArrow()
