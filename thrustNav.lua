@@ -66,6 +66,18 @@ end
 
 -- function to send you back when you press the back button
 local function backButtonPress ( event )
+	if( ( math.abs( yTargetDelta ) < 2 ) and 
+		( math.abs( xTargetDelta ) < 2 ) and 
+		( xDelta == 0 ) ) then
+		game.messageBox( "Nicely Done!")
+	end
+	if ( xDelta == 0 ) then
+		game.saveState.thrustNav.shipSpinning = false
+	end
+	-- saved for use in messages
+	game.saveState.thrustNav.lastXTargetDelta = xTargetDelta
+	game.saveState.thrustNav.lastYTargetDelta = yTargetDelta
+
 	game.gotoAct ( "mainAct" )
 end
 
