@@ -55,6 +55,7 @@ local targetRect       -- Rectangle target area
 local arrow        		-- directional arrow toward mars
 local totalRocketImpulses = 0    -- number of rocket impulses used
 local bgLeft, bgRight          -- background images
+local thrusterSound = audio.loadSound( "media/thrustNav/ignite3.wav" )
 
 -- Make a small red circle centered at the given location
 local function makeStar( x, y )
@@ -107,11 +108,13 @@ end
 function updateEnergy()
 	totalRocketImpulses = totalRocketImpulses + 1
 	-- also update energy to main resources
+	game.saveState.resources.kWh = game.saveState.resources.kWh - 0.1
 end
 
 -- Turn left button 
 function buttonTurnLeftTouch (event)
 	if event.phase == "began" then
+		local s = audio.play( thrusterSound )
 		print("Turn Left Button")
 		xVelocity = xVelocity + xVelocityInc
 		printPositions()
@@ -123,6 +126,7 @@ end
 -- Turn Right button 
 function buttonTurnRightTouch (event)
 	if event.phase == "began" then
+		local s = audio.play( thrusterSound )
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
 		xVelocity = xVelocity - xVelocityInc
 		printPositions()
@@ -134,6 +138,7 @@ end
 --  Roll Left button
 function buttonRollLeftTouch (event)
 	if event.phase == "began" then
+		local s = audio.play( thrusterSound )
 		print("Roll Left Button")
 		rotVelocity = rotVelocity + rotVelocityInc
 		printPositions()
@@ -145,6 +150,7 @@ end
 -- Roll RIght Button
 function buttonRollRightTouch (event)
 	if event.phase == "began" then
+		local s = audio.play( thrusterSound )
 		print("Roll Right Button, rotation= ", spaceGroup.rotation )
 		rotVelocity = rotVelocity - rotVelocityInc
 		printPositions()
@@ -156,6 +162,7 @@ end
 -- Pitch Up Button
 function buttonPitchUpTouch (event)
 	if event.phase == "began" then
+		local s = audio.play( thrusterSound )
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity + yVelocityInc
 		printPositions()
@@ -167,6 +174,7 @@ end
 -- Pitch Down Button
 function buttonPitchDownTouch (event)
 	if event.phase == "began" then
+		local s = audio.play( thrusterSound )
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity - yVelocityInc
 		printPositions()
