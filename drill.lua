@@ -22,6 +22,8 @@ local W = act.width
 local H = act.height
 local XC = act.xCenter
 local YC = act.yCenter
+local YMIN = act.yMin
+YMAX = act.yMax
 
 
 --Declare file local functions to be used
@@ -57,7 +59,7 @@ function act:init()
 	drillSpot.fill = { type = "image", filename = "media/drill/DrillSpot.png" }
 
 	-- Create the bar
-	bar = display.newRect( act.group, 0, H - 25, W / 7, H / 4 )
+	bar = display.newRect( act.group, 0, YMAX, W / 7, H / 4 )
 	bar.anchorX = 0
 	bar.anchorY = 1
 	bar.fill = { 0.36, 0.25, 0.13, 0.5 }
@@ -93,10 +95,6 @@ function act:init()
 
 	act.group:insert( resetButton )
 
-	-- Set difficulty
-	difficulty.drop = 3
-	difficulty.rise = 18
-
 	-- Intro screen
 	game.drillPlayed = false
 
@@ -122,14 +120,19 @@ function act:init()
 	act.group:insert( resetButton )
 
 	-- Set difficulty
-	difficulty.drop = 3
-	difficulty.rise = 18
+	if game.drillDiff then
+		difficulty.drop = game.drillDiff * .4
+		difficulty.rise = 5 * math.log( game.drillDiff )
+	else
+		difficulty.drop = 3
+		difficulty.rise = 15
+	end
 
 	-- Intro screen
 	game.drillPlayed = false
 
 	-- Test text
-	testText = display.newText( act.group, string.format( "%3.0f", math.abs( YC + 29 - bar.height ) ), XC, YC, native.systemFont, 25 )
+	testText = display.newText( act.group, string.format( "%3.0f", math.abs( YMAX / 2 - bar.height ) ), XC, YC, native.systemFont, 25 )
 
 end
 
@@ -137,6 +140,10 @@ function act:prepare()
 
 	resetButton.isVisible = false
 	start()
+	print( YC )
+	print( H )
+	print( H - YC )
+	print( YMIN )
 
 end
 
@@ -149,7 +156,7 @@ end
 function newFrame()
 	
 	droppingBar()
-	testText.text = string.format( "%3.0f", math.abs( YC + 29 - bar.height ) )
+	testText.text = string.format( "%3.0f", math.abs( YMAX / 2 - bar.height ) )
 end
 
 function start()
@@ -205,7 +212,7 @@ function timeLimit()
 	Runtime:removeEventListener( "enterFrame", newFrame )
 	Runtime:removeEventListener( "touch", risingBar )
 
-	local x = math.abs( YC + 29 - bar.height )
+	local x = math.abs( YMAX / 2 - bar.height )
 	range = display.newText( act.group, "", XC, YC + 20, native.systemFontBold, 25 )
 
 	if x <= 15 then

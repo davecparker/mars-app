@@ -22,6 +22,8 @@ local W = act.width
 local H = act.height
 local XC = act.xCenter
 local YC = act.yCenter
+local YMIN = act.yMin
+local XMIN = act.xMin
 
 -- Function declaration
 
@@ -34,6 +36,7 @@ local waterSpotStatsHide
 local transitionDrill
 local backButton
 local chooseBg
+local returnTrue
 
 -- Display group declaration
 
@@ -56,6 +59,9 @@ local energyText
 local drillButton
 local currentLiters = 0
 local currentCost = 0
+local scanDistance = 0
+local numSpots = 0
+game.drillDiff = 0
 
 -- Array declaration
 
@@ -63,17 +69,24 @@ local waterSpot = {}
 
 function act:init()
 
---	marsSurface = act:newImage ( "MarsSurface.jpg", { width = W, height = H } )
+	-- Create Martian surface
+
 	marsSurface = chooseBg()
 	marsSurface.x, marsSurface.y = W, 4 * H / 5
 	marsSurface.anchorX = 1
 	marsSurface.anchorY = 1
 
+	if scanDistance < 50 then
+
+		numSpots = 15
+
+	end
+
 	-- Create the water spots
 
-	for i = 1, 3 do
+	for i = 1, numSpots do
 		
-		waterSpot[i] = display.newImage( act.group, "media/drillScan/WaterSpot.png", math.random( 10, W - 10 ), math.random( 10, 4 * H / 5 - 10 ), true )
+		waterSpot[i] = display.newImage( act.group, "media/drillScan/WaterSpot.png", math.random( XMIN + 10, W - 10 ), math.random( YMIN + 10, ( H - 2 * H / 5 ) - 10 ), true )
 		waterSpot[i].isVisible = false
 		waterSpot[i].contamination = math.random( 0, 100 )
 		waterSpot[i].frigidity = 100 - waterSpot[i].contamination
@@ -88,7 +101,7 @@ function act:init()
 
 	-- Create the water spots' info bubbles
 
-	for i = 1, 3 do
+	for i = 1, #waterSpot do
 
 		waterSpot[i].infoBox = display.newRoundedRect( waterSpot[i].group, 0, 0, 70, 40, 10 )
 		waterSpot[i].infoBox.fill = { 0, 0, 0, 0.5 }
@@ -98,12 +111,24 @@ function act:init()
 		waterSpot[i].diffText = display.newText( waterSpot[i].group, "Level: " .. string.format( "%2.1f", waterSpot[i].difficulty ), 0, 0, native.systemFontBold, 14 )
 	end
 
+	for i = 1, #waterSpot do
+
+		act.group:insert( waterSpot[i] )
+
+	end
+
+	for i = 1, #waterSpot do
+
+		act.group:insert( waterSpot[i].group )
+
+	end
+
 	scanCircle = display.newCircle( act.group, XC, YC, 50 )
 	scanCircle.fill = { 0, 0.568, 1 }
 	scanCircle.alpha = 0.001
 
 	infoConsole = act:newImage( "Steel2.jpg", { width = 1024, height = 768 } )
-	infoConsole.x, infoConsole.y = XC, H - 115
+	infoConsole.x, infoConsole.y = XC, H - 2 * H / 5
 	infoConsole.anchorX = 0.5
 	infoConsole.anchorY = 0
 
@@ -114,7 +139,7 @@ function act:init()
 ]]
 	textGroup = display.newGroup( )
 	textGroup.x = XC
-	textGroup.y = YC + 185
+	textGroup.y = H - 1.8 * H / 5
 
 	contamOrigin = 0
 	contamText = display.newText( textGroup, contamOrigin .. "% Contaminated", -150, 0, native.systemFont, 17 )
@@ -150,9 +175,9 @@ function act:init()
 	drillButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Drill", onPress = transitionDrill }
 
 	drillButton.anchorX = 1
-	drillButton.x = W + 2
-	drillButton.y = H - 50
---	drillButton.isVisible = false
+	drillButton.x = W - 10
+	drillButton.y = H - 1.5 * H / 5
+	drillButton.isVisible = false
 
 	act.group:insert( drillButton )
 	act.group:insert( textGroup )
@@ -162,9 +187,21 @@ end
 function act:prepare()
 
 	marsSurface:addEventListener( "touch", scan )
+	infoConsole:addEventListener( "touch", returnTrue )
 
 end
 
+function returnTrue(event)
+
+	if event.phase == "began" then
+
+		return true
+
+	end
+
+end
+
+--[[
 function act:stop()
 
 	for i = 1, 3 do
@@ -178,6 +215,7 @@ function act:stop()
 	marsSurface:removeEventListener( "touch", scan )
 
 end
+]]
 
 function chooseBg()
 
@@ -254,7 +292,7 @@ function finishScan()
 
 	-- Make the scanner reveal the water spots
 
-	for i = 1, 3 do
+	for i = 1, #waterSpot do
 
 		if ( scanCircle.x - waterSpot[i].x ) ^ 2 + ( scanCircle.y - waterSpot[i].y ) ^ 2 <= ( 50 + 10 ) ^ 2 then
 
@@ -293,14 +331,14 @@ function waterSpotStats( event )
 
 			t.group.isVisible = true
 
-			if t.x <= W - 70 then
+			if t.x <= W - 90 then
 
 				transition.to( t.group, { time = 333, x = t.x + 45, xScale = 1, yScale = 1 } )
 
-			elseif t.x > W - 70 then
+			elseif t.x > W - 90 then
 
 				transition.to( t.group, { time = 333, x = t.x - 45, xScale = 1, yScale = 1 } )
-				
+
 			end
 
 			contamText.text = t.contamination .. "% Contaminated"
@@ -312,6 +350,7 @@ function waterSpotStats( event )
 
 			currentLiters = t.liters
 			currentCost = t.energyCost
+			game.drillDiff = t.difficulty
 
 		elseif t.group.isVisible == true then
 
@@ -326,6 +365,7 @@ function waterSpotStats( event )
 
 			currentLiters = 0
 			currentCost = 0
+			game.drillDiff = 0
 
 		end
 
