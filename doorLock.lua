@@ -169,6 +169,7 @@ function clearKeyPad()
 	for i = #numberDisplay, 1, -1 do
 		table.remove( numberDisplay, i )
 	end
+	print("Clearing Key Pad")
 end
 
 -- The Listener for the Buttons
@@ -176,18 +177,26 @@ function keyPressed( event )
 	local key = event.target.name
 
 	local r = math.random( 1, 4 )
-	audio.play( sound.button[r] )
+	audio.play( sound.button[r], { channel = r } )
 
+	for i = 1, 4 do
+		audio.setVolume( 1.2, { channel = i } )
+	end
+
+	-- If Clear Key is Pressed
 	if key == "clr" then
 		clearKeyPad()
+	-- If Enter Key is Pressed
 	elseif key == "ent" then
 		if checkKey() then
 			keyedCorrectly = true
-			audio.play( sound.beep1 )
+			audio.play( sound.pass, { channel = 5 } )
+			system.vibrate( )
 		else
 			keyedCorrectly = false
-			audio.play( sound.beep2 )
+			audio.play( sound.fail, { channel = 5 } )
 		end
+	-- If Any Other Key is Pressed
 	elseif key ~= "clr" and key ~= "ent" then
 		if table.maxn(numberDisplay) < 4 then
 			table.insert( numberDisplay, key )
@@ -212,7 +221,7 @@ local function createButton( name, x, y, file, file2 )
 	return b
 end
 
--- Init the act
+-- Initiate the Activity (Create)
 function act:init()
 
 	-- Title Bar
@@ -229,10 +238,10 @@ function act:init()
 		audio.loadSound( "media/doorLock/sounds/button4.wav" )
 	}
 
-	sound.beep1 = audio.loadSound( "media/doorLock/sounds/beep1.wav" )
-	sound.beep2 = audio.loadSound( "media/doorLock/sounds/beep2.wav" )
+	sound.pass = audio.loadSound( "media/doorLock/sounds/pass.wav" )
+	sound.fail = audio.loadSound( "media/doorLock/sounds/fail.wav" )
 
-	audio.setVolume( 0.6 )
+	audio.setVolume( 0.5, { channel = 5 } )
 
 	-- Screen
 	screen = act:newImage( "screen.png", { width=200 })
@@ -295,7 +304,6 @@ function act:init()
 	act.group:insert( button.enter )
 
 end
-
 
 ------------------------- End of Activity --------------------------------
 

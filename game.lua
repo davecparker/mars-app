@@ -80,6 +80,12 @@ end
 
 -------------------------- Resource use   ---------------------------------
 
+-- Accessors for resource amounts
+function game.oxygen()  return res.o2    end
+function game.water()   return res.h2o   end
+function game.energy()  return res.kWh   end
+function game.food()    return res.food  end
+
 -- Add to or subtract from the oxygen supply by the given amount in liters
 function game.addOxygen( liters )
     res.o2 = res.o2 + liters
