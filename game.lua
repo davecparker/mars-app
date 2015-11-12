@@ -21,8 +21,7 @@ local game = {
     -- The saveState table is saved to a file between runs
     saveState = {
         usedGems = {},  -- set of gem names that have been used
-        docs = {},      -- list of document filenames that user has found
-
+    
         -- The user's current resource levels (and starting values)
         resources = {
             o2 = 100,     -- oxygen in liters
@@ -38,6 +37,13 @@ local game = {
             y2 = 0
         },
 
+        thrustNav = {
+            onTarget = false,
+            latestXTargetDelta = 100,
+            latestYTargetDelta = 100,
+            shipSpinning = true
+        },
+            
         -- List of document filenames that user has found
         docs = {},
     },     
