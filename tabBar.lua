@@ -96,8 +96,13 @@ end
 function game.showBadge( badge )
     assert( badge )
     if not badge.showing then
+        -- Fade in hidden badge
         transition.fadeIn( badge, { time = 200 } )
         badge.showing = true
+    elseif badge.alpha == 1 then
+        -- Blink already showing badge
+        transition.fadeOut( badge, { time = 200 } )
+        transition.fadeIn( badge, { delay = 250, time = 200 } )
     end
 end
 
