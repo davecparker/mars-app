@@ -21,8 +21,7 @@ local game = {
     -- The saveState table is saved to a file between runs
     saveState = {
         usedGems = {},  -- set of gem names that have been used
-        docs = {},      -- list of document filenames that user has found
-
+    
         -- The user's current resource levels (and starting values)
         resources = {
             o2 = 100,     -- oxygen in liters
@@ -38,6 +37,13 @@ local game = {
             y2 = 0
         },
 
+        thrustNav = {
+            onTarget = false,
+            latestXTargetDelta = 100,
+            latestYTargetDelta = 100,
+            shipSpinning = true
+        },
+            
         -- List of document filenames that user has found
         docs = {},
     },     
@@ -77,6 +83,10 @@ function game.eatTouch()
     return true
 end
 
+-- Remove the given display object
+function game.removeObj( obj )
+    obj:removeSelf()
+end
 
 -------------------------- Resource use   ---------------------------------
 
@@ -120,6 +130,15 @@ end
 
 
 ------------------------- User interface  ---------------------------------
+
+-- Make floating message text that moves up from x, y then fades and disappears
+function game.floatMessage( text, x, y )
+    local text = display.newText( text, x, y, native.systemFontBold, 18 )
+    text:setFillColor( 1, 1, 0 )   -- yellow
+    transition.to( text, { x = x + 50, y = y - 100, xScale = 2, yScale = 2, time = 1000 } ) 
+    transition.to( text, { alpha = 0, time = 1000, transition = easing.inQuad, 
+            onComplete = game.removeObj } )
+end
 
 -- Destroy an active message box shown by game.messageBox, if any.
 function game.endMessageBox()
@@ -203,8 +222,8 @@ end
 
 ------------------------- Game management  --------------------------------
 
--- Init the game
-local function initGame()
+-- Init the game object
+local function initGameObject()
     -- Hide device status bar
     display.setStatusBar( display.HiddenStatusBar )
 
@@ -224,5 +243,5 @@ end
 
 
 -- Init and return the game object
-initGame()
+initGameObject()
 return game
