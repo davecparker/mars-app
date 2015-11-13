@@ -121,8 +121,8 @@ function act:init()
 
 	-- Set difficulty
 	if game.drillDiff then
-		difficulty.drop = game.drillDiff * .4
-		difficulty.rise = 5 * math.log( game.drillDiff )
+		difficulty.drop = 0.5 + game.drillDiff * .4
+		difficulty.rise = 13 + math.log( game.drillDiff )
 	else
 		difficulty.drop = 3
 		difficulty.rise = 15
@@ -227,8 +227,14 @@ function timeLimit()
 		range.text = "Horrible range"
 	end
 
+	local function resetVisible()
+
+		resetButton.isVisible = true
+
+	end
+
 	game.addEnergy( -x/10 )
-	resetButton.isVisible = true
+	timer.performWithDelay( 1500, resetVisible )
 end
 
 return act.scene

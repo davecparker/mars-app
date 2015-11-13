@@ -109,6 +109,7 @@ function act:init()
 		waterSpot[i].group.yScale = 0.1
 		waterSpot[i].group.isVisible = false
 		waterSpot[i].diffText = display.newText( waterSpot[i].group, "Level: " .. string.format( "%2.1f", waterSpot[i].difficulty ), 0, 0, native.systemFontBold, 14 )
+
 	end
 
 	for i = 1, #waterSpot do
@@ -123,20 +124,11 @@ function act:init()
 
 	end
 
-	scanCircle = display.newCircle( act.group, XC, YC, 50 )
-	scanCircle.fill = { 0, 0.568, 1 }
-	scanCircle.alpha = 0.001
-
 	infoConsole = act:newImage( "Steel2.jpg", { width = 1024, height = 768 } )
 	infoConsole.x, infoConsole.y = XC, H - 2 * H / 5
 	infoConsole.anchorX = 0.5
 	infoConsole.anchorY = 0
 
---[[	scanConsole = act:newImage( "Steel.jpg", { width = W / 4, height = 1414 } )
-	scanConsole.x, scanConsole.y = 3 * W / 4, 4 * H / 5
-	scanConsole.anchorX = 0
-	scanConsole.anchorY = 1
-]]
 	textGroup = display.newGroup( )
 	textGroup.x = XC
 	textGroup.y = H - 1.8 * H / 5
@@ -201,22 +193,6 @@ function returnTrue(event)
 
 end
 
---[[
-function act:stop()
-
-	for i = 1, 3 do
-
-		waterSpot[i]:removeSelf()
-
-	end
-
---	act.group:insert( drillButton )
-
-	marsSurface:removeEventListener( "touch", scan )
-
-end
-]]
-
 function chooseBg()
 
 	local p
@@ -278,6 +254,10 @@ function scan( event )
 
 	if event.phase == "began" then
 
+		local scanCircle = display.newCircle( act.group, XC, YC, 50 )
+		scanCircle.fill = { 0, 0.568, 1 }
+		scanCircle.alpha = 0.001
+
 		scanCircle.x = event.x
 		scanCircle.y = event.y
 		transition.fadeIn( scanCircle, { time = 500, transition = easing.inOutBounce, onComplete = finishScan } )
@@ -288,13 +268,13 @@ function scan( event )
 
 end
 
-function finishScan()
+function finishScan( obj )
 
 	-- Make the scanner reveal the water spots
 
 	for i = 1, #waterSpot do
 
-		if ( scanCircle.x - waterSpot[i].x ) ^ 2 + ( scanCircle.y - waterSpot[i].y ) ^ 2 <= ( 50 + 10 ) ^ 2 then
+		if ( obj.x - waterSpot[i].x ) ^ 2 + ( obj.y - waterSpot[i].y ) ^ 2 <= ( 50 + 10 ) ^ 2 then
 
 			if waterSpot[i].isVisible == false then
 
@@ -307,7 +287,14 @@ function finishScan()
 
 	end
 
-	transition.fadeOut( scanCircle, { time = 500, transition = easing.outInBounce } )
+	local function killObj( obj )
+
+		obj:removeSelf()
+		obj = nil
+
+	end
+
+	transition.fadeOut( obj, { time = 500, transition = easing.outInBounce, onComplete = killObj } )
 
 end
 
@@ -348,8 +335,8 @@ function waterSpotStats( event )
 
 			drillButton.isVisible = true
 
-			currentLiters = t.liters
-			currentCost = t.energyCost
+			currentLiters = math.floor( t.liters )
+			currentCost = math.floor( t.energyCost )
 			game.drillDiff = t.difficulty
 
 		elseif t.group.isVisible == true then
