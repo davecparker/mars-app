@@ -56,6 +56,8 @@ local arrow        		-- directional arrow toward mars
 local totalRocketImpulses = 0    -- number of rocket impulses used
 local bgLeft, bgRight          -- background images
 local thrusterSound = audio.loadSound( "media/thrustNav/ignite3.wav" )
+local leftAccelerate, rightAccelerate, upAccelerate, downAccelerate
+local accelerateFrameCount
 
 -- Make a small red circle centered at the given location
 local function makeStar( x, y )
@@ -114,11 +116,15 @@ end
 -- Turn left button 
 function buttonTurnLeftTouch (event)
 	if event.phase == "began" then
-		local s = audio.play( thrusterSound )
+		local s = audio.play( thrusterSound ) 
 		print("Turn Left Button")
+		accelerateFrameCount = 0
 		xVelocity = xVelocity + xVelocityInc
-		printPositions()
+		leftAccelerate = true
+		-- printPositions()
 		updateEnergy()
+	else -- event.phase == "ended" or event.phase == "canceled" then
+		leftAccelerate = false
 	end
 	return true
 end
@@ -128,16 +134,21 @@ function buttonTurnRightTouch (event)
 	if event.phase == "began" then
 		local s = audio.play( thrusterSound )
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
+		accelerateFrameCount = 0
 		xVelocity = xVelocity - xVelocityInc
-		printPositions()
+		-- xVelocity = xVelocity - xVelocityInc
+		-- printPositions()
+		rightAccelerate = true
 		updateEnergy()
+	else
+		rightAccelerate = false
 	end
 	return true
 end
 
 --  Roll Left button
 function buttonRollLeftTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" or event.phase == "moved" then
 		local s = audio.play( thrusterSound )
 		print("Roll Left Button")
 		rotVelocity = rotVelocity + rotVelocityInc
@@ -149,7 +160,7 @@ end
 
 -- Roll RIght Button
 function buttonRollRightTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" or event.phase == "moved" then
 		local s = audio.play( thrusterSound )
 		print("Roll Right Button, rotation= ", spaceGroup.rotation )
 		rotVelocity = rotVelocity - rotVelocityInc
@@ -165,20 +176,28 @@ function buttonPitchUpTouch (event)
 		local s = audio.play( thrusterSound )
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity + yVelocityInc
-		printPositions()
+		accelerateFrameCount = 0
+		upAccelerate = true
+		-- printPositions()
 		updateEnergy()
+	else
+		upAccelerate = false
 	end
 	return true
 end
 
 -- Pitch Down Button
-function buttonPitchDownTouch (event)
-	if event.phase == "began" then
+function buttonPitchDownTouch(event)
+	if event.phase == "began"  then
 		local s = audio.play( thrusterSound )
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity - yVelocityInc
-		printPositions()
+		accelerateFrameCount = 0
+		downAccelerate = true
+		-- printPositions()
 		updateEnergy()
+	else
+		downAccelerate = false
 	end
 	return true
 end
@@ -391,6 +410,45 @@ function updatePosition()
 	spaceGroup.y = spaceGroup.y + yVelocity
 	spaceGroup.rotation = spaceGroup.rotation + rotVelocity
 
+	-- check for button holds
+	if( leftAccelerate == true ) then
+		accelerateFrameCount = accelerateFrameCount + 1
+		if( accelerateFrameCount % 5 == 0 ) then
+			xVelocity = xVelocity + xVelocityInc
+		end
+		if( accelerateFrameCount > 10 ) then
+			local s = audio.play( thrusterSound )
+			accelerateFrameCount = 0
+		end
+	elseif( rightAccelerate == true ) then
+		accelerateFrameCount = accelerateFrameCount + 1
+		if( accelerateFrameCount % 5 == 0 ) then
+			xVelocity = xVelocity - xVelocityInc
+		end
+		if( accelerateFrameCount > 10 ) then
+			local s = audio.play( thrusterSound )
+			accelerateFrameCount = 0
+		end
+	elseif( upAccelerate == true ) then
+		accelerateFrameCount = accelerateFrameCount + 1
+		if( accelerateFrameCount % 5 == 0 ) then
+			yVelocity = yVelocity + yVelocityInc
+		end
+		if( accelerateFrameCount > 10 ) then
+			local s = audio.play( thrusterSound )
+			accelerateFrameCount = 0
+		end
+	elseif( downAccelerate == true ) then
+		accelerateFrameCount = accelerateFrameCount + 1
+		if( accelerateFrameCount % 5 == 0 ) then
+			yVelocity = yVelocity - yVelocityInc
+		end
+		if( accelerateFrameCount > 10 ) then
+			local s = audio.play( thrusterSound )
+			accelerateFrameCount = 0
+		end
+	end
+		
 	-- check on back ground image bounds
 	local bgTemp
 	if( bgLeft.contentBounds.xMin > act.xMin - 10 ) then
