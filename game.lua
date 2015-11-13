@@ -30,11 +30,20 @@ local game = {
             food = 100,   -- food in kg
         },
 
-        roverCoord = {
-            x1 = 0,
-            y1 = 0,
-            x2 = 0,
-            y2 = 0
+        -- rover map coordinates
+        rover = {
+            x1 = 0,     -- current position x coordinate
+            y1 = 0,     -- current position y coordinate
+            x2 = 0,     -- course x coordinate
+            y2 = 0      -- course y coordinate
+        },
+
+        -- array of tables containing crater coordinates and radii
+        crater = {
+            { x = 15, y = -15, r = 5 },
+            { x = 15, y = 15, r = 30 },
+            { x = -15, y = -15, r = 20 },
+            { x = -15, y = 15, r = 10 },
         },
 
         thrustNav = {
@@ -88,6 +97,10 @@ function game.removeObj( obj )
     obj:removeSelf()
 end
 
+-- Do nothing
+function game.emptyFunction()
+end
+
 -------------------------- Resource use   ---------------------------------
 
 -- Accessors for resource amounts
@@ -130,6 +143,14 @@ end
 
 
 ------------------------- User interface  ---------------------------------
+
+-- Display hint text for the user in a popup window.
+-- The title is optional, defaults to "Hint".
+-- If the onDismiss function is included, it is called when the user dismisses the popup.
+function game.showHint( text, title, onDismiss )
+	-- TODO: Make something better looking than a native alert?
+	native.showAlert( title or "Hint", text, { "OK" }, onDismiss or game.emptyFunction )
+end
 
 -- Make floating message text that moves up from x, y then fades and disappears
 function game.floatMessage( text, x, y )

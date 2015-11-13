@@ -14,6 +14,7 @@ game.xyInRect( x, y, rect )           -- test if point is in rect
 game.xyHitTest( x1, y1, x2, y2, dxy ) -- x, y hit test
 game.eatTouch()                       -- return true to eat touch or tap event
 game.removeObj( obj )                 -- remove a display object
+game.emptyFunction()                  -- do nothing
 
 -- Resource functions in game.lua:
 game.oxygen()                         -- return current oxygen amount
@@ -26,6 +27,7 @@ game.addEnergy( kWh )                 -- Add or subtract energy
 game.addFood( kg )                    -- Add or subtract food
 
 -- User-Interface functions in game.lua:
+game.showHint( text, title, onExit )  -- display help text in popup
 game.floatMessage( text, x, y )       -- Display floating fade-away message
 game.messageBox( text, options )      -- Display message box
 game.endMessageBox()                  -- Dismiss active message box if any
