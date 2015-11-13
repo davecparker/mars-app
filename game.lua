@@ -97,6 +97,10 @@ function game.removeObj( obj )
     obj:removeSelf()
 end
 
+-- Do nothing
+function game.emptyFunction()
+end
+
 -------------------------- Resource use   ---------------------------------
 
 -- Accessors for resource amounts
@@ -139,6 +143,14 @@ end
 
 
 ------------------------- User interface  ---------------------------------
+
+-- Display hint text for the user in a popup window.
+-- The title is optional, defaults to "Hint".
+-- If the onDismiss function is included, it is called when the user dismisses the popup.
+function game.showHint( text, title, onDismiss )
+	-- TODO: Make something better looking than a native alert?
+	native.showAlert( title or "Hint", text, { "OK" }, onDismiss or game.emptyFunction )
+end
 
 -- Make floating message text that moves up from x, y then fades and disappears
 function game.floatMessage( text, x, y )
