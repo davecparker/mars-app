@@ -74,6 +74,7 @@ local function backButtonPress ( event )
 		( math.abs( yVelocity ) < 0.00001 ) ) then
 		game.saveState.onTarget = true
 		game.messageBox( "Nicely Done!")
+		-- game.showHint( "Nicely Done!", "On Target")
 	else
 		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
 			( math.abs( yVelocity )  > 0.00001) ) then
@@ -123,8 +124,10 @@ function buttonTurnLeftTouch (event)
 		leftAccelerate = true
 		-- printPositions()
 		updateEnergy()
-	else -- event.phase == "ended" or event.phase == "canceled" then
+		display.getCurrentStage():setFocus( event.target )  -- helps when fingers move
+	elseif event.phase == "ended" or event.phase == "cancelled" then
 		leftAccelerate = false
+		display.getCurrentStage():setFocus(nil)
 	end
 	return true
 end
@@ -140,8 +143,10 @@ function buttonTurnRightTouch (event)
 		-- printPositions()
 		rightAccelerate = true
 		updateEnergy()
-	else
+		display.getCurrentStage():setFocus( event.target )  -- helps when fingers move
+	elseif event.phase == "ended" or event.phase == "cancelled" then
 		rightAccelerate = false
+		display.getCurrentStage():setFocus(nil)
 	end
 	return true
 end
@@ -180,8 +185,10 @@ function buttonPitchUpTouch (event)
 		upAccelerate = true
 		-- printPositions()
 		updateEnergy()
-	else
+		display.getCurrentStage():setFocus( event.target )  -- helps when fingers move
+	elseif event.phase == "ended" or event.phase == "cancelled" then
 		upAccelerate = false
+		display.getCurrentStage():setFocus(nil)
 	end
 	return true
 end
@@ -196,8 +203,10 @@ function buttonPitchDownTouch(event)
 		downAccelerate = true
 		-- printPositions()
 		updateEnergy()
-	else
+		display.getCurrentStage():setFocus( event.target )  -- helps when fingers move
+	elseif event.phase == "ended" or event.phase == "cancelled" then
 		downAccelerate = false
+		display.getCurrentStage():setFocus(nil)
 	end
 	return true
 end
@@ -415,6 +424,7 @@ function updatePosition()
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			xVelocity = xVelocity + xVelocityInc
+			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
 			local s = audio.play( thrusterSound )
@@ -424,6 +434,7 @@ function updatePosition()
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			xVelocity = xVelocity - xVelocityInc
+			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
 			local s = audio.play( thrusterSound )
@@ -433,6 +444,7 @@ function updatePosition()
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			yVelocity = yVelocity + yVelocityInc
+			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
 			local s = audio.play( thrusterSound )
@@ -442,6 +454,7 @@ function updatePosition()
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			yVelocity = yVelocity - yVelocityInc
+			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
 			local s = audio.play( thrusterSound )
