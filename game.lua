@@ -30,11 +30,20 @@ local game = {
             food = 100,   -- food in kg
         },
 
-        roverCoord = {
-            x1 = 0,
-            y1 = 0,
-            x2 = 0,
-            y2 = 0
+        -- rover map coordinates
+        rover = {
+            x1 = 0,     -- current position x coordinate
+            y1 = 0,     -- current position y coordinate
+            x2 = 0,     -- course x coordinate
+            y2 = 0      -- course y coordinate
+        },
+
+        -- array of tables containing crater coordinates and radii
+        crater = {
+            { x = 15, y = -15, r = 5 },
+            { x = 15, y = 15, r = 30 },
+            { x = -15, y = -15, r = 20 },
+            { x = -15, y = 15, r = 10 },
         },
 
         thrustNav = {
