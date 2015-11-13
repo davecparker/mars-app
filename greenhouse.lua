@@ -18,8 +18,11 @@ local msTimer = 100    -- timer interval
 local maxHealth = 100  -- plant health ranges from 0 to 100
 
 -- File local variables
-local plants   -- group for all the plants
-local timerID  -- repeating timer
+local plants           -- group for all the plants
+local timerID          -- repeating timer
+local waterHintShown   -- true when the hint to water plants has been shown
+local nPlantsDied = 0  -- total number of plants that have died
+local nWaterings = 0   -- total number of times user has watered any plant
 
 
 -- Called when the drops are done animating
@@ -74,6 +77,7 @@ local function touchPlant( event )
 				game.messageBox( "Out of water!" )
 			else
 				waterPlant( plant )
+				nWaterings = nWaterings + 1
 			end
 		end
 	end
@@ -102,13 +106,26 @@ local function touchDirt( event )
 	return true
 end
 
+-- Show the water hint if necessary
+function checkWaterHint()
+	if not waterHintShown and nPlantsDied > nWaterings then
+		game.showHint( "Tap plants to water them.")
+		waterHintShown = true
+	end
+end
+
 -- Set a plant's color based on its health
 local function adjustPlantColor( plant )
 	if plant.health <= 0 then
 		-- Color dead plants dark brown and remove flowers
-		plant.leaves:setFillColor( 0.5, 0.25, 0 )
-		if plant.flowers then
-			plant.flowers:removeSelf()
+		if not plant.dead then
+			plant.dead = true
+			plant.leaves:setFillColor( 0.5, 0.25, 0 )
+			if plant.flowers then
+				plant.flowers:removeSelf()
+			end
+			nPlantsDied = nPlantsDied + 1
+			checkWaterHint()
 		end
 	else
 		-- Interpolate plant color based on health
