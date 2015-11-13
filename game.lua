@@ -21,8 +21,7 @@ local game = {
     -- The saveState table is saved to a file between runs
     saveState = {
         usedGems = {},  -- set of gem names that have been used
-        docs = {},      -- list of document filenames that user has found
-
+    
         -- The user's current resource levels (and starting values)
         resources = {
             o2 = 100,     -- oxygen in liters
@@ -31,13 +30,29 @@ local game = {
             food = 100,   -- food in kg
         },
 
-        roverCoord = {
-            x1 = 0,
-            y1 = 0,
-            x2 = 0,
-            y2 = 0
+        -- rover map coordinates
+        rover = {
+            x1 = 0,     -- current position x coordinate
+            y1 = 0,     -- current position y coordinate
+            x2 = 0,     -- course x coordinate
+            y2 = 0      -- course y coordinate
         },
 
+        -- array of tables containing crater coordinates and radii
+        crater = {
+            { x = 15, y = -15, r = 5 },
+            { x = 15, y = 15, r = 30 },
+            { x = -15, y = -15, r = 20 },
+            { x = -15, y = 15, r = 10 },
+        },
+
+        thrustNav = {
+            onTarget = false,
+            latestXTargetDelta = 100,
+            latestYTargetDelta = 100,
+            shipSpinning = true
+        },
+            
         -- List of document filenames that user has found
         docs = {},
     },     
