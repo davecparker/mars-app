@@ -58,6 +58,7 @@ local bgLeft, bgRight          -- background images
 local thrusterSound = audio.loadSound( "media/thrustNav/ignite3.wav" )
 local leftAccelerate, rightAccelerate, upAccelerate, downAccelerate
 local accelerateFrameCount
+local onTargetX, onTargetY, onTargetXY -- graphics that become visible when on target
 
 -- Make a small red circle centered at the given location
 local function makeStar( x, y )
@@ -73,7 +74,7 @@ local function backButtonPress ( event )
 		( math.abs( xVelocity ) < 0.00001 ) and 
 		( math.abs( yVelocity ) < 0.00001 ) ) then
 		game.saveState.onTarget = true
-		game.messageBox( "Nicely Done!")
+		-- game.messageBox( "Nicely Done!")
 		-- game.showHint( "Nicely Done!", "On Target")
 	else
 		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
@@ -85,7 +86,7 @@ local function backButtonPress ( event )
 			game.messageBox( "Still Off Target!")
 		end
 	end
-	if ( xVelocity == 0 ) then
+	if ( math.abs( xVelocity ) < 0.00001 ) then
 		game.saveState.thrustNav.shipSpinning = false
 	end
 	-- saved for use in messages
@@ -240,15 +241,15 @@ function act:init()
 	-- display.setDefault("textureWrapY", "mirrorRepeat")
 
 	-- Create control buttons, background, etc.
-	buttonTurnLeft = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
+	buttonTurnLeft = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
 	buttonTurnLeft.rotation = -90
-	buttonTurnRight = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
+	buttonTurnRight = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
 	buttonTurnRight.rotation = 90
 --	buttonRollLeft = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
 --	buttonRollRight = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
-	buttonPitchUp = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
+	buttonPitchUp = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
 	print( "buttonPitchUp=",buttonPitchUp )
-	buttonPitchDown = act:newImage( "arrowbutton.png" , { width = 30, height = 30 } )
+	buttonPitchDown = act:newImage( "arrowbutton.png" , { width = 50, height = 50 } )
 	print( "buttonPitchDown=",buttonPitchDown )
 	buttonPitchDown.rotation = 180
 
@@ -311,7 +312,7 @@ function act:init()
     -- spaceGroup.anchorY =spaceGroup.y
     -- spaceGroup.rotation = 10
 
-	xVelocity = 0.5
+	xVelocity = 2.1 -- 3.5
 	yVelocity = 0.1
 	rotVelocity = 0
 	xVelocityInc = 0.1
@@ -328,13 +329,21 @@ function act:init()
 	display.newLine( act.group, act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
 	targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
 
+	-- On Target Indicators
+	onTargetX = act:newImage( "targetx.png", { height = act.width/2, width = act.width/2 } )
+	onTargetX.isVisible = false
+	onTargetY = act:newImage( "targety.png", { height = act.width/2, width = act.width/2 } )
+	onTargetY.isVisible = false
+	onTargetXY = act:newImage( "targetxy.png", { height = act.width/2, width = act.width/2 } )
+	onTargetXY.isVisible = false
+
     -- Set up buttons
-	buttonTurnLeft.x = act.xCenter - (act.xMax - act.xMin) / 8
-	buttonTurnLeft.y = act.yMax - (act.yMax - act.yMin) / 15
+	buttonTurnLeft.x = act.xMin + act.width / 8
+	buttonTurnLeft.y = act.yMax - act.height / 12
 	buttonTurnLeft.isVisible = true
 
-	buttonTurnRight.x = act.xCenter + (act.xMax - act.xMin) / 8
-	buttonTurnRight.y = act.yMax - (act.yMax - act.yMin) / 15
+	buttonTurnRight.x = act.xMax - act.width / 8
+	buttonTurnRight.y = act.yMax - act.height / 12
 	buttonTurnRight.isVisible = true
 
 	--- buttonRollLeft.x = act.xMax - (act.xMax - act.xMin) / 8
@@ -346,12 +355,12 @@ function act:init()
 	--- buttonRollRight.y = act.yMax - (act.yMax - act.yMin) / 20
 	--- buttonRollRight.isVisible = true
 
-	buttonPitchUp.x = (act.xMax - act.xMin ) / 2
-	buttonPitchUp.y = act.yMax - (act.yMax - act.yMin) / 10 
+	buttonPitchUp.x = act.xCenter
+	buttonPitchUp.y = act.yMax - act.height / 8 
 	buttonPitchUp.isVisible = true
 
-	buttonPitchDown.x = (act.xMax - act.xMin ) / 2
-	buttonPitchDown.y = act.yMax - (act.yMax - act.yMin) / 30 
+	buttonPitchDown.x = act.xCenter
+	buttonPitchDown.y = act.yMax - act.height / 30 
 	buttonPitchDown.isVisible = true
 
 	buttonTurnLeft:addEventListener( "touch", buttonTurnLeftTouch )
@@ -392,14 +401,36 @@ function updateNavStats()
 
 	if( math.abs( xTargetDelta ) < 2  ) then 
 		xStr = xStr .. " On Target" 
+		onTargetX.isVisible = true
 	elseif( math.abs( xTargetDelta ) < 5  ) then 
 		xStr = xStr .. " Getting close" 
+		onTargetX.isVisible = true
+	else
+		onTargetX.isVisible = false
+		onTargetXY.isVisible = false
 	end
 	if( math.abs( yTargetDelta ) < 2  ) then 
 		yStr = yStr .. " On Target" 
+		onTargetY.isVisible = true
 	elseif( math.abs( yTargetDelta ) < 5  ) then 
 		yStr = yStr .. " Getting close" 
+		onTargetY.isVisible = true
+	else
+		onTargetY.isVisible = false
+		onTargetXY.isVisible = false
 	end
+	if( math.abs( yTargetDelta ) < 2 and math.abs( xTargetDelta ) < 2 ) then
+		onTargetXY.isVisible = true
+	else
+		onTargetXY.isVisible = false
+	end
+
+	if( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 ) then
+		game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
+		-- Show hint showed no operational difference to messageBox.  That is it didn't wait for ok.
+		-- game.showHint( "Nicely Done!", "On Target", game.gotoAct ( "mainAct" ) )
+		-- game.gotoAct ( "mainAct" )
+	end		
 
 	if( hasCollided( earth, targetRect ) ) then
 		navStatsText.text = "Where are you going?  Home?"	
