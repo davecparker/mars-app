@@ -63,6 +63,7 @@ function act:init()
 	bar.anchorX = 0
 	bar.anchorY = 1
 	bar.fill = { 0.36, 0.25, 0.13, 0.5 }
+	bar.difference = H / 2 - bar.height
 
 	-- Create the splash screen
 	splash = display.newRoundedRect( act.group, XC, YC, 200, 400, 25 )
@@ -132,7 +133,7 @@ function act:init()
 	game.drillPlayed = false
 
 	-- Test text
-	testText = display.newText( act.group, string.format( "%3.0f", math.abs( YMAX / 2 - bar.height ) ), XC, YC, native.systemFont, 25 )
+	testText = display.newText( act.group, string.format( "%3.0f", bar.difference ), XC, YC, native.systemFont, 25 )
 
 end
 
@@ -156,7 +157,8 @@ end
 function newFrame()
 	
 	droppingBar()
-	testText.text = string.format( "%3.0f", math.abs( YMAX / 2 - bar.height ) )
+	bar.difference = H / 2 - bar.height
+	testText.text = string.format( "%3.0f", math.abs( bar.difference ) )
 end
 
 function start()
@@ -212,14 +214,14 @@ function timeLimit()
 	Runtime:removeEventListener( "enterFrame", newFrame )
 	Runtime:removeEventListener( "touch", risingBar )
 
-	local x = math.abs( YMAX / 2 - bar.height )
+	local x = math.abs( bar.difference )
 	range = display.newText( act.group, "", XC, YC + 20, native.systemFontBold, 25 )
 
 	if x <= 15 then
 		range.text = "Ideal range"
-	elseif x <= 62 then
+	elseif x <= 70 then
 		range.text = "Good range"
-	elseif x <= 121 then
+	elseif x <= 140 then
 		range.text =  "Mediocre range"
 	elseif x <= 183 then
 		range.text =  "Bad range"
@@ -233,7 +235,7 @@ function timeLimit()
 
 	end
 
-	game.addEnergy( -x/10 )
+	game.addEnergy( math.floor( -x/10 ) )
 	timer.performWithDelay( 1500, resetVisible )
 end
 
