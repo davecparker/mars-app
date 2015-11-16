@@ -19,12 +19,18 @@ local act = game.newAct()
 
 -- List of activities that can be run directly from the debug menu
 local debugActs = {
+	"mainAct",
+	"layoutTool",
 	"sampleAct",
 	"blankAct",
 	"circuit",
 	"doorLock",
 	"wireCut",
 	"thrustNav",
+	"drillScan",
+	"drill",
+	"rover",
+	"greenhouse",
 }
 
 ------------------------- Start of Activity --------------------------------
@@ -50,18 +56,18 @@ end
 
 -- Handle touch on a row
 function onRowTouch( event )
-	--if event.phase == "tap" or event.phase == "release" then
+	if event.phase == "tap" or event.phase == "release" then
 		-- Run the selected activity module and remember it for next startup
 		local actName = debugActs[event.target.index]
-		game.saveState.startAct = actName
-		game.selectGameTab( 1 )  -- Misc activities run off of the Main tab
+		game.selectGameTab( 1 )  -- Debug acts run off the main tab
 		game.gotoAct( actName )  
-	--end
+	end
 end
 
 -- Init the act
 function act:init()
-	-- Title bar for the view
+	-- Background and title bar for the view
+	act:whiteBackground()
 	act:makeTitleBar( "Debug Menu" )
 
 	-- Create the tableView widget to list the debug activities
@@ -70,7 +76,7 @@ function act:init()
 	    left = act.xMin,
 	    top = act.yMin + act.dyTitleBar,
 	    height = act.height - act.dyTitleBar,
-	    width = act.width - 12,   -- try to visually balance the widget's left margin
+	    width = act.width,
 	    onRowRender = onRowRender,
 	    onRowTouch = onRowTouch,
 	}
