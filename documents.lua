@@ -59,7 +59,7 @@ function act:init()
 	    left = act.xMin,
 	    top = act.yMin + act.dyTitleBar,
 	    height = act.height - act.dyTitleBar,
-	    width = act.width - 12,   -- try to visually balance the widget's left margin
+	    width = act.width,
 	    onRowRender = onRowRender,
 	    onRowTouch = onRowTouch,
 	}
@@ -68,12 +68,6 @@ end
 
 -- Prepare the view before it shows
 function act:prepare()
-	-- If a document is open then go to single document view
-	if game.openDoc then 
-		game.gotoAct( "document" )
-		return
-	end
-
 	-- Make sure that there are enough rows for the list of found docs
 	-- (Note that documents never get deleted so the list never shrinks)
 	local docs = game.saveState.docs

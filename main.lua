@@ -8,26 +8,47 @@
 
 --[[------------------------- Programmer Documentation ----------------------------------
 
--- Game functions defined in game.lua:
+-- Utility functions in game.lua:
 game.pinValue( value, min, max )      -- Constrain a value to a range
+game.xyInRect( x, y, rect )           -- test if point is in rect
+game.xyHitTest( x1, y1, x2, y2, dxy ) -- x, y hit test
+game.eatTouch()                       -- return true to eat touch or tap event
+game.removeObj( obj )                 -- remove a display object
+game.emptyFunction()                  -- do nothing
 
--- Game functions defined in Act.lua
-game.gotoAct( name, options )         -- Run a given activity/view
-game.removeAct( name )                -- Remove an activity from memory
-game.newAct()                         -- Create a new activity
+-- Resource functions in game.lua:
+game.oxygen()                         -- return current oxygen amount
+game.water()                          -- return current water amount
+game.energy()                         -- return current energy amount
+game.food()                           -- return current food amount
+game.addOxygen( liters )              -- Add or subtract oxygen
+game.addWater( liters )               -- Add or subtract water
+game.addEnergy( kWh )                 -- Add or subtract energy
+game.addFood( kg )                    -- Add or subtract food
 
--- Game functions defined in tabBar.lua:
+-- User-Interface functions in game.lua:
+game.showHint( text, title, onExit )  -- display help text in popup
+game.floatMessage( text, x, y )       -- Display floating fade-away message
+game.messageBox( text, options )      -- Display message box
+game.endMessageBox()                  -- Dismiss active message box if any
+
+-- User-Interface functions in tabBar.lua:
 game.selectGameTab( index, press )    -- Select one of the tab bar tabs
 game.createBadge( x, y )              -- Create a new item indicator badge
 game.showBadge( badge )               -- show an indicator badge
 game.hideBadge( badge )               -- hide an indicator badge
 
--- Game functions defined in messages.lua:
+-- Game functions in messages.lua:
 game.sendMessage( id )                -- Add message to messages view
 game.sendMessages( id1, id2, ... )    -- Add multiple messages to messages view
 
--- Game functions defined in documents.lua:
+-- Game functions in documents.lua:
 game.foundDocument( filename )        -- Add document to user's list of found docs
+
+-- Activity functions in Act.lua
+game.gotoAct( name, options )         -- Run a given activity/view
+game.removeAct( name )                -- Remove an activity from memory
+game.newAct()                         -- Create a new activity
 
 -- Variables in the act table you can use:
 act.width    -- width of the activiy area 
@@ -47,6 +68,7 @@ act:newImage( filename, options )        -- make a new imageRect display object
 act:newGroup( parent )                   -- make a new display (sub-)group
 act:whiteBackground()                    -- make a solid white background
 act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
+act:loadSound( filename, folder )        -- load sound file (folder defaults to act media)
 
 -----------------------------------------------------------------------------------------
 How to define an activity:
@@ -126,7 +148,7 @@ local function onSystemEvent( event )
 end
 
 -- Init the game
-function initGame()
+local function initGame()
 	-- Listen for system events
 	Runtime:addEventListener( "system", onSystemEvent )
 
@@ -137,10 +159,11 @@ function initGame()
 	game.sendMessage( "wake1" )
 	game.sendMessage( "wake2" )
 	game.sendMessages( "spin1", "spin2" )
+
+	-- Start in the debug menu view for now
+	game.gotoAct( "debugMenu" )
 end
 
 -- Start the game
 initGame()
 
--- Start in the debug menu view for now
-game.gotoAct( "debugMenu" )

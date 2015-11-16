@@ -12,6 +12,7 @@ local game = globalGame
 -- Create the act object
 local act = game.newAct()
 local widget = require( "widget" )  -- need to make buttons
+local util = require ("circuitActUtil")
 
 ------------------------- Variables ---------------------------------------------------------
 
@@ -19,18 +20,19 @@ local nutsRemoved = 0    -- the number of nuts that have been removed
 local panel
 local largeBG
 local wrenchTurns = 0
-local lastAngle -- saves the last angle the wrench was at
+local lastAngle          -- saves the last angle the wrench was at
 local wrenchRotation = 0 -- the actual angle of the wrench
 local offset = 0         -- saves an offset value for moving the panel
+local toolbox      
 
 ------------------------- Functions -------------------------------------------------------
 
 -- function to remove everything when the toolbox closes
 local function toolBoxClose ()
-	wrench.button:removeSelf()
-	wrench.button = nil
-	wrench:removeSelf()
-	wrench = nil
+	toolWindow.wrenchButton:removeSelf()
+	toolWindow.wrenchButton = nil
+	toolWindow.manualButton:removeSelf()
+	toolWindow.manualButton = nil
 	toolWindow:removeSelf()
 	toolWindow = nil
 end
@@ -45,7 +47,26 @@ local function wrenchTouch ( event )
 		wrenchSelected = true
 		toolBoxClose()
 	end
-	--return true
+	return true
+end
+
+local function manualClose ( event )
+	if event.phase == "ended" then
+		manual:removeSelf( )
+		manual = nil
+	end
+	return true
+end
+
+local function manualTouch ( event )
+	if event.phase == "ended" then
+		manual = act:newImage ( "manual.png", { width = 350 } )
+		manual.x = act.xCenter + 30
+		manual.y = act.yCenter + 30
+		manual:addEventListener( "touch", manualClose )
+		toolBoxClose()
+	end 
+	return true
 end
 
 -- function for the toolbox touch
@@ -56,23 +77,20 @@ local function toolboxTouch (event)
 				wrench:removeSelf()
 				wrench = nil
 			end
-			toolWindow = display.newRect( act.group, act.xCenter, act.yCenter, 300, 300 )
-			wrench = act:newImage( "wrench.png",  { width = 120 } )
-			wrench.rotation = 45
-			wrench.x = act.xCenter - 80
-			wrench.y = act.yCenter - 80
-			wrench.button = widget.newButton { width = 100, height = 100, onEvent = wrenchTouch }
-			wrench.button.x = act.xCenter - 80
-			wrench.button.y = act.yCenter - 80
+			transition.cancel( toolbox ) -- kill the blinking
+			toolbox.alpha = 1   -- set the alpha of the toolbox back to 1
+			toolWindow = act:newImage ( "toolboxInside.png", { width = 300 } )
+			toolWindow.x = act.xCenter
+			toolWindow.y = act.yCenter
+			toolWindow.wrenchButton = widget.newButton { width = 100, height = 120, onEvent = wrenchTouch }
+			toolWindow.wrenchButton.x = act.xCenter - 80
+			toolWindow.wrenchButton.y = act.yCenter - 80
+			toolWindow.manualButton = widget.newButton { width = 80, height = 110, onEvent = manualTouch }
+			toolWindow.manualButton.x = act.xCenter + 60
+			toolWindow.manualButton.y = act.yCenter + 60
 		end
 	end
 	return true
-end
-
-local function nutRotate (fx, fy)
-	local dx = fx - activeNut.x
-	local dy = fy - activeNut.y
-	activeNut.rotation = (math.atan2(dy, dx) * 180 / math.pi)
 end
 
 -- function for turning wrench
@@ -81,39 +99,49 @@ local function turnWrench ( event )
 	if event.phase == "began" then
 		local dx = event.x - wrench.x
 		local dy = event.y - wrench.y
+		display.getCurrentStage():setFocus( event.wrench )
 	end
 	if event.phase == "moved" then
 		local dx = event.x - wrench.x
 		local dy = event.y - wrench.y
 		wrench.rotation = (math.atan2(dy, dx) * 180 / math.pi)
-		print(wrench.rotation)
+
+	elseif event.phase == "ended" or event.phase == "cancelled" then
+		display.getCurrentStage():setFocus(nil)
 	end
+
 	-- saves the angle of the wrench
 	if wrench.rotation > 0 then
-		wrenchRotation = wrench.rotation		
+		wrenchRotation = math.floor(wrench.rotation)
 	else
-		wrenchRotation = wrench.rotation + 360
+		wrenchRotation = math.floor(wrench.rotation + 360)
 	end
-	-- adds 1 to turn wrech upon a 360 degree rotation
-	if lastAngle < 20 then
+
+	-- back the wrench up if its moving in the wrong direction otherwise let it move counterclockwise
+	if wrenchRotation + 30 < lastAngle then
+		wrench.rotation = lastAngle
+
+	elseif wrenchRotation > lastAngle then
+		wrench.rotation = lastAngle	
+	else
+		lastAngle = wrenchRotation
+		activeNut.rotation = wrench.rotation - 25
+	end
+
+	-- adds 1 to turn wrech upon a 360 degree rotation=========================================================================================
+	if math.floor(lastAngle) < 20 then
 		lastAngle = 360
 		wrenchTurns = wrenchTurns + 1
 	end
-	-- back the wrench up if its moving in the wrong direction otherwise let it move counterclockwise
-	if wrenchRotation + 20  < lastAngle then
-		wrench.rotation = lastAngle
-	elseif wrenchRotation > lastAngle then
-		wrench.rotation = lastAngle
-	else
-		lastAngle = wrenchRotation
-		nutRotate(event.x, event.y)  -- rotate the nut too
-	end
+	
 	-- if the wrench turns a certin amount then remove the nut
 	if wrenchTurns > 2 then
-		wrench:removeEventListener( "touch", turnWrench )
-		activeNut:removeSelf()
-		activeNut = nil
-		nutsRemoved = nutsRemoved + 1
+		if (wrenchRotation > activeNut.angle - 5) and (wrenchRotation < activeNut.angle + 5) then
+			wrench:removeEventListener( "touch", turnWrench )
+			activeNut:removeSelf()
+			activeNut = nil
+			nutsRemoved = nutsRemoved + 1
+		end
 		-- if all the nuts have been removed remove the wrench as well
 		if nutsRemoved == 4 then
 			wrench:removeSelf()
@@ -135,10 +163,10 @@ local function nutTouch ( event )
 		end
 		-- create a wrench on the selected nut and reset the wrenchturns
 		if wrenchSelected then
-			wrench = act:newImage( "wrench.png",  { width = 130 } )
+			wrench = act:newImage( "wrench.png",  { width = 150 } )
 			wrench.anchorX = 0.13
 			wrench.x = event.target.x  -- refrences the targets x that was touched
-			wrench.y = event.target.y  -- same thing buy y cord
+			wrench.y = event.target.y  -- same thing but y cord
 			wrench:rotate (activeNut.angle)
 			wrench:addEventListener( "touch", turnWrench )
 			wrenchTurns = 0
@@ -157,9 +185,13 @@ local function removePanel ( event )
 		if (event.phase == "moved") and (panelLoose == true ) then
 			
 			panel.x = event.x + offset
-			if panel.x < act.xMin or panel.x > act.xMax then
+			if panel.x > act.xMax then
 				-- move panel off screen and transition to the next part of the game
 				transition.to( panel, { time = 500, x = 500, onComplete = game.gotoAct( "wireCut", "fade" ) } )
+			end
+			if panel.x < act.xMin then
+				-- move panel off screen and transition to the next part of the game
+				transition.to( panel, { time = 500, x = -220, onComplete = game.gotoAct( "wireCut", "fade" ) } )
 			end
 		end
 		return true
@@ -187,6 +219,7 @@ end
 -- function to send you back when you press the back button
 local function backButtonPress ( event )
 	game.gotoAct ( "mainAct" )
+	return true
 end
 
 ------------------------- Start of Activity ----------------------------------------------------
@@ -211,23 +244,18 @@ function act:init()
 	bg:addEventListener( "touch", bgTouch )
 
 	-- toolbox icon
-	local toolbox = act:newImage ( "toolbox.png", { width = 40 } )
+	toolbox = act:newImage ( "toolbox2.png", { width = 45 } )
 	toolbox.x = act.xMax - 30
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
+	transition.blink ( toolbox, { time = 2000 } )
+	--toolbox = util.makeToolbox(act)
 
 	-- back button
-	local backButton = act:newImage( "backButton.png", { width = 40 } )
+	local backButton = act:newImage( "backButton.png", { width = 50 } )
 	backButton.x = act.xMin + 30
 	backButton.y = act.yMin + 30
-	backButton.button = widget.newButton 
-	{
-		 x = act.xMin + 30,
-		 y = act.yMin + 30,
-		 width = 50, 
-		 height = 50,
-		 onPress = backButtonPress 
-	}
+	backButton:addEventListener( "tap", backButtonPress )
 
 	-- panel
 	local panelLoose = false
