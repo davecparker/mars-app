@@ -45,7 +45,9 @@ local act = game.newAct()
 
 ------------------------- Start of Activity --------------------------------
 -- File local variables
-local staticGrp -- display group for foreground static objects
+local staticBgGrp -- display group for static background objects
+local staticFgGrp -- display group for static foreground objects
+local mapGrp
 local dynamicGrp -- display group for dynamic objects
 local terrain = {} -- basic terrain
 local obstacle = {} -- terrain obstacles
@@ -336,25 +338,16 @@ local function coastRover()
 	end
 end
 
--- Acceleration touch event handler
-local function bgTouched( event )
-	if event.phase == "began" then
-		rover.accelerate = true
-	elseif event.phase == "ended" or event.phase == "cancelled" then
-		rover.accelerate = false
-	end
-end
-
 local function updatePosition()
 	-- calculate distance rover has moved and new course length
-	local distMoved = ( rover.x - rover.distOldX )/100
+	local distMoved = ( rover.x - rover.distOldX )/100 --* map.scale
 	map.courseLength = map.courseLength - distMoved
 
 	-- if the rover has moved and still has a course (has not reached its destination)
 	if map.courseLength > 0 and distMoved ~= 0 then
 		-- calculate new current position coordinates
-		game.saveState.rover.x1 = game.saveState.rover.x1 + distMoved * map.courseVX
-		game.saveState.rover.y1 = game.saveState.rover.y1 + distMoved * map.courseVY
+		game.saveState.rover.x1 = game.saveState.rover.x1 + distMoved * map.courseVX --* map.scale
+		game.saveState.rover.y1 = game.saveState.rover.y1 + distMoved * map.courseVY --* map.scale
 		local x1 = game.saveState.rover.x1 - mapGrp.x
 		local y1 = game.saveState.rover.y1 - mapGrp.y
 
@@ -443,6 +436,16 @@ local function moveTerrain()
 	end
 end
 
+-- Acceleration touch event handler
+local function onAccelPress( event )
+	rover.accelerate = true
+end
+
+-- Acceleration touch event handler
+local function onAccelRelease( event )
+	rover.accelerate = false
+end
+
 -- Stop button event handler
 local function onStopPress( event )
 	rover.brake = true
@@ -485,42 +488,6 @@ local function onResetPress( event )
 	resetButton.isVisible = false
 end
 
--- Create the speed display text
-local function newDisplay()
-	local format = "%4d %s"
-	local options = 
-	{
-		parent = staticGrp,
-		text = string.format( format, 0, "kph" ),
-		x = act.xMax - 10,
-		y = 20,
-		font = native.systemFontBold,
-		fontSize = 18,
-	}
-
-	speedText = display.newText( options )
-	speedText:setFillColor( 0.0, 1.0, 0.0 )
-	speedText.anchorX = 1
-	speedText.anchorY = 0
-	speedText.x = act.xMax - 10
-	speedText.y = act.yMin + 10
-	speedText.format = format
-end
-
--- Update the speed display
-local function updateDisplay()
-	local kmPerCoronaUnit = 0.00006838462 -- based on estimated rover length
-	local elapsedTimePerHr = 7200 -- every 0.5 seconds
-	rover.kph = ( rover.x - rover.speedOldX ) * kmPerCoronaUnit * elapsedTimePerHr
-
-	if rover.kph < 0 then 
-		rover.kph = 0 
-	end
-
-	speedText.text = string.format( speedText.format, rover.kph, "kph" )
-	rover.speedOldX = rover.x
-end
-
 local function zoomMap()
 
 	local zoomData = {
@@ -534,28 +501,54 @@ local function zoomMap()
 	transition.scaleTo( map, zoomData )
 end
 
--- Init the act
-function act:init()
-	-- include Corona's physics and widget libraries
-	local physics = require "physics"
-	local widget = require( "widget" )
+local function onZoomInRelease()
+	if map.scale < 3 then
+		map.scale = map.scale * 1.5
+		zoomMap()
+	end
+end
 
-	-- start physics, set gravity 
-	physics.start()
-	physics.setGravity( 0, 3.3 )
-	physics.setContinuous( true )
-	--physics.setDrawMode( "hybrid" )
+local function onZoomOutRelease()
+	if map.scale > 1 then
+		map.scale = map.scale / 1.5
+		zoomMap()
+	end
+end
 
-	-- seed math.random()
-	math.randomseed( os.time() )
+-- Create the speed display text
+local function newDisplayPanel()
 
-	-- create display groups for dynamic objects & static foreground objects
-	staticGrp = act:newGroup()
-	dynamicGrp = act:newGroup()
+	local widget = require "widget" 
+
+	-- set display panel backgroud image
+	local dispPanelData = { 
+		parent = staticFgGrp, 
+		x = act.xCenter, 
+		y = act.yMin + act.height/6 + 5, 
+		width = act.width, 
+		height = act.height/3 + 10 ,
+	} 
+
+	displayPanel = act:newImage( "panel8.png", dispPanelData )
 
 	local mapLength = act.height/3
-	mapGrp = display.newContainer( mapLength, mapLength )
-	mapGrp:translate( act.xCenter, act.yMin + act.height/6 )
+	local mapX = act.xMin + act.height/6 + 5
+	local mapY = act.yMin + act.height/6 + 5 
+
+	mapBgRect1 = display.newRect( staticFgGrp, mapX, mapY, mapLength + 4, mapLength + 4 )
+	mapBgRect1:setFillColor( 0.5, 0.5, 0.5 )
+
+	mapBgRect2 = display.newRect( staticFgGrp, mapX, mapY, mapLength + 3, mapLength + 3 )
+	mapBgRect2:setFillColor( 0.3, 0.3, 0.3 )
+
+	mapBgRect3 = display.newRect( staticFgGrp, mapX, mapY, mapLength + 2, mapLength + 2 )
+	mapBgRect3:setFillColor( 0.1, 0.1, 0.1 )
+
+	mapBgRect4 = display.newRect( staticFgGrp, mapX, mapY, mapLength + 1, mapLength + 1 )
+	mapBgRect4:setFillColor( 0, 0, 0 )
+	
+	mapGrp = display.newContainer( staticFgGrp, mapLength, mapLength )
+	mapGrp:translate( mapX, mapY )
 	mapGrp.left = -mapLength/2
 	mapGrp.right = mapLength/2
 	mapGrp.top = -mapLength/2
@@ -579,33 +572,99 @@ function act:init()
 	map.courseLength = 0
 	map.courseVX = 0
 	map.courseVY = 0
-	map.scale = 2
+	map.scale = 1
 
 	-- add touch event listener to background image
 	map:addEventListener( "touch", mapTouched )
 
-	-- set sky background
-	local skyData = { 
-		parent = dynamicGrp, 
-		x = act.xMin, 
-		y = act.yMin, 
+	newMapDot()
+
+	-- Create zoom-in button
+	local zoomInButton = widget.newButton
+	{
+	    left = act.xMin + mapLength + 10, 
+	    top = mapGrp.y - 20, 
+	    width = 10, 
+	    height = 10,
+	    label = "+",
+	    font = native.systemFontBold,
+	    onRelease = onZoomInRelease
+	}
+
+	-- Create zoom-out button
+	local zoomOutButton = widget.newButton
+	{
+	    left = act.xMin + mapLength + 10, 
+	    top = mapGrp.y, 
+	    width = 10, 
+	    height = 10,
+	    label = "-",
+	    font = native.systemFontBold,
+	    onRelease = onZoomOutRelease
+	}
+
+	speedBgRect = display.newRect( staticFgGrp, act.xCenter, act.yCenter, 80, 20 )
+	speedBgRect.anchorX = 0
+	speedBgRect.anchorY = 1
+	speedBgRect.x = act.xMin + mapLength + 10
+	speedBgRect.y = act.yMin + mapLength + 7
+	speedBgRect:setFillColor( 0.25, 0.25, 0.25 )
+
+	local format = "%4d %s"
+	local options = 
+	{
+		parent = staticFgGrp,
+		text = string.format( format, 0, "kph" ),
+		x = act.xMax - 10,
+		y = 20,
+		font = native.systemFontBold,
+		fontSize = 18,
+	}
+
+	speedText = display.newText( options )
+	speedText:setFillColor( 0.0, 1.0, 0.0 )
+	speedText.anchorX = 1
+	speedText.anchorY = 1
+	speedText.x = speedBgRect.x + 75
+	speedText.y = speedBgRect.y
+	speedText.format = format
+
+	staticFgGrp:insert( mapGrp )
+	staticFgGrp:insert( zoomInButton )
+	staticFgGrp:insert( zoomOutButton )
+end
+
+local function newControlPanel()
+	local widget = require "widget" 
+	-- set panel backgroud image
+	local ctrlPanelData = { 
+		parent = staticFgGrp, 
+		x = act.xCenter, 
+		y = act.yMax + act.height/12, 
 		width = act.width, 
-		height = act.height 
+		height = act.height/3 + 10,
 	} 
 
-	sky = act:newImage( "sky2.jpg", skyData )
-	sky.x = act.xCenter
-	sky.y = act.yCenter
+	displayPanel = act:newImage( "panel8.png", ctrlPanelData )
 
-	-- add touch event listener to background image
-	sky:addEventListener( "touch", bgTouched )
-	timer.performWithDelay( 500, updateDisplay, 0 )
+	-- create the accelerator
+	local accelButton = widget.newButton
+	{
+		x = act.xCenter + 35,
+		y = act.yMax - 24,
+		width = 40,
+		height = 40,
+		defaultFile = "media/rover/accel_unpressed.png",
+		overFile = "media/rover/accel_pressed.png",
+		onPress = onAccelPress,
+		onRelease = onAccelRelease
+	}
 
 	-- create the stop button
 	local stopButton = widget.newButton
 	{
-		x = act.xMax - 30,
-		y = act.yMax - 40,
+		x = act.xCenter - 35,
+		y = act.yMax - 24,
 		width = 40,
 		height = 40,
 		defaultFile = "media/rover/stop_unpressed.png",
@@ -618,7 +677,7 @@ function act:init()
 	resetButton = widget.newButton
 	{
 		x = act.xCenter,
-		y = act.yMax - 40,
+		y = act.yMax - 35,
 		width = 30,
 		height = 30,
 		defaultFile = "media/rover/reset_unpressed.png",
@@ -628,14 +687,67 @@ function act:init()
 
 	resetButton.isVisible = false
 
+	staticFgGrp:insert( accelButton )
+	staticFgGrp:insert( stopButton )
+	staticFgGrp:insert( resetButton )
+end
+
+-- Update the speed display
+local function updateDisplay()
+	local kmPerCoronaUnit = 0.00006838462 -- based on estimated rover length
+	local elapsedTimePerHr = 7200 -- every 0.5 seconds
+	rover.kph = ( rover.x - rover.speedOldX ) * kmPerCoronaUnit * elapsedTimePerHr
+
+	if rover.kph < 0 then 
+		rover.kph = 0 
+	end
+
+	speedText.text = string.format( speedText.format, rover.kph, "kph" )
+	rover.speedOldX = rover.x
+end
+
+-- Init the act
+function act:init()
+	-- include Corona's physics and widget libraries
+	local physics = require "physics"
+	
+	-- start physics, set gravity 
+	physics.start()
+	physics.setGravity( 0, 3.3 )
+	physics.setContinuous( true )
+	--physics.setDrawMode( "hybrid" )
+
+	-- seed math.random()
+	math.randomseed( os.time() )
+
+	-- create display groups for dynamic objects & static foreground objects
+	staticBgGrp = act:newGroup()
+	staticFgGrp = act:newGroup()
+	dynamicGrp = act:newGroup()	
+
+	-- set sky background
+	local skyData = { 
+		parent = staticBgGrp, 
+		x = act.xMin, 
+		y = act.yMin, 
+		width = act.width, 
+		height = act.height 
+	} 
+
+	sky = act:newImage( "sky2.jpg", skyData )
+	sky.x = act.xCenter
+	sky.y = act.yCenter
+
+	-- add touch event listener to background image
+	--sky:addEventListener( "touch", bgTouched )
+
 	-- create the terrain and the rover
 	newTerrain( 20 )
 	newRover( act.yMax - 112 )
-	newMapDot()
-	newDisplay()
-	staticGrp:insert( stopButton )
-	staticGrp:insert( resetButton )
-	staticGrp:insert( mapGrp )
+	newDisplayPanel()
+	newControlPanel()
+
+	timer.performWithDelay( 500, updateDisplay, 0 )
 end
 
 -- Handle enterFrame events
@@ -647,13 +759,10 @@ function act:enterFrame( event )
 
 	-- recycle and generate the terrain
 	moveTerrain()
-	
-	-- move the background along the x-axis the distance the rover has moved
-	sky.x = act.xCenter + rover.x - 100
 
 	-- move the static group to the foreground
-	sky:toBack()
-	staticGrp:toFront()
+	staticBgGrp:toBack()
+	staticFgGrp:toFront()
 end
 
 ------------------------- End of Activity --------------------------------
