@@ -27,11 +27,13 @@ local function backTapped()
 	-- "Close" the document being viewed, and go back to the documents list view
 	game.openDoc = nil
 	game.gotoAct( "documents", { effect = "slideRight", time = 300 } )
+	return true
 end
 
 -- Init the act
 function act:init()
-	-- Title bar for the view with back button
+	-- Background and title bar for the view with back button
+	act:whiteBackground()
 	act:makeTitleBar( "", backTapped )
 
 	-- Text area

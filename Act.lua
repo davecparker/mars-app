@@ -21,10 +21,8 @@ local Act = {
 -- Create a new instance of the Act class
 function Act:new()
     local act = {}
-
-	setmetatable(act, self)
+	setmetatable( act, self )
 	self.__index = self
-
     return act
 end
 
@@ -36,6 +34,7 @@ end
 --    folder          -- subfolder where filename is located, default is media/actName
 --    x, y            -- initial position of the center of the object, default is act center
 --    width, height   -- display object size (default to original size/aspect)
+--    allowFail       -- set to true to just return nil if image not found instead of error
 -- If only one of width or height is included, the other is calculated to retain the aspect.
 function Act:newImage( filename, options )
     -- Check the parameter types
@@ -73,8 +72,13 @@ function Act:newImage( filename, options )
     end
 
     -- Now make the imageRect at the desired size and position
+    width = width or self.width
+    height = height or self.height
     local image = display.newImageRect( parent, path, width, height )
     if not image then
+        if options.allowFail then
+            return nil
+        end
         error( "Image not found: " .. path, 2 )  -- report runtime error at the calling location
     else
         image.x = x
@@ -91,33 +95,55 @@ function Act:newGroup( parent )
 	return g
 end 
 
--- Make a background title bar for a game view with the given title string (default empty).
--- If backListener is passed, include a back button and call backListener when pressed.
-function Act:makeTitleBar( title, backListener )
+-- Make and return a solid white background for the act.
+function Act:whiteBackground()
     -- Background for the whole view
     local bg = display.newRect( self.group, self.xCenter, self.yCenter, self.width, self.height )
-    bg:setFillColor( 1 )   -- white
+    bg:setFillColor( 1 )  -- white
+    return bg
+end    
 
-    -- Title bar
-    local bar = display.newRect( self.group, self.xMin, self.yMin, self.width, self.dyTitleBar )
+-- Make a background title bar for a game view with the given title string (default empty).
+-- If backListener is passed, include a back button and call backListener when pressed.
+-- Return a display group containing all the title bar elements.
+function Act:makeTitleBar( title, backListener )
+    -- Make a display group to hold all the title bar elements
+    local group = self:newGroup()
+
+    -- Colored bar
+    local bar = display.newRect( group, self.xMin, self.yMin, self.width, self.dyTitleBar )
     bar.anchorX = 0
     bar.anchorY = 0
     bar:setFillColor( 0.5, 0, 0 )   -- dark red
+    bar:addEventListener( "touch", game.eatTouch )  -- eat touches on title bar
+    bar:addEventListener( "tap", game.eatTouch )    -- and taps too
 
     -- Title bar text
     title = title or ""
-    self.title = display.newText( self.group, title, 
+    self.title = display.newText( group, title, 
                         self.xCenter, self.yMin + self.dyTitleBar / 2, 
                         native.systemFontBold, 18 )
     self.title:setFillColor( 1 )   -- white
 
     -- Back button if requested
     if backListener then
-        local bb = self:newImage( "back.png", { folder = "media/game", height = self.dyTitleBar * 0.6 } )
+        local bb = self:newImage( "back.png", { 
+            parent = group, 
+            folder = "media/game", 
+            height = self.dyTitleBar * 0.6 
+        } )
         bb.x = self.xMin + 15
         bb.y = self.yMin + self.dyTitleBar / 2
         bb:addEventListener( "tap", backListener )
     end
+    return group
+end
+
+-- Load and return a sound file with the given filename. 
+-- Use the folder if given, else media/actName
+function Act:loadSound( filename, folder )
+    folder = folder or "media/" .. self.name 
+    return audio.loadSound( folder .. "/" .. filename )
 end
 
 
@@ -125,6 +151,7 @@ end
 
 -- Go to a given act, with transition options (see composer.gotoScene for parameters)
 function game.gotoAct( name, options )
+    game.setCurrentTabAct( name )
     composer.gotoScene( name, options )  -- CRASH? If you get 'sceneName' nil here then you
                                          -- forgot to return act.scene from your act file.
 end
@@ -173,7 +200,7 @@ function game.newAct()
         -- When the scene is on-screen and ready to go...
         local act = self.act
         if event.phase == "will" then
-           -- Call the act prepare function, if any
+            -- Call the act prepare function, if any
             if act.prepare then 
                 act:prepare()
             end            
