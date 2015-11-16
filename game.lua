@@ -21,8 +21,7 @@ local game = {
     -- The saveState table is saved to a file between runs
     saveState = {
         usedGems = {},  -- set of gem names that have been used
-        docs = {},      -- list of document filenames that user has found
-
+    
         -- The user's current resource levels (and starting values)
         resources = {
             o2 = 100,     -- oxygen in liters
@@ -47,6 +46,13 @@ local game = {
             { x = -15, y = 15, r = 10 },
         },
 
+        thrustNav = {
+            onTarget = false,
+            latestXTargetDelta = 100,
+            latestYTargetDelta = 100,
+            shipSpinning = true
+        },
+            
         -- List of document filenames that user has found
         docs = {},
     },     
@@ -86,8 +92,22 @@ function game.eatTouch()
     return true
 end
 
+-- Remove the given display object
+function game.removeObj( obj )
+    obj:removeSelf()
+end
+
+-- Do nothing
+function game.emptyFunction()
+end
 
 -------------------------- Resource use   ---------------------------------
+
+-- Accessors for resource amounts
+function game.oxygen()  return res.o2    end
+function game.water()   return res.h2o   end
+function game.energy()  return res.kWh   end
+function game.food()    return res.food  end
 
 -- Add to or subtract from the oxygen supply by the given amount in liters
 function game.addOxygen( liters )
@@ -123,6 +143,23 @@ end
 
 
 ------------------------- User interface  ---------------------------------
+
+-- Display hint text for the user in a popup window.
+-- The title is optional, defaults to "Hint".
+-- If the onDismiss function is included, it is called when the user dismisses the popup.
+function game.showHint( text, title, onDismiss )
+	-- TODO: Make something better looking than a native alert?
+	native.showAlert( title or "Hint", text, { "OK" }, onDismiss or game.emptyFunction )
+end
+
+-- Make floating message text that moves up from x, y then fades and disappears
+function game.floatMessage( text, x, y )
+    local text = display.newText( text, x, y, native.systemFontBold, 18 )
+    text:setFillColor( 1, 1, 0 )   -- yellow
+    transition.to( text, { x = x + 50, y = y - 100, xScale = 2, yScale = 2, time = 1000 } ) 
+    transition.to( text, { alpha = 0, time = 1000, transition = easing.inQuad, 
+            onComplete = game.removeObj } )
+end
 
 -- Destroy an active message box shown by game.messageBox, if any.
 function game.endMessageBox()
@@ -206,8 +243,8 @@ end
 
 ------------------------- Game management  --------------------------------
 
--- Init the game
-local function initGame()
+-- Init the game object
+local function initGameObject()
     -- Hide device status bar
     display.setStatusBar( display.HiddenStatusBar )
 
@@ -227,5 +264,5 @@ end
 
 
 -- Init and return the game object
-initGame()
+initGameObject()
 return game
