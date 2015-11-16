@@ -35,6 +35,12 @@ local gems = {
         foodL1 =    { x = 130,  y = 50, t = "res", res = "food", amount = 50, enabled = true  },     
         codeDoc1 =  { x = 80, y = 70, t = "doc", file = "Security Announcement" },
         resDoc1 =   { x = 110, y = 70, t = "doc", file = "Resource Management", enabled = true  },
+
+        -- In Greenhouse
+        h2oG1 =     { x = 30,  y = 120, t = "res", res = "h2o", amount = 20, enabled = true  },
+        h2oG2 =     { x = 30,  y = 150, t = "res", res = "h2o", amount = 20, enabled = true  },
+        h2oG3 =     { x = 30,  y = 180, t = "res", res = "h2o", amount = 20, enabled = true  },
+        plants =    { x = 80,  y = 130, t = "act", act = "greenhouse", enabled = true },
  
 		-- In Engineering room 
 		panel1 =	{ x = -10, y = 230, t = "act", act = "circuit", param = 1, enabled = true },

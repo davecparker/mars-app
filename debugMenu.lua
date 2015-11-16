@@ -30,6 +30,7 @@ local debugActs = {
 	"drillScan",
 	"drill",
 	"rover",
+	"greenhouse",
 }
 
 ------------------------- Start of Activity --------------------------------
@@ -55,12 +56,12 @@ end
 
 -- Handle touch on a row
 function onRowTouch( event )
-	--if event.phase == "tap" or event.phase == "release" then
+	if event.phase == "tap" or event.phase == "release" then
 		-- Run the selected activity module and remember it for next startup
 		local actName = debugActs[event.target.index]
 		game.selectGameTab( 1 )  -- Debug acts run off the main tab
 		game.gotoAct( actName )  
-	--end
+	end
 end
 
 -- Init the act
