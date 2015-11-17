@@ -40,8 +40,6 @@ end
 local function toolboxTouch (event) 
 	if event.phase == "began" then
 		if toolWindow == nil then
-			transition.cancel( toolbox ) -- kill the blinking
-			toolbox.alpha = 1   -- set the alpha of the toolbox back to 1
 			toolWindow = act:newImage ( "toolboxInside.png", { width = 300, folder = "media/circuit" } )
 			toolWindow.x = act.xCenter
 			toolWindow.y = act.yCenter
@@ -346,21 +344,14 @@ function act:init()
 	local backButton = act:newImage( "backButton.png", { width = 50, folder = "media/circuit"} )
 	backButton.x = act.xMin + 30
 	backButton.y = act.yMin + 30
-	backButton.button = widget.newButton 
-	{
-		 x = act.xMin + 30,
-		 y = act.yMin + 30,
-		 width = 50, 
-		 height = 50,
-		 onPress = backButtonPress 
-	}
+	backButton:addEventListener( "tap", backButtonPress )
 
 	-- toolbox icon
 	toolbox = act:newImage ( "toolbox2.png", { width = 45, folder = "media/circuit" } )
 	toolbox.x = act.xMax - 30
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
-	transition.blink ( toolbox, { time = 2000 } )
+
 
 	-- Touch location text display objects==============================================================================================
 	--local yText = act.yMin + 15   -- relative to actual top of screen

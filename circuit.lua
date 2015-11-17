@@ -23,7 +23,13 @@ local wrenchTurns = 0
 local lastAngle          -- saves the last angle the wrench was at
 local wrenchRotation = 0 -- the actual angle of the wrench
 local offset = 0         -- saves an offset value for moving the panel
-local toolbox      
+local toolWindow
+local toolbox   
+local toolIcon           -- the tool selected icon  
+-- toolbox selection icon
+local toolboxIconOptions = { width = 100, height = 100, numFrames = 3 } 
+local toolboxIconSequence = { name = "icon", start = 1, count = 3 }
+local toolboxIconImageSheet = graphics.newImageSheet( "media/circuit/toolBoxIcon.png", toolboxIconOptions ) 
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -31,42 +37,90 @@ local toolbox
 local function toolBoxClose ()
 	toolWindow.wrenchButton:removeSelf()
 	toolWindow.wrenchButton = nil
+	toolWindow.wireCutterhButton:removeSelf()
+	toolWindow.wireCutterhButton = nil
+	toolWindow.tapeButton:removeSelf()
+	toolWindow.tapeButton = nil
 	toolWindow.manualButton:removeSelf()
 	toolWindow.manualButton = nil
 	toolWindow:removeSelf()
 	toolWindow = nil
 end
 
+-- sets the icon over the toolbox
+local function setToolIcon ( tool)
+	if toolIcon then
+		toolIcon:setFrame( tool )
+	else
+		toolIcon = display.newSprite( act.group, toolboxIconImageSheet, toolboxIconSequence )
+		toolIcon:setFrame( tool )
+		toolIcon.x = act.xMax - 30
+		toolIcon.y = act.yMin + 30
+		toolIcon:scale( 0.5, 0.5 )
+		toolbox.alpha = 0.2
+	end
+	toolBoxClose()
+end
+
 -- function for selecting the wrench from the toolbox window
 local function wrenchTouch ( event )
 	if event.phase == "ended" then
-		-- want to change the icon of the toolbox, maybe find a better way here
-		local toolboxWrench = act:newImage ("wrenchSmall.png",  { width = 40 } )
-		toolboxWrench.x = act.xMax - 30
-		toolboxWrench.y = act.yMin + 30
+		setToolIcon(1)
 		wrenchSelected = true
-		toolBoxClose()
 	end
 	return true
 end
 
+-- remove the manual page
 local function manualClose ( event )
 	if event.phase == "ended" then
-		manual:removeSelf( )
-		manual = nil
+		manual2:removeSelf( )
+		manual2 = nil
 	end
 	return true
 end
 
+-- got to the next page in the manual
+local function nextPage ( event )
+	if event.phase == "ended" then
+		-- remove page 1
+		manual1:removeSelf( ) 
+		manual1 = nil
+		-- make page 2
+		manual2 = act:newImage ( "manualPG2.png", { width = 300 } )
+		manual2.x = act.xCenter
+		manual2.y = act.yCenter
+		manual2:addEventListener( "touch", manualClose )
+	end
+	return true
+end
+
+-- controls what happnes when you touch the manual
 local function manualTouch ( event )
 	if event.phase == "ended" then
-		manual = act:newImage ( "manual.png", { width = 350 } )
-		manual.x = act.xCenter + 30
-		manual.y = act.yCenter + 30
-		manual:addEventListener( "touch", manualClose )
+		manual1 = act:newImage ( "manualPG1.png", { width = 300 } )
+		manual1.x = act.xCenter
+		manual1.y = act.yCenter
+		manual1:addEventListener( "touch", nextPage )
 		toolBoxClose()
 	end 
 	return true
+end
+
+-- wire cutter is touched
+local function wireCutterTouch ( event )
+	if event.phase == "ended" then
+		local toolIcon = setToolIcon(3)
+		wrenchSelected = false
+	end
+end
+
+-- tape is touched
+local function tapeTouch ( event )
+	if event.phase == "ended" then
+		local toolIcon = setToolIcon(2)
+		wrenchSelected = false
+	end
 end
 
 -- function for the toolbox touch
@@ -77,20 +131,50 @@ local function toolboxTouch (event)
 				wrench:removeSelf()
 				wrench = nil
 			end
-			transition.cancel( toolbox ) -- kill the blinking
-			toolbox.alpha = 1   -- set the alpha of the toolbox back to 1
+			if manual1 then     -- remove the manual if its up
+				manual1:removeSelf( )
+				manual1 = nil
+			end
+			if manual2 then 
+				manual2:removeSelf( )
+				manual2 = nil
+			end
 			toolWindow = act:newImage ( "toolboxInside.png", { width = 300 } )
 			toolWindow.x = act.xCenter
 			toolWindow.y = act.yCenter
+			-- wrench button
 			toolWindow.wrenchButton = widget.newButton { width = 100, height = 120, onEvent = wrenchTouch }
 			toolWindow.wrenchButton.x = act.xCenter - 80
 			toolWindow.wrenchButton.y = act.yCenter - 80
+			toolWindow.wrenchButton.isVisible = false
+			toolWindow.wrenchButton.isHitTestable = true
+			-- wire cutter button
+			toolWindow.wireCutterhButton = widget.newButton { width = 100, height = 120, onEvent = wireCutterTouch }
+			toolWindow.wireCutterhButton.x = act.xCenter + 55
+			toolWindow.wireCutterhButton.y = act.yCenter - 80
+			toolWindow.wireCutterhButton.isVisible = false
+			toolWindow.wireCutterhButton.isHitTestable = true
+			-- tape button
+			toolWindow.tapeButton = widget.newButton { width = 100, height = 120, onEvent = tapeTouch }
+			toolWindow.tapeButton.x = act.xCenter - 80
+			toolWindow.tapeButton.y = act.yCenter + 60
+			toolWindow.tapeButton.isVisible = false
+			toolWindow.tapeButton.isHitTestable = true
+			-- manual button
 			toolWindow.manualButton = widget.newButton { width = 80, height = 110, onEvent = manualTouch }
 			toolWindow.manualButton.x = act.xCenter + 60
 			toolWindow.manualButton.y = act.yCenter + 60
+			toolWindow.manualButton.isVisible = false
+			toolWindow.manualButton.isHitTestable = true
 		end
 	end
 	return true
+end
+
+-- remove the nut
+local function removeNut ()
+	activeNut:removeSelf()
+	activeNut = nil
 end
 
 -- function for turning wrench
@@ -128,22 +212,18 @@ local function turnWrench ( event )
 		activeNut.rotation = wrench.rotation - 25
 	end
 
-	-- adds 1 to turn wrech upon a 360 degree rotation=========================================================================================
+	-- adds 1 to turn wrech upon a 360 degree rotation
 	if math.floor(lastAngle) < 20 then
 		lastAngle = 360
 		wrenchTurns = wrenchTurns + 1
 	end
 	
-	-- if the wrench turns a certin amount then remove the nut
+	-- if the wrench turns a certin amount then remove the nut and wrench
 	if wrenchTurns > 2 then
 		if (wrenchRotation > activeNut.angle - 5) and (wrenchRotation < activeNut.angle + 5) then
 			wrench:removeEventListener( "touch", turnWrench )
-			activeNut:removeSelf()
-			activeNut = nil
+			transition.to( activeNut, { time = 500, y = activeNut.y + 300, transition = easing.inSine, onComplete = removeNut } )
 			nutsRemoved = nutsRemoved + 1
-		end
-		-- if all the nuts have been removed remove the wrench as well
-		if nutsRemoved == 4 then
 			wrench:removeSelf()
 			wrench = nil
 		end
@@ -178,6 +258,7 @@ end
 local function removePanel ( event )
 	
 	if nutsRemoved == 4 then
+		transition.to ( panel, { time = 1000, x = panel.x + 10, transition = easing.inOutBack } )
 		if event.phase == "began" then
 			offset = panel.x - event.x
 			panelLoose = true
@@ -203,6 +284,14 @@ local function bgTouch (event)
 	if event.phase == "began" then
 		if toolWindow then
 			toolBoxClose()
+		end
+		if manual1 then     -- remove the manual if its up
+			manual1:removeSelf( )
+			manual1 = nil
+		end
+		if manual2 then 
+			manual2:removeSelf( )
+			manual2 = nil
 		end
 	end
 end
@@ -248,8 +337,8 @@ function act:init()
 	toolbox.x = act.xMax - 30
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
-	transition.blink ( toolbox, { time = 2000 } )
-	--toolbox = util.makeToolbox(act)
+
+	
 
 	-- back button
 	local backButton = act:newImage( "backButton.png", { width = 50 } )
