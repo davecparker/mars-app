@@ -172,6 +172,7 @@ end
 
 -- fade out to next part of game
 local function endFade ()
+	game.panelFixed = true
 	game.gotoAct ( "mainAct", { effect = "fade", time = 100 } )
 end
 

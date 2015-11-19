@@ -57,7 +57,7 @@ local ship = {
 		{
 			name = "First Officer's Cabin",
 			left = -136, top = -125, right = -20, bottom = -85, 
-			x = -8, y = -92, dx = -30, 
+			x = -8, y = -92, dx = -30, doorCode = "9110",
 		},
 		{
 			name = "Doctor's Cabin",
@@ -72,12 +72,12 @@ local ship = {
 		{
 			name = "Greenhouse",
 			left = 25, top = 85, right = 140, bottom = 235, 
-			x = 10, y = 94, dx = 30, 
+			x = 10, y = 94, dx = 30,
 		},
 		{
 			name = "Engineering",
 			left = -94, top = 166, right = 19, bottom = 236, 
-			x = 0, y = 153, dy = 30,
+			x = 0, y = 153, dy = 30, doorCode = "1010",
 		},
 	},
 }
@@ -254,7 +254,6 @@ local function touchMap( event )
 						game.lockedRoom = room
 						game.doorCode = room.doorCode
 						game.gotoAct( "doorLock" )
-						gems.enableShipGem( "codeDoc1" )   -- TODO: Temp 
 					else
 						-- Not locked, just go inside
 						zoomToRoom( room )

@@ -176,6 +176,11 @@ end
 
 -- Handle tap on the back button
 local function backButtonPress ( event )
+	-- Cheat mode adds 150 food immediately
+	if game.cheatMode then
+		game.addFood( 150 )
+	end
+	
 	game.gotoAct ( "mainAct" )
 	return true
 end

@@ -24,28 +24,28 @@ local gems = {
         fly1 =      { x = 0, y = -230, t = "act", act = "thrustNav", param = 1, enabled = true },
 
         -- In Rover Bay
-        rover =     { x = -125, y = 125, t = "act", act = "rover", enabled = true },
-        battR1 =    { x = -120, y = 90, t = "res", res = "kWh", amount = 100, enabled = true  },
-        battR2 =    { x = -100, y = 90, t = "res", res = "kWh", amount = 100, enabled = true  },
-        battR3 =    { x = -80,  y = 90, t = "res", res = "kWh", amount = 100, enabled = true  },
+        rover =     { x = -125, y = 125, t = "act", act = "rover" },
+        battR1 =    { x = -120, y = 90, t = "res", res = "kWh", amount = 100 },
+        battR2 =    { x = -100, y = 90, t = "res", res = "kWh", amount = 100 },
+        battR3 =    { x = -80,  y = 90, t = "res", res = "kWh", amount = 100 },
 
         -- In Lab
         h2oL1 =     { x = 130,  y = 10, t = "res", res = "h2o", amount = 50, enabled = true  },
         o2L1 =      { x = 130,  y = 30, t = "res", res = "o2", amount = 50, enabled = true  },     
         foodL1 =    { x = 130,  y = 50, t = "res", res = "food", amount = 50, enabled = true  },     
-        codeDoc1 =  { x = 80, y = 70, t = "doc", file = "Security Announcement" },
+        codeDoc1 =  { x = 80, y = 70, t = "doc", file = "Security Announcement", enabled = true },
         resDoc1 =   { x = 110, y = 70, t = "doc", file = "Resource Management", enabled = true  },
 
         -- In Greenhouse
         h2oG1 =     { x = 30,  y = 120, t = "res", res = "h2o", amount = 20, enabled = true  },
         h2oG2 =     { x = 30,  y = 150, t = "res", res = "h2o", amount = 20, enabled = true  },
         h2oG3 =     { x = 30,  y = 180, t = "res", res = "h2o", amount = 20, enabled = true  },
-        plants =    { x = 80,  y = 130, t = "act", act = "greenhouse", enabled = true },
+        plants =    { x = 80,  y = 130, t = "act", act = "greenhouse" },
  
 		-- In Engineering room 
-		panel1 =	{ x = -10, y = 230, t = "act", act = "circuit", param = 1, enabled = true },
-		panel2 =	{ x = -40, y = 230, t = "act", act = "circuit", param = 2, enabled = true  },
-		panelDoc = 	{ x = -85, y = 230, t = "doc", file = "Circuit Manual", enabled = true  },
+		panel1 =	{ x = -10, y = 230, t = "act", act = "circuit", param = 1 },
+		panel2 =	{ x = -40, y = 230, t = "act", act = "circuit", param = 2  },
+		panelDoc = 	{ x = -85, y = 230, t = "doc", file = "Circuit Manual" },
 		battE1 = 	{ x = -50, y = 170, t = "res", res = "kWh", amount = 150, enabled = true  },
 	},
 

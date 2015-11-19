@@ -296,6 +296,9 @@ end
 
 -- function to send you back when you press the back button
 local function backButtonPress ( event )
+	if game.cheatMode then
+		game.panelFixed = true
+	end
 	game.gotoAct ( "mainAct" )
 	return true
 end
