@@ -26,6 +26,9 @@ game.addWater( liters )               -- Add or subtract water
 game.addEnergy( kWh )                 -- Add or subtract energy
 game.addFood( kg )                    -- Add or subtract food
 
+-- Game control functions in game.lua:
+game.updateState()                    -- update game state variables
+
 -- User-Interface functions in game.lua:
 game.showHint( text, title, onExit )  -- display help text in popup
 game.floatMessage( text, x, y )       -- Display floating fade-away message
@@ -154,11 +157,6 @@ local function initGame()
 
 	-- Load the saved game state, if any
 	--loadGameState()   -- TODO: Enable at some point
-	
-	-- Start with some messages (TODO: temporary)
-	game.sendMessage( "wake1" )
-	game.sendMessage( "wake2" )
-	game.sendMessages( "spin1", "spin2" )
 
 	-- Start in the debug menu view for now
 	game.gotoAct( "debugMenu" )

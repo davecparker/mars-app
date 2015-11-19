@@ -18,8 +18,16 @@ local game = {
     doorCode = nil,       -- door code for locked room or nil if none
     doorUnlocked = nil,   -- set to true when a locked door is successfully unlocked
 
+    -- Game state tracking
+    stateStartTime = 0,   -- value of system.getTimer() when current game state started
+
     -- The saveState table is saved to a file between runs
     saveState = {
+        -- Game sequence state
+        onMars = false,     -- true when we make it to Mars
+        shipState = 0,      -- ship sequence state number
+
+        -- Gem state
         usedGems = {},  -- set of gem names that have been used
     
         -- The user's current resource levels (and starting values)
@@ -59,10 +67,61 @@ local game = {
 }
 
 -- Shortcuts to access parts of the game data in this module
-local res = game.saveState.resources
+local ss = game.saveState
+local res = ss.resources
+
 
 -- File local variables
 local messageBox       -- currently displayed message box or nil if none
+
+
+-------------------------- Game State Logic  --------------------------------
+
+-- Update the game state sequence when on the ship. The current state number
+-- is passed, and the new state number is returned.
+local function updateShipState( state )
+	-- Calculate number of seconds since current state started
+	local sec = (system.getTimer() - game.stateStartTime) / 1000
+
+	-- switch (state)
+    if state == 0 then
+    	-- Game start: User is awoken from stasis
+        game.sendMessage( "wake1" )
+        game.sendMessage( "wake2" )
+        return 1
+    elseif state == 1 then
+    	if sec > 5 then
+	    	-- Course correction #1 needed
+	        game.sendMessages( "spin1", "spin2" )
+	        return 2
+	    end
+    end
+
+    -- No change
+    return state
+end
+
+-- Update the game state when on Mars.
+local function updateMarsState()
+	-- TODO
+end
+
+-- This function is called every second while the game is running, but it 
+-- can also be called whenever an immediate game state update is desired. 
+function game.updateState()
+	if ss.onMars then
+		-- On Mars
+		updateMarsState()
+	else
+		-- Not on Mars yet. Game state proceeds in a sequence.
+		local newState = updateShipState( ss.shipState )
+		if newState ~= ss.shipState then
+			ss.shipState = newState
+			game.stateStartTime = system.getTimer()
+			print( "Ship state " .. newState )
+		end
+	end
+end
 
 
 ------------------------- Utility Functions  --------------------------------
@@ -260,6 +319,10 @@ local function initGameObject()
 
     -- Set game UI element metrics
     game.dyTabBar = 40     -- Height of UI tab bar on all screens
+
+    -- Start the repeating game state update timer
+	game.stateStartTime = system.getTimer()
+    timer.performWithDelay( 1000, game.updateState, 0 )  -- repeat every second
 end
 
 
