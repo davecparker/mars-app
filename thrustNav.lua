@@ -50,7 +50,7 @@ local spaceGroup    	-- group for rotating space background
 local xVelocity, yVelocity, rotVelocity  -- positional deltas used on each enter frame
 local xVelocityInc, yVelocityInc, rotVelocityInc  -- increments for the deltas
 local xTargetDelta, yTargetDelta  -- delta from Target
-local navStatsText     -- text string for nav stats
+local navStatsText1, navStatsText2, navStatsText3 -- text strings for nav stats
 local targetRect       -- Rectangle target area
 local arrow        		-- directional arrow toward mars
 local totalRocketImpulses = 0    -- number of rocket impulses used
@@ -69,17 +69,19 @@ end
 
 -- function to send you back when you press the back button
 local function backButtonPress ( event )
+	print ( xVelocity, yVelocity ) 
+
 	if( ( math.abs( yTargetDelta ) < 2 ) and 
 		( math.abs( xTargetDelta ) < 2 ) and 
 		( math.abs( xVelocity ) < 0.00001 ) and 
 		( math.abs( yVelocity ) < 0.00001 ) ) then
 		game.saveState.onTarget = true
+		game.endMessageBox()  -- clear message box
 		-- game.messageBox( "Nicely Done!")
 		-- game.showHint( "Nicely Done!", "On Target")
 	else
 		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
 			( math.abs( yVelocity )  > 0.00001) ) then
-			-- print ( xVelocity, yVelocity ) 
 			game.messageBox( "Still Spinning!")
 		elseif ( ( math.abs( yTargetDelta ) >= 2 ) or 
 			( math.abs( xTargetDelta ) >= 2 ) ) then
@@ -92,7 +94,7 @@ local function backButtonPress ( event )
 	-- saved for use in messages
 	game.saveState.thrustNav.lastXTargetDelta = xTargetDelta
 	game.saveState.thrustNav.lastYTargetDelta = yTargetDelta
-
+	
 	game.gotoAct ( "mainAct" )
 	return true
 end
@@ -275,10 +277,16 @@ function act:init()
 	print("bg=", bg )
 
 	local yText = act.yMin + 10
-	navStatsText = display.newText( act.group, "Hello", (act.xCenter-act.xMin) / 2, yText, native.systemFont, 14 )
-	navStatsText.anchorX = 0
-	navStatsText.anchorY = 0
-	print( "navStatsText=" , navStatsText )
+	navStatsText1 = display.newText( act.group, "Hello1", (act.xCenter-act.xMin) / 2, yText, native.systemFont, 14 )
+	navStatsText1.anchorX = 0
+	navStatsText1.anchorY = 0
+	navStatsText2 = display.newText( act.group, "Hello2", (act.xCenter-act.xMin) / 2, yText + 16, native.systemFont, 14 )
+	navStatsText2.anchorX = 0
+	navStatsText2.anchorY = 0
+	navStatsText3 = display.newText( act.group, "Hello3", (act.xCenter-act.xMin) / 2, yText + 32, native.systemFont, 14 )
+	navStatsText3.anchorX = 0
+	navStatsText3.anchorY = 0
+	print( "navStatsText1=" , navStatsText1 )
 	
 	-- spaceGroup.y = act.height / 2 - 100
 	
@@ -430,17 +438,17 @@ function updateNavStats()
 		-- Show hint showed no operational difference to messageBox.  That is it didn't wait for ok.
 		-- game.showHint( "Nicely Done!", "On Target", game.gotoAct ( "mainAct" ) )
 		-- game.gotoAct ( "mainAct" )
+		-- timer.performWithDelay( 5000, game.gotoAct ( "mainAct") )
 	end		
 
 	if( hasCollided( earth, targetRect ) ) then
-		navStatsText.text = "Where are you going?  Home?"	
+		navStatsText1.text = "Where are you going?  Home?"	
 	elseif( hasCollided( sun, targetRect ) ) then
-		navStatsText.text = "That will be VERY HOT!"	
+		navStatsText1.text = "That will be VERY HOT!"	
 	else
-		navStatsText.text = string.format("%s  %3d %5.1f   %s\n%s  %3d %5.1f  %s\n%s %3d",  
-		"xDelta=", xTargetDelta , xVelocity, xStr,
-		"yDelta=", yTargetDelta , yVelocity, yStr,
-		"totalImpulses= ", totalRocketImpulses )
+		navStatsText1.text = string.format( "%s  %3d %5.1f   %s", "xDelta=", xTargetDelta , xVelocity, xStr)
+		navStatsText2.text = string.format( "%s  %3d %5.1f   %s", "yDelta=", yTargetDelta , yVelocity, yStr)
+		navStatsText3.text = string.format( "%s %3d", "totalImpulses= ", totalRocketImpulses )
 	end
 end
 
@@ -554,7 +562,7 @@ end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
-	if( navStatsText ) then
+	if( navStatsText1 ) then
 		updateNavStats()
 	end
 

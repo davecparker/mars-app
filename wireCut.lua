@@ -22,7 +22,14 @@ local orTL, orTR, orBL                -- or gates
 local andTop, andBottom              -- and gates
 local ledTop, ledMid, ledBottom      -- LEDs
 local toolbox
+local backButton
 local toolWindow
+local toolIcon                       -- the tool selected icon
+local tapeSelected = false
+local wireCutterSelected = false
+local manual  
+local manualPage         -- what page of the manual you are on
+
 ------------------------- Functions -------------------------------------------------------
 
 -- function to send you back when you press the back button
@@ -32,22 +39,156 @@ end
 
 -- function to remove everything when the toolbox closes
 local function toolBoxClose ()
+	toolWindow.wrenchButton:removeSelf()
+	toolWindow.wrenchButton = nil
+	toolWindow.wireCutterhButton:removeSelf()
+	toolWindow.wireCutterhButton = nil
+	toolWindow.tapeButton:removeSelf()
+	toolWindow.tapeButton = nil
+	toolWindow.manualButton:removeSelf()
+	toolWindow.manualButton = nil
 	toolWindow:removeSelf()
 	toolWindow = nil
+end
+
+-- sets the icon over the toolbox
+local function setToolIcon ( tool)
+	if toolIcon then
+		toolIcon:setFrame( tool )
+	else
+		-- toolbox selection icon
+		local toolboxIconOptions = { width = 100, height = 100, numFrames = 3 } 
+		local toolboxIconSequence = { name = "icon", start = 1, count = 3 }
+		local toolboxIconImageSheet = graphics.newImageSheet( "media/circuit/toolBoxIcon.png", toolboxIconOptions ) 
+		toolIcon = display.newSprite( act.group, toolboxIconImageSheet, toolboxIconSequence )
+		toolIcon:setFrame( tool )
+		toolIcon.x = act.xMax - 30
+		toolIcon.y = act.yMin + 30
+		toolIcon:scale( 0.5, 0.5 )
+		toolbox.alpha = 0.2
+	end
+	toolBoxClose()
+end
+
+-- got to the next page in the manual
+local function nextPage ( event )
+	--local manual = event.target
+	if event.phase == "ended" then
+		manualPage = manualPage + 1
+		if manualPage > 3 then
+			manual:removeSelf( ) 
+			manual = nil
+		else
+			manual:setFrame( manualPage )
+		end
+	end
+	return true
+end
+
+-- controls what happnes when you touch the manual
+local function manualTouch ( event )
+	if event.phase == "ended" then
+		-- manual image sheet
+		local manualOptions = { width = 440, height = 600, numFrames = 3 }
+		local manualSequence = { name = manual, start = 1, count = 3 }
+		local manualImageSheet = graphics.newImageSheet( "media/circuit/manual.png", manualOptions )
+		manual = display.newSprite( act.group, manualImageSheet, manualSequence )
+		manual.x = act.xCenter
+		manual.y = act.yCenter
+		manual:scale( 0.7, 0.7 )
+		manualPage = 1
+		manual:addEventListener( "touch", nextPage )
+		toolBoxClose()
+	end 
+	return true
+end
+
+-- wire cutter is touched
+local function wireCutterTouch ( event )
+	if event.phase == "ended" then
+		local toolIcon = setToolIcon(3)
+		wireCutterSelected = true
+		tapeSelected = false
+	end
+end
+
+-- tape is touched
+local function tapeTouch ( event )
+	if event.phase == "ended" then
+		local toolIcon = setToolIcon(2)
+		wireCutterSelected = false
+		tapeSelected = true
+	end
+end
+
+-- wrench is touched
+local function wrenchTouch ( event )
+	if event.phase == "ended" then
+		local toolIcon = setToolIcon(1)
+		wireCutterSelected = false
+		tapeSelected = false
+	end
 end
 
 -- function for the toolbox touch
 local function toolboxTouch (event) 
 	if event.phase == "began" then
 		if toolWindow == nil then
-			transition.cancel( toolbox ) -- kill the blinking
-			toolbox.alpha = 1   -- set the alpha of the toolbox back to 1
+			if manual then     -- remove the manual if its up
+				manual:removeSelf( )
+				manual = nil
+			end
 			toolWindow = act:newImage ( "toolboxInside.png", { width = 300, folder = "media/circuit" } )
 			toolWindow.x = act.xCenter
 			toolWindow.y = act.yCenter
+			-- wrench button
+			toolWindow.wrenchButton = widget.newButton { width = 100, height = 120, onEvent = wrenchTouch }
+			toolWindow.wrenchButton.x = act.xCenter - 80
+			toolWindow.wrenchButton.y = act.yCenter - 80
+			toolWindow.wrenchButton.isVisible = false
+			toolWindow.wrenchButton.isHitTestable = true
+			-- wire cutter button
+			toolWindow.wireCutterhButton = widget.newButton { width = 100, height = 120, onEvent = wireCutterTouch }
+			toolWindow.wireCutterhButton.x = act.xCenter + 55
+			toolWindow.wireCutterhButton.y = act.yCenter - 80
+			toolWindow.wireCutterhButton.isVisible = false
+			toolWindow.wireCutterhButton.isHitTestable = true
+			-- tape button
+			toolWindow.tapeButton = widget.newButton { width = 100, height = 120, onEvent = tapeTouch }
+			toolWindow.tapeButton.x = act.xCenter - 80
+			toolWindow.tapeButton.y = act.yCenter + 60
+			toolWindow.tapeButton.isVisible = false
+			toolWindow.tapeButton.isHitTestable = true
+			-- manual button
+			toolWindow.manualButton = widget.newButton { width = 80, height = 110, onEvent = manualTouch }
+			toolWindow.manualButton.x = act.xCenter + 60
+			toolWindow.manualButton.y = act.yCenter + 60
+			toolWindow.manualButton.isVisible = false
+			toolWindow.manualButton.isHitTestable = true
 		end
 	end
 	return true
+end
+
+-- fade out to next part of game
+local function endFade ()
+	game.gotoAct ( "mainAct", { effect = "fade", time = 100 } )
+end
+
+-- end of act function
+local function endAct()
+	local panel = act:newImage( "panel.png", { width = 440, folder = "media/circuit" } )
+	panel.x = act.xMax + 450
+	panel.y = act.yCenter - 15
+	backButton:removeSelf( )
+	backButton = nil
+	toolbox:removeSelf( )
+	toolbox = nil
+	toolIcon:removeSelf( )
+	toolIcon = nil
+	transition.to( panel, { time = 1000, transition = easing.outSine, x = act.xCenter - 3, delay = 500 } )
+	transition.scaleBy( act.group, { xScale = -0.5, yScale = -0.5, time = 2000 } )
+	transition.to( act.group, { time = 2002, x = game.xCenter / 2, y = game.yCenter / 2 - 20, onComplete = endFade } )
 end
 
 -- checks the state of the game and what wires have been cut
@@ -62,7 +203,6 @@ local function checkState ()
 	if wire2.isCut == true and wire4.isCut == true then
 		orTR:setFrame( 2 )
 		ledTop:setFrame ( 2 )
-		print( ledTop.frame )
 	else
 		orTR:setFrame( 1 )
 		ledTop:setFrame ( 1 )
@@ -101,16 +241,20 @@ local function checkState ()
 		andBottom:setFrame( 1 )
 		ledBottom:setFrame( 1 )
 	end
+	-- vicotory condition
+	if ledTop.frame == 2 and ledMid.frame == 2 and ledBottom.frame == 1 then
+		endAct()
+	end
 end
 
 -- function for cutting the wire
 local function wireTouch ( event )
 	local w = event.target
-	if event.phase == "began" then
-		if w.wire.isCut == false then
+	if event.phase == "ended" then
+		if w.wire.isCut == false and wireCutterSelected == true then-- ========================================================================================
 			w.wire:setFrame( 2 )
 			w.wire.isCut = true
-		else
+		elseif w.wire.isCut == true and tapeSelected == true then
 			w.wire:setFrame( 1 )
 			w.wire.isCut = false
 		end
@@ -152,6 +296,10 @@ local function bgTouch (event)
 		if toolWindow then
 			toolBoxClose()
 		end
+		if manual then     -- remove the manual if its up
+			manual:removeSelf( )
+			manual = nil
+		end
 	end
 end
 
@@ -172,7 +320,7 @@ end
 function act:init()
 
 	-- background image
-	local wireCutBG = act:newImage ( "wireCutBG.jpg", { width = 320} )
+	local wireCutBG = act:newImage ( "wireCutBG2.jpg", { width = 320} )
 	wireCutBG:addEventListener( "touch", bgTouch )
 	wireCutBG.y = act.yCenter + 20
 	wireCutBG.x = act.xCenter
@@ -181,7 +329,7 @@ function act:init()
 	-- wire1 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire1Options = { width = 110, height = 404, numFrames = 2 }
 	local wire1Sequence = { start = 1, count = 2 }
-	local wire1ImageSheet = graphics.newImageSheet( "media/wireCut/wire1sheet.png", wire1Options )
+	local wire1ImageSheet = graphics.newImageSheet( "media/wireCut/wire1.2sheet.png", wire1Options )
 	wire1 = display.newSprite( act.group, wire1ImageSheet, wire1Sequence )
 	wireSet ( wire1, -65, -150 )
 
@@ -202,7 +350,7 @@ function act:init()
 	-- wire3 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire3Options = { width = 290, height = 155, numFrames = 2 }
 	local wire3Sequence = { name = wire3, start = 1, count = 2 }
-	local wire3ImageSheet = graphics.newImageSheet( "media/wireCut/wire3sheet.png", wire3Options )
+	local wire3ImageSheet = graphics.newImageSheet( "media/wireCut/wire3.2sheet.png", wire3Options )
 	wire3 = display.newSprite( act.group, wire3ImageSheet, wire3Sequence )
 	wireSet ( wire3, -120, -73 )
 
@@ -241,7 +389,7 @@ function act:init()
 	-- wire6 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire6Options = { width = 570, height = 261, numFrames = 2 }
 	local wire6Sequence = { name = wire6, start = 1, count = 2 }
-	local wire6ImageSheet = graphics.newImageSheet( "media/wireCut/wire6sheet.png", wire6Options )
+	local wire6ImageSheet = graphics.newImageSheet( "media/wireCut/wire6.2sheet.png", wire6Options )
 	wire6 = display.newSprite( act.group, wire6ImageSheet, wire6Sequence )
 	wireSet ( wire6, -69, 68 )
 
@@ -272,14 +420,8 @@ function act:init()
 
 	-- The uncutable wires---------------------------------------------------------------------------------------------------------------
 	local wire9 = wireNoCut ( 85, -68 )
-	--wire9.x = act.xCenter + 85
-	--wire9.y = act.yCenter - 88
 	local wire10 = wireNoCut ( 85, 22 )
-	--wire10.x = act.xCenter + 85
-	--wire10.y = act.yCenter + 2
 	local wire11 = wireNoCut ( 85, 112 )
-	--wire11.x = act.xCenter + 85
-	--wire11.y = act.yCenter + 92
 
 	-- led image sheet-------------------------------------------------------------------------------------------------------------------
 	local ledOptions = { width = 249, height = 252, numFrames = 2 }
@@ -338,29 +480,22 @@ function act:init()
 	andBottom = andMaker ( 40, 110 )
 
 	-- background mask
-	local wireCutBGMask = act:newImage ( "wireCutBGMask.png", { width = 320 } )
+	local wireCutBGMask = act:newImage ( "wireCutBGMask2.png", { width = 640 } )
 	wireCutBGMask.y = act.yCenter + 20
 	wireCutBGMask.x = act.xCenter
 
 	-- back button
-	local backButton = act:newImage( "backButton.png", { width = 50, folder = "media/circuit"} )
+	backButton = act:newImage( "backButton.png", { width = 50, folder = "media/circuit"} )
 	backButton.x = act.xMin + 30
 	backButton.y = act.yMin + 30
-	backButton.button = widget.newButton 
-	{
-		 x = act.xMin + 30,
-		 y = act.yMin + 30,
-		 width = 50, 
-		 height = 50,
-		 onPress = backButtonPress 
-	}
+	backButton:addEventListener( "tap", backButtonPress )
 
 	-- toolbox icon
 	toolbox = act:newImage ( "toolbox2.png", { width = 45, folder = "media/circuit" } )
 	toolbox.x = act.xMax - 30
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
-	transition.blink ( toolbox, { time = 2000 } )
+
 
 	-- Touch location text display objects==============================================================================================
 	--local yText = act.yMin + 15   -- relative to actual top of screen
