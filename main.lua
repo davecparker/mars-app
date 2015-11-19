@@ -26,6 +26,9 @@ game.addWater( liters )               -- Add or subtract water
 game.addEnergy( kWh )                 -- Add or subtract energy
 game.addFood( kg )                    -- Add or subtract food
 
+-- Game control functions in gameState.lua:
+game.updateState()                    -- update game state (periodic or forced)
+
 -- User-Interface functions in game.lua:
 game.showHint( text, title, onExit )  -- display help text in popup
 game.floatMessage( text, x, y )       -- Display floating fade-away message
@@ -67,6 +70,7 @@ act.name     -- act module name
 act:newImage( filename, options )        -- make a new imageRect display object
 act:newGroup( parent )                   -- make a new display (sub-)group
 act:whiteBackground()                    -- make a solid white background
+act:grayBackground()                     -- make a solid gray background
 act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
 act:loadSound( filename, folder )        -- load sound file (folder defaults to act media)
 
@@ -105,6 +109,7 @@ require( "Act" )
 require( "tabBar" )
 require( "documents" )
 require( "messages" )
+require( "gameState" )
 
 
 -- Return the path name for the user data file where the game state is saved
@@ -154,14 +159,13 @@ local function initGame()
 
 	-- Load the saved game state, if any
 	--loadGameState()   -- TODO: Enable at some point
-	
-	-- Start with some messages (TODO: temporary)
-	game.sendMessage( "wake1" )
-	game.sendMessage( "wake2" )
-	game.sendMessages( "spin1", "spin2" )
 
-	-- Start in the debug menu view for now
-	game.gotoAct( "debugMenu" )
+    -- Start the repeating game state update timer
+	game.stateStartTime = system.getTimer()
+    timer.performWithDelay( 1000, game.updateState, 0 )  -- repeat every second
+
+	-- Start in the main view
+	game.gotoAct( "mainAct" )
 end
 
 -- Start the game

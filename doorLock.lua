@@ -34,6 +34,9 @@ local sound = {}
 
 -- When the Back Button is Pushed
 function backTapped()
+	if game.cheatMode then
+		game.doorUnlocked = true
+	end
 	game.gotoAct( "mainAct", { effect = "slideRight", time = 800 } )
 end
 
@@ -225,7 +228,7 @@ end
 function act:init()
 
 	-- Title Bar
-	act:makeTitleBar( "Door", backTapped )
+	act:makeTitleBar( "", backTapped )   -- title set in act:prepare()
 
 	-- Background
 	--...
@@ -303,6 +306,16 @@ function act:init()
 	act.group:insert( button.zero )
 	act.group:insert( button.enter )
 
+end
+
+-- Prepare the act
+function act:prepare()
+	-- Set title bar text to the name of the room
+	if game.lockedRoom then
+		act.title.text = game.lockedRoom.name
+	else
+		act.title.text = "Locked Door"
+	end
 end
 
 ------------------------- End of Activity --------------------------------

@@ -28,7 +28,6 @@ local dot              -- user's position dot on map
 local roomInside       -- room the user is inside or nil if none
 local titleBar         -- title bar used when map is zoomed
 local yTitleBar        -- y position of title bar when visible
-local clickWav		   -- click sound
 
 -- Main Ship coordinates
 local ship = {
@@ -58,7 +57,7 @@ local ship = {
 		{
 			name = "First Officer's Cabin",
 			left = -136, top = -125, right = -20, bottom = -85, 
-			x = -8, y = -92, dx = -30, 
+			x = -8, y = -92, dx = -30, doorCode = "9110",
 		},
 		{
 			name = "Doctor's Cabin",
@@ -73,12 +72,12 @@ local ship = {
 		{
 			name = "Greenhouse",
 			left = 25, top = 85, right = 140, bottom = 235, 
-			x = 10, y = 94, dx = 30, 
+			x = 10, y = 94, dx = 30,
 		},
 		{
 			name = "Engineering",
 			left = -94, top = 166, right = 19, bottom = 236, 
-			x = 0, y = 153, dy = 30,
+			x = 0, y = 153, dy = 30, doorCode = "1010",
 		},
 	},
 }
@@ -232,9 +231,6 @@ end
 -- Handle touch event on the map
 local function touchMap( event )
 	if event.phase == "began" then
-		-- Temp click sound (TODO)
-		audio.play( clickWav )
-
 		-- Get tap position in shipGroup coords
 		local x, y = shipGroup:contentToLocal( event.x, event.y )
 
@@ -258,7 +254,6 @@ local function touchMap( event )
 						game.lockedRoom = room
 						game.doorCode = room.doorCode
 						game.gotoAct( "doorLock" )
-						gems.enableShipGem( "codeDoc1" )   -- TODO: Temp 
 					else
 						-- Not locked, just go inside
 						zoomToRoom( room )
@@ -283,9 +278,6 @@ end
 
 -- Init the act
 function act:init()
-	-- Load temp click sound (TODO)
-	clickWav = act:loadSound( "Click6.wav" )
-
 	-- Display group for ship elements (centered on ship)
 	shipGroup = act:newGroup()
 	shipGroup.x = act.xCenter
@@ -323,8 +315,6 @@ end
 
 -- Prepare the view before it shows
 function act:prepare()
-	-- TODO: Go to current activity if any
-
 	-- If we just unlocked a door (coming back from doorLock act) then go in
 	if game.lockedRoom and game.doorUnlocked then
 		zoomToRoom( game.lockedRoom )
@@ -334,6 +324,7 @@ function act:prepare()
 	game.doorCode = nil
 	game.doorUnlocked = nil
 end
+
 
 ------------------------- End of Activity --------------------------------
 

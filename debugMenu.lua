@@ -64,23 +64,41 @@ function onRowTouch( event )
 	end
 end
 
+-- Handle event for the act cheat switch
+local function cheatSwitch( event )
+	game.cheatMode = event.target.isOn
+	print( "Cheat mode = " .. tostring(game.cheatMode) )
+end
+
 -- Init the act
 function act:init()
 	-- Background and title bar for the view
-	act:whiteBackground()
+	act:grayBackground()
 	act:makeTitleBar( "Debug Menu" )
+
+	-- Cheat mode switch and label
+	local ySwitch = act.yMin + act.dyTitleBar * 1.5
+	local label = display.newText( act.group, "Cheat Mode", act.xCenter, ySwitch, 
+						native.systemFont, 18 )
+	label:setFillColor( 0 )
+	local switch = widget.newSwitch{
+		x = act.xMax - 50,
+		y = ySwitch,
+		onRelease = cheatSwitch,
+	}
+	act.group:insert( switch )
 
 	-- Create the tableView widget to list the debug activities
 	local tableView = widget.newTableView
 	{
 	    left = act.xMin,
-	    top = act.yMin + act.dyTitleBar,
-	    height = act.height - act.dyTitleBar,
+	    top = act.yMin + act.dyTitleBar * 2,
+	    height = act.height - act.dyTitleBar * 2,
 	    width = act.width,
 	    onRowRender = onRowRender,
 	    onRowTouch = onRowTouch,
 	}
-	act.group:insert(tableView)
+	act.group:insert( tableView )
 
 	-- Insert the rows
 	for i = 1, #debugActs do

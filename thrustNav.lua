@@ -71,11 +71,19 @@ end
 local function backButtonPress ( event )
 	print ( xVelocity, yVelocity ) 
 
+	-- Cheat mode to succeed immediately
+	if game.cheatMode then
+		xTargetDelta = 0
+		yTargetDelta = 0
+		xVelocity = 0
+		yVelocity = 0
+	end
+	
 	if( ( math.abs( yTargetDelta ) < 2 ) and 
 		( math.abs( xTargetDelta ) < 2 ) and 
 		( math.abs( xVelocity ) < 0.00001 ) and 
 		( math.abs( yVelocity ) < 0.00001 ) ) then
-		game.saveState.onTarget = true
+		game.saveState.thrustNav.onTarget = true
 		game.endMessageBox()  -- clear message box
 		-- game.messageBox( "Nicely Done!")
 		-- game.showHint( "Nicely Done!", "On Target")
@@ -88,9 +96,10 @@ local function backButtonPress ( event )
 			game.messageBox( "Still Off Target!")
 		end
 	end
-	if ( math.abs( xVelocity ) < 0.00001 ) then
-		game.saveState.thrustNav.shipSpinning = false
-	end
+	-- if ( math.abs( xVelocity ) < 0.00001 ) then
+	-- 	game.saveState.thrustNav.shipSpinning = false
+	-- end
+
 	-- saved for use in messages
 	game.saveState.thrustNav.lastXTargetDelta = xTargetDelta
 	game.saveState.thrustNav.lastYTargetDelta = yTargetDelta
@@ -434,11 +443,12 @@ function updateNavStats()
 	end
 
 	if( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 ) then
-		game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
-		-- Show hint showed no operational difference to messageBox.  That is it didn't wait for ok.
-		-- game.showHint( "Nicely Done!", "On Target", game.gotoAct ( "mainAct" ) )
-		-- game.gotoAct ( "mainAct" )
-		-- timer.performWithDelay( 5000, game.gotoAct ( "mainAct") )
+		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
+		game.showHint( "Nicely Done!", "On Target", 
+				function ()
+					game.saveState.thrustNav.onTarget = true
+					game.gotoAct ( "mainAct" )
+				end )
 	end		
 
 	if( hasCollided( earth, targetRect ) ) then

@@ -11,15 +11,25 @@
 -- The game object where game global data and functions are stored
 local game = {
     -- Data for the current act to use
+    cheatMode = false,    -- true if cheat mode is on
     actParam = nil,       -- act parameter data from a gem
     actGemName = nil,     -- gem name that triggered the act
     openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
     lockedRoom = nil,     -- locked room that user is trying to enter or nil if none
     doorCode = nil,       -- door code for locked room or nil if none
     doorUnlocked = nil,   -- set to true when a locked door is successfully unlocked
+    panelFixed = nil,     -- set to true when a circuit panel is successfully fixed
+
+    -- Game state tracking
+    stateStartTime = 0,   -- value of system.getTimer() when current game state started
 
     -- The saveState table is saved to a file between runs
     saveState = {
+        -- Game sequence state
+        onMars = false,     -- true when we make it to Mars
+        shipState = 1,      -- ship sequence state number
+
+        -- Gem state
         usedGems = {},  -- set of gem names that have been used
     
         -- The user's current resource levels (and starting values)
@@ -50,7 +60,6 @@ local game = {
             onTarget = false,
             latestXTargetDelta = 100,
             latestYTargetDelta = 100,
-            shipSpinning = true
         },
             
         -- List of document filenames that user has found
@@ -60,6 +69,7 @@ local game = {
 
 -- Shortcuts to access parts of the game data in this module
 local res = game.saveState.resources
+
 
 -- File local variables
 local messageBox       -- currently displayed message box or nil if none
