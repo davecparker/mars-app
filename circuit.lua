@@ -12,7 +12,6 @@ local game = globalGame
 -- Create the act object
 local act = game.newAct()
 local widget = require( "widget" )  -- need to make buttons
-local util = require ("circuitActUtil")
 
 ------------------------- Variables ---------------------------------------------------------
 
@@ -25,11 +24,9 @@ local wrenchRotation = 0 -- the actual angle of the wrench
 local offset = 0         -- saves an offset value for moving the panel
 local toolWindow
 local toolbox   
-local toolIcon           -- the tool selected icon  
--- toolbox selection icon
-local toolboxIconOptions = { width = 100, height = 100, numFrames = 3 } 
-local toolboxIconSequence = { name = "icon", start = 1, count = 3 }
-local toolboxIconImageSheet = graphics.newImageSheet( "media/circuit/toolBoxIcon.png", toolboxIconOptions ) 
+local toolIcon           -- the tool selected icon
+local manual  
+local manualPage         -- what page of the manual you are on
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -52,6 +49,9 @@ local function setToolIcon ( tool)
 	if toolIcon then
 		toolIcon:setFrame( tool )
 	else
+		local toolboxIconOptions = { width = 100, height = 100, numFrames = 3 } 
+		local toolboxIconSequence = { name = "icon", start = 1, count = 3 }
+		local toolboxIconImageSheet = graphics.newImageSheet( "media/circuit/toolBoxIcon.png", toolboxIconOptions ) 
 		toolIcon = display.newSprite( act.group, toolboxIconImageSheet, toolboxIconSequence )
 		toolIcon:setFrame( tool )
 		toolIcon.x = act.xMax - 30
@@ -71,26 +71,17 @@ local function wrenchTouch ( event )
 	return true
 end
 
--- remove the manual page
-local function manualClose ( event )
-	if event.phase == "ended" then
-		manual2:removeSelf( )
-		manual2 = nil
-	end
-	return true
-end
-
 -- got to the next page in the manual
 local function nextPage ( event )
+	--local manual = event.target
 	if event.phase == "ended" then
-		-- remove page 1
-		manual1:removeSelf( ) 
-		manual1 = nil
-		-- make page 2
-		manual2 = act:newImage ( "manualPG2.png", { width = 300 } )
-		manual2.x = act.xCenter
-		manual2.y = act.yCenter
-		manual2:addEventListener( "touch", manualClose )
+		manualPage = manualPage + 1
+		if manualPage > 3 then
+			manual:removeSelf( ) 
+			manual = nil
+		else
+			manual:setFrame( manualPage )
+		end
 	end
 	return true
 end
@@ -98,10 +89,16 @@ end
 -- controls what happnes when you touch the manual
 local function manualTouch ( event )
 	if event.phase == "ended" then
-		manual1 = act:newImage ( "manualPG1.png", { width = 300 } )
-		manual1.x = act.xCenter
-		manual1.y = act.yCenter
-		manual1:addEventListener( "touch", nextPage )
+		-- manual image sheet
+		local manualOptions = { width = 440, height = 600, numFrames = 3 }
+		local manualSequence = { name = manual, start = 1, count = 3 }
+		local manualImageSheet = graphics.newImageSheet( "media/circuit/manual.png", manualOptions )
+		manual = display.newSprite( act.group, manualImageSheet, manualSequence )
+		manual.x = act.xCenter
+		manual.y = act.yCenter
+		manual:scale( 0.7, 0.7 )
+		manualPage = 1
+		manual:addEventListener( "touch", nextPage )
 		toolBoxClose()
 	end 
 	return true
@@ -131,13 +128,9 @@ local function toolboxTouch (event)
 				wrench:removeSelf()
 				wrench = nil
 			end
-			if manual1 then     -- remove the manual if its up
-				manual1:removeSelf( )
-				manual1 = nil
-			end
-			if manual2 then 
-				manual2:removeSelf( )
-				manual2 = nil
+			if manual then     -- remove the manual if its up
+				manual:removeSelf( )
+				manual = nil
 			end
 			toolWindow = act:newImage ( "toolboxInside.png", { width = 300 } )
 			toolWindow.x = act.xCenter
@@ -285,13 +278,9 @@ local function bgTouch (event)
 		if toolWindow then
 			toolBoxClose()
 		end
-		if manual1 then     -- remove the manual if its up
-			manual1:removeSelf( )
-			manual1 = nil
-		end
-		if manual2 then 
-			manual2:removeSelf( )
-			manual2 = nil
+		if manual then     -- remove the manual if its up
+			manual:removeSelf( )
+			manual = nil
 		end
 	end
 end
@@ -338,8 +327,6 @@ function act:init()
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
 
-	
-
 	-- back button
 	local backButton = act:newImage( "backButton.png", { width = 50 } )
 	backButton.x = act.xMin + 30
@@ -378,7 +365,6 @@ function act:init()
 	nut.BR:addEventListener( "touch", nutTouch )
 	nut.BR.angle = 225
 	
-
 	-- Draws the large background (NEEDS TO BE LAST THING DRAWN)
 	largeBG = act:newImage ( "backgroundLarge.jpg", { width = 480 / 1.5} )
 
