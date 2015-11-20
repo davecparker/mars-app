@@ -43,6 +43,7 @@ local bar -- The bar being adjusted
 local splash -- Splash screen for when the player finishes
 local startTimer -- Timer when beginning
 local range -- Text for range user finished in
+local waterText -- Displays how much water the user has earned
 local resetButton -- The button that allows you to restart the game
 local difficulty = {} -- Difficulty of drill game
 local testText
@@ -74,6 +75,7 @@ function act:init()
 	startInit = 5
 	startTimer = display.newText( act.group, "Beginning in: " .. startInit, XC, YC - 100, native.systemFontBold, 25 )
 	startTimer.count = startInit
+	startTimer.fill = { 0, 0.42, 1 }
 	startTimer.isVisible = false
 
 	-- Create splash screen button
@@ -99,27 +101,6 @@ function act:init()
 	-- Intro screen
 	game.drillPlayed = false
 
-	-- Create splash screen button
-
-	local options =
-	{
-		width = 80,
-		height = 40,
-		numFrames = 2,
-		sheetContentWidth = 160,
-		sheetContentHeight = 40
-	}
-
-	local buttonSheet = graphics.newImageSheet( "media/drillScan/Button.png", options )
-
-	local resetButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Restart", onPress = reset }
-
-	resetButton.x = XC
-	resetButton.y = YC + 170
-	resetButton.isVisible = false
-
-	act.group:insert( resetButton )
-
 	-- Set difficulty
 	if game.drillDiff then
 		difficulty.drop = 0.5 + game.drillDiff * .4
@@ -133,7 +114,8 @@ function act:init()
 	game.drillPlayed = false
 
 	-- Test text
-	testText = display.newText( act.group, string.format( "%3.0f", bar.difference ), XC, YC, native.systemFont, 25 )
+	costText = display.newText( act.group, "Cost: " ..  -game.currentCost + math.abs( math.floor( bar.difference / 10 ) ) .. " KWH", XC, YC, native.systemFont, 25 )
+	costText.fill = { 0, 0.42, 1 }
 
 end
 
@@ -141,10 +123,6 @@ function act:prepare()
 
 	resetButton.isVisible = false
 	start()
-	print( YC )
-	print( H )
-	print( H - YC )
-	print( YMIN )
 
 end
 
@@ -158,7 +136,8 @@ function newFrame()
 	
 	droppingBar()
 	bar.difference = H / 2 - bar.height
-	testText.text = string.format( "%3.0f", math.abs( bar.difference ) )
+	costText.text = "Cost: " .. -game.currentCost + math.abs( math.floor( bar.difference / 10 ) ) .. " KWH"
+
 end
 
 function start()
@@ -190,6 +169,7 @@ function reset()
 	Runtime:removeEventListener( "enterFrame", newFrame )
 	bar.height = H / 4
 	range.isVisible = false
+	waterText.isVisible = false
 	game.removeAct( "drillScan" )
 	game.gotoAct( "drillScan", { effect = "zoomInOutFade", time = 333 } )
 
@@ -216,6 +196,10 @@ function timeLimit()
 
 	local x = math.abs( bar.difference )
 	range = display.newText( act.group, "", XC, YC + 20, native.systemFontBold, 25 )
+	range.fill = { 0, 0.42, 1 }
+	waterText = display.newText( act.group, "Water: " .. game.currentLiters .. " Liters", XC, YC - 20, native.systemFont, 25 )
+	waterText.fill = { 0, 0.42, 1 }
+
 
 	if x <= 15 then
 		range.text = "Ideal range"
@@ -229,13 +213,15 @@ function timeLimit()
 		range.text = "Horrible range"
 	end
 
+	local energyCost = math.floor( -x / 10 )
+
 	local function resetVisible()
 
 		resetButton.isVisible = true
 
 	end
 
-	game.addEnergy( math.floor( -x/10 ) )
+	game.addEnergy( energyCost )
 	timer.performWithDelay( 1500, resetVisible )
 end
 
