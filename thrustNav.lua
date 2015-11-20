@@ -55,7 +55,7 @@ local targetRect       -- Rectangle target area
 local arrow        		-- directional arrow toward mars
 local totalRocketImpulses = 0    -- number of rocket impulses used
 local bgLeft, bgRight          -- background images
-local thrusterSound = audio.loadSound( "media/thrustNav/ignite3.wav" )
+local thrusterSound     -- thrust sound
 local leftAccelerate, rightAccelerate, upAccelerate, downAccelerate
 local accelerateFrameCount
 local onTargetX, onTargetY, onTargetXY -- graphics that become visible when on target
@@ -71,11 +71,19 @@ end
 local function backButtonPress ( event )
 	print ( xVelocity, yVelocity ) 
 
+	-- Cheat mode to succeed immediately
+	if game.cheatMode then
+		xTargetDelta = 0
+		yTargetDelta = 0
+		xVelocity = 0
+		yVelocity = 0
+	end
+	
 	if( ( math.abs( yTargetDelta ) < 2 ) and 
 		( math.abs( xTargetDelta ) < 2 ) and 
 		( math.abs( xVelocity ) < 0.00001 ) and 
 		( math.abs( yVelocity ) < 0.00001 ) ) then
-		game.saveState.onTarget = true
+		game.saveState.thrustNav.onTarget = true
 		game.endMessageBox()  -- clear message box
 		-- game.messageBox( "Nicely Done!")
 		-- game.showHint( "Nicely Done!", "On Target")
@@ -88,9 +96,10 @@ local function backButtonPress ( event )
 			game.messageBox( "Still Off Target!")
 		end
 	end
-	if ( math.abs( xVelocity ) < 0.00001 ) then
-		game.saveState.thrustNav.shipSpinning = false
-	end
+	-- if ( math.abs( xVelocity ) < 0.00001 ) then
+	-- 	game.saveState.thrustNav.shipSpinning = false
+	-- end
+
 	-- saved for use in messages
 	game.saveState.thrustNav.lastXTargetDelta = xTargetDelta
 	game.saveState.thrustNav.lastYTargetDelta = yTargetDelta
@@ -120,7 +129,7 @@ end
 -- Turn left button 
 function buttonTurnLeftTouch (event)
 	if event.phase == "began" then
-		local s = audio.play( thrusterSound ) 
+		game.playSound( thrusterSound ) 
 		print("Turn Left Button")
 		accelerateFrameCount = 0
 		xVelocity = xVelocity + xVelocityInc
@@ -138,7 +147,7 @@ end
 -- Turn Right button 
 function buttonTurnRightTouch (event)
 	if event.phase == "began" then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
 		accelerateFrameCount = 0
 		xVelocity = xVelocity - xVelocityInc
@@ -157,7 +166,7 @@ end
 --  Roll Left button
 function buttonRollLeftTouch (event)
 	if event.phase == "began" or event.phase == "moved" then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Roll Left Button")
 		rotVelocity = rotVelocity + rotVelocityInc
 		printPositions()
@@ -169,7 +178,7 @@ end
 -- Roll RIght Button
 function buttonRollRightTouch (event)
 	if event.phase == "began" or event.phase == "moved" then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Roll Right Button, rotation= ", spaceGroup.rotation )
 		rotVelocity = rotVelocity - rotVelocityInc
 		printPositions()
@@ -181,7 +190,7 @@ end
 -- Pitch Up Button
 function buttonPitchUpTouch (event)
 	if event.phase == "began" then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity + yVelocityInc
 		accelerateFrameCount = 0
@@ -199,7 +208,7 @@ end
 -- Pitch Down Button
 function buttonPitchDownTouch(event)
 	if event.phase == "began"  then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity - yVelocityInc
 		accelerateFrameCount = 0
@@ -235,6 +244,9 @@ end
 
 -- Init the act
 function act:init()
+	-- Load sound effects
+	thrusterSound = act:loadSound( "ignite3.wav" )
+	
 	-- create group for rotating background space objects
 	spaceGroup = act:newGroup()
 
@@ -434,11 +446,12 @@ function updateNavStats()
 	end
 
 	if( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 ) then
-		game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
-		-- Show hint showed no operational difference to messageBox.  That is it didn't wait for ok.
-		-- game.showHint( "Nicely Done!", "On Target", game.gotoAct ( "mainAct" ) )
-		-- game.gotoAct ( "mainAct" )
-		-- timer.performWithDelay( 5000, game.gotoAct ( "mainAct") )
+		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
+		game.showHint( "Nicely Done!", "On Target", 
+				function ()
+					game.saveState.thrustNav.onTarget = true
+					game.gotoAct ( "mainAct" )
+				end )
 	end		
 
 	if( hasCollided( earth, targetRect ) ) then
@@ -466,7 +479,7 @@ function updatePosition()
 			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
-			local s = audio.play( thrusterSound )
+			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
 	elseif( rightAccelerate == true ) then
@@ -476,7 +489,7 @@ function updatePosition()
 			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
-			local s = audio.play( thrusterSound )
+			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
 	elseif( upAccelerate == true ) then
@@ -486,7 +499,7 @@ function updatePosition()
 			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
-			local s = audio.play( thrusterSound )
+			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
 	elseif( downAccelerate == true ) then
@@ -496,7 +509,7 @@ function updatePosition()
 			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
-			local s = audio.play( thrusterSound )
+			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
 	end
