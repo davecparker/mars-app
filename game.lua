@@ -27,8 +27,8 @@ local game = {
     saveState = {
     	-- Game options settings
     	soundOn = false,    -- true to enable sounds
-    	fxVolume = 1,       -- sound effects volume (0-1)
-    	ambientVolume = 1,  -- ambient sound volume (0-1)
+    	fxVolume = 0.7,       -- sound effects volume (0-1)
+    	ambientVolume = 0.7,  -- ambient sound volume (0-1)
 
         -- Game sequence state
         onMars = false,     -- true when we make it to Mars
@@ -268,9 +268,19 @@ end
 -- Play the sound if game sound is on
 function game.playSound( sound, options )
 	if ss.soundOn then
-		return audio.play( sound, options )
+		local ch = audio.play( sound, options )
+        if ch and ch > 0 then
+            audio.setVolume( ss.fxVolume, { channel = ch } ) 
+        end
 	end
 	return nil
+end
+
+-- Stop the sound effect playing on the given channel
+function game.stopSound( channel )
+    if channel and channel > 0 then
+        audio.stop( channel )
+    end
 end
 
 -- Play the ambient sound with the given filename, or stop if filename is nil
@@ -294,6 +304,7 @@ function game.playAmbientSound( filename )
 	-- Play requested sound if not already playing
 	if ss.soundOn and ambientSound.handle and not ambientSound.channel then
 		ambientSound.channel = audio.play( ambientSound.handle, { loops = -1 } )
+        audio.setVolume( ss.ambientVolume, { channel = ambientSound.channel } ) 
 	end
 end
 
