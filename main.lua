@@ -35,6 +35,11 @@ game.floatMessage( text, x, y )       -- Display floating fade-away message
 game.messageBox( text, options )      -- Display message box
 game.endMessageBox()                  -- Dismiss active message box if any
 
+-- Sound functions in game.lua:
+game.playSound( sound, options )      -- Play sound effect
+game.playAmbientSound( filename )     -- Play background sound/music
+game.stopAmbientSound()               -- Stop background sound/music
+
 -- User-Interface functions in tabBar.lua:
 game.selectGameTab( index, press )    -- Select one of the tab bar tabs
 game.createBadge( x, y )              -- Create a new item indicator badge

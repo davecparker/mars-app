@@ -72,7 +72,7 @@ local ship = {
 		{
 			name = "Greenhouse",
 			left = 25, top = 85, right = 140, bottom = 235, 
-			x = 10, y = 94, dx = 30,
+			x = 10, y = 94, dx = 30, sound = "Light Mood.mp3",
 		},
 		{
 			name = "Engineering",

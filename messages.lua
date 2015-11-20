@@ -43,7 +43,7 @@ function game.sendMessage( id )
 		badge = game.createBadge( act.xMin + act.width * 0.75, act.yMax + 15 )
 	end
 	game.showBadge( badge )
-	audio.play( textSound )
+	game.playSound( textSound )
 end
 
 -- Send all the messages ids given by variable parameter list

@@ -150,7 +150,7 @@ end
 -- Load and return a sound file with the given filename. 
 -- Use the folder if given, else media/actName
 function Act:loadSound( filename, folder )
-    folder = folder or "media/" .. self.name 
+    folder = folder or ("media/" .. self.name)
     return audio.loadSound( folder .. "/" .. filename )
 end
 
