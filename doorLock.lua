@@ -34,6 +34,9 @@ local sound = {}
 
 -- When the Back Button is Pushed
 function backTapped()
+	if game.cheatMode then
+		game.doorUnlocked = true
+	end
 	game.gotoAct( "mainAct", { effect = "slideRight", time = 800 } )
 end
 
@@ -177,11 +180,7 @@ function keyPressed( event )
 	local key = event.target.name
 
 	local r = math.random( 1, 4 )
-	audio.play( sound.button[r], { channel = r } )
-
-	for i = 1, 4 do
-		audio.setVolume( 1.2, { channel = i } )
-	end
+	game.playSound( sound.button[r] )
 
 	-- If Clear Key is Pressed
 	if key == "clr" then
@@ -190,11 +189,13 @@ function keyPressed( event )
 	elseif key == "ent" then
 		if checkKey() then
 			keyedCorrectly = true
-			audio.play( sound.pass, { channel = 5 } )
-			system.vibrate( )
+			game.playSound( sound.pass )
+			if game.saveState.soundOn then
+				system.vibrate( )
+			end
 		else
 			keyedCorrectly = false
-			audio.play( sound.fail, { channel = 5 } )
+			game.playSound( sound.fail )
 		end
 	-- If Any Other Key is Pressed
 	elseif key ~= "clr" and key ~= "ent" then
@@ -225,7 +226,7 @@ end
 function act:init()
 
 	-- Title Bar
-	act:makeTitleBar( "Door", backTapped )
+	act:makeTitleBar( "", backTapped )   -- title set in act:prepare()
 
 	-- Background
 	--...
@@ -240,8 +241,6 @@ function act:init()
 
 	sound.pass = audio.loadSound( "media/doorLock/sounds/pass.wav" )
 	sound.fail = audio.loadSound( "media/doorLock/sounds/fail.wav" )
-
-	audio.setVolume( 0.5, { channel = 5 } )
 
 	-- Screen
 	screen = act:newImage( "screen.png", { width=200 })
@@ -303,6 +302,16 @@ function act:init()
 	act.group:insert( button.zero )
 	act.group:insert( button.enter )
 
+end
+
+-- Prepare the act
+function act:prepare()
+	-- Set title bar text to the name of the room
+	if game.lockedRoom then
+		act.title.text = game.lockedRoom.name
+	else
+		act.title.text = "Locked Door"
+	end
 end
 
 ------------------------- End of Activity --------------------------------
