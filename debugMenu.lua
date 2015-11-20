@@ -30,11 +30,8 @@ local debugActs = {
 	"drillScan",
 	"drill",
 	"rover",
-<<<<<<< Updated upstream
 	"greenhouse",
-=======
 	"shipLanding",
->>>>>>> Stashed changes
 }
 
 ------------------------- Start of Activity --------------------------------

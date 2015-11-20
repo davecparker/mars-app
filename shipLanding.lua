@@ -21,35 +21,23 @@ local sound = {}
 
 local function bgTouch( event )
 
-	-- Function to Rotate Ship Clockwise
-	local function rotate()	
-		transition.to( ship.group, {time = 5000, rotation = 360, delta = true, onComplete = rotate } )
-	end
-
-	-- Function to Rotate Ship CounterClockwise
-	local function rotate_c()
-		transition.to( ship.group, {time = 5000, rotation = -360, delta = true, onComplete = rotate_c } )
-	end
-
 	-- Rotate when right side of screen is touched
 	if event.x > act.xCenter then
 		if event.phase == "began" then
-			rotate()
 			ship.flameL.isVisible = true
-			audio.play( sound.thrust )
+			sound.channel = game.playSound( sound.thrust, { loops = -1 } )
 		elseif event.phase == "ended" then
-			transition.cancel( square )
 			ship.flameL.isVisible = false
+			audio.stop( sound.channel )
 		end
 	-- Rotate when left side of screen is touched
 	elseif event.x < act.xCenter then
 		if event.phase == "began" then
-			rotate_c()
 			ship.flameR.isVisible = true
-			audio.play( sound.thrust )
+			sound.channel = game.playSound( sound.thrust, { loops = -1 } )
 		elseif event.phase == "ended" then
-			transition.cancel( square )
 			ship.flameR.isVisible = false
+			audio.stop( sound.channel )
 		end
 	end
 
@@ -59,28 +47,34 @@ end
 local function shipTouch( event )
 	if event.phase == "began" then
 		ship.flame.isVisible = true
-		myChannel = audio.play( sound.thrust, { loops = -1 } )
-
+		sound.channel = game.playSound( sound.thrust, { loops = -1 } )
 	elseif event.phase == "ended" then
 		ship.flame.isVisible = false
-		audio.stop( myChannel )
+		audio.stop( sound.channel )
 	end
 
 	return true
 end
 
+-- Thrusting
+--ship.dy = ship.dy - s 
+
+
 -- Init the act
 function act:init()
 
-	sound.thrust = audio.loadSound( "media/shipLanding/sounds/ignite.wav" )
+	sound.thrust = act:loadSound( "sounds/thrust.wav" )
 
 	local bg = display.newRect( act.group, act.xCenter, act.yCenter, act.width, act.height )
 	bg:setFillColor( 0 )
 	bg:addEventListener( "touch", bgTouch )
+
+	local thrustLeft
 	
 	ship.group = act:newGroup( )
-	ship.group.x = act.xCenter
-	ship.group.y = act.yCenter
+	ship.group.x = act.xMin + 20
+	ship.group.y = act.yMin + 20
+	ship.group.dy = 0.5
 
 	ship.square = display.newRect( ship.group, 0, 0, 30, 30 )
 	ship.square:addEventListener( "touch", shipTouch )
@@ -95,8 +89,10 @@ function act:init()
 	ship.flameR = act:newImage( "flame.png", { parent = ship.group, x = 30, y = 30, width = 15 } )
 	ship.flameR.rotation = -45
 	ship.flameR.isVisible = false
+end
 
-
+function act:enterFrame( event )
+	ship.group.y = ship.group.y + ship.group.dy
 end
 
 
