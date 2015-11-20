@@ -77,7 +77,7 @@ local ship = {
 		{
 			name = "Engineering",
 			left = -94, top = 166, right = 19, bottom = 236, 
-			x = 0, y = 153, dy = 30, doorCode = "1010",
+			x = 0, y = 153, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
 		},
 	},
 }
@@ -157,6 +157,15 @@ local function gemTapped( event )
 	end
 end
 
+-- Update the ambient sound depending on the room
+local function updateAmbientSound()
+	if roomInside and roomInside.sound then
+		game.playAmbientSound( roomInside.sound )
+	else
+		game.playAmbientSound( "Ship Ambience.mp3" )
+	end
+end
+
 -- Change to the zoomed view for the given room
 local function zoomToRoom( room )
 	-- Fade in icons for gems in the room
@@ -189,7 +198,10 @@ local function zoomToRoom( room )
 	-- Show the title bar with this room name
 	act.title.text = room.name
 	titleBar.isVisible = true
-	transition.to( titleBar, { y = yTitleBar, time = zoomTime })
+	transition.to( titleBar, { y = yTitleBar, time = zoomTime } )
+
+	-- Update the ambient sound when we enter the room
+	timer.performWithDelay( zoomTime, updateAmbientSound )
 end
 
 -- Called when a zoom out of a room is complete
@@ -225,6 +237,9 @@ local function exitRoom()
 
 		-- Hide the title bar
 		transition.to( titleBar, { y = yTitleBar - act.dyTitleBar, time = zoomTime, onComplete = hideTitleBar })
+
+		-- Update the ambient sound when we exit the room
+		timer.performWithDelay( zoomTime, updateAmbientSound )
 	end
 end
 
@@ -323,6 +338,16 @@ function act:prepare()
 	game.lockedRoom = nil
 	game.doorCode = nil
 	game.doorUnlocked = nil
+end
+
+-- Start the act
+function act:start()
+	updateAmbientSound()
+end
+
+-- Stop the act
+function act:stop()
+	game.stopAmbientSound()
 end
 
 

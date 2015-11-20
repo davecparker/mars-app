@@ -72,7 +72,12 @@ local res = game.saveState.resources
 
 
 -- File local variables
-local messageBox       -- currently displayed message box or nil if none
+local messageBox           -- currently displayed message box or nil if none
+local ambientSound = {
+	handle = nil,    -- sound handle of sound loaded or nil if none
+	name = nil,      -- filename of sound loaded or nil if none
+	channel = nil,   -- sound channel number if playing or nil if not
+}
 
 
 ------------------------- Utility Functions  --------------------------------
@@ -250,6 +255,40 @@ function game.messageBox( text, options )
             y = (options.y or game.yCenter) - game.yCenter,
             transition = easing.outQuad } )
 end
+
+-- Play the ambient sound with the given filename, or stop if filename is nil
+function game.playAmbientSound( filename ) 
+	-- Is the requested sound different from the previous one?
+	if filename ~= ambientSound.name then
+		-- Stop and discard previous sound.
+		game.stopAmbientSound()
+		if ambientSound.handle then 
+			audio.dispose( ambientSound.handle )
+			ambientSound.handle = nil
+		end
+
+		-- Load new sound, if any
+		if filename then
+			ambientSound.handle = audio.loadStream( "media/game/music/" .. filename )
+		end
+		ambientSound.name = filename
+	end
+
+	-- Play requested sound if not already playing
+	if ambientSound.handle and not ambientSound.channel then
+		ambientSound.channel = audio.play( ambientSound.handle, { loops = -1 } )
+	end
+end
+
+-- Stop the current ambient sound if any
+function game.stopAmbientSound()
+	if ambientSound.channel then
+		-- Stop sound but keep it loaded in case we restart the same sound.
+		audio.stop( ambientSound.channel )
+		ambientSound.channel = nil
+	end
+end
+
 
 ------------------------- Game management  --------------------------------
 
