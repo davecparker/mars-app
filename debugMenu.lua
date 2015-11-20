@@ -70,11 +70,16 @@ local function cheatSwitch( event )
 	print( "Cheat mode = " .. tostring(game.cheatMode) )
 end
 
+-- Handle press of the back button
+local function onBackButton()
+	game.gotoAct( "menu" )
+end
+
 -- Init the act
 function act:init()
 	-- Background and title bar for the view
 	act:grayBackground()
-	act:makeTitleBar( "Debug Menu" )
+	act:makeTitleBar( "Debug Menu", onBackButton )
 
 	-- Cheat mode switch and label
 	local ySwitch = act.yMin + act.dyTitleBar * 1.5

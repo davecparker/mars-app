@@ -180,11 +180,7 @@ function keyPressed( event )
 	local key = event.target.name
 
 	local r = math.random( 1, 4 )
-	audio.play( sound.button[r], { channel = r } )
-
-	for i = 1, 4 do
-		audio.setVolume( 1.2, { channel = i } )
-	end
+	game.playSound( sound.button[r] )
 
 	-- If Clear Key is Pressed
 	if key == "clr" then
@@ -193,11 +189,13 @@ function keyPressed( event )
 	elseif key == "ent" then
 		if checkKey() then
 			keyedCorrectly = true
-			audio.play( sound.pass, { channel = 5 } )
-			system.vibrate( )
+			game.playSound( sound.pass )
+			if game.saveState.soundOn then
+				system.vibrate( )
+			end
 		else
 			keyedCorrectly = false
-			audio.play( sound.fail, { channel = 5 } )
+			game.playSound( sound.fail )
 		end
 	-- If Any Other Key is Pressed
 	elseif key ~= "clr" and key ~= "ent" then
@@ -243,8 +241,6 @@ function act:init()
 
 	sound.pass = audio.loadSound( "media/doorLock/sounds/pass.wav" )
 	sound.fail = audio.loadSound( "media/doorLock/sounds/fail.wav" )
-
-	audio.setVolume( 0.5, { channel = 5 } )
 
 	-- Screen
 	screen = act:newImage( "screen.png", { width=200 })

@@ -209,8 +209,14 @@ function act:prepare()
 	timerID = timer.performWithDelay( msTimer, timerTick, 0 )
 end
 
+-- Start the act
+function act:start()
+	game.playAmbientSound( "Light Mood.mp3" )
+end
+
 -- Stop the act
 function act:stop()
+	game.stopAmbientSound()
 	-- TODO: Keep timer running when act is not active?
 	if timerID then
 		timer.cancel( timerID )

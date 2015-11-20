@@ -25,6 +25,11 @@ local game = {
 
     -- The saveState table is saved to a file between runs
     saveState = {
+    	-- Game options settings
+    	soundOn = false,    -- true to enable sounds
+    	fxVolume = 1,       -- sound effects volume (0-1)
+    	ambientVolume = 1,  -- ambient sound volume (0-1)
+
         -- Game sequence state
         onMars = false,     -- true when we make it to Mars
         shipState = 1,      -- ship sequence state number
@@ -68,7 +73,8 @@ local game = {
 }
 
 -- Shortcuts to access parts of the game data in this module
-local res = game.saveState.resources
+local ss = game.saveState
+local res = ss.resources
 
 
 -- File local variables
@@ -256,6 +262,17 @@ function game.messageBox( text, options )
             transition = easing.outQuad } )
 end
 
+
+------------------------------ Sound  --------------------------------------
+
+-- Play the sound if game sound is on
+function game.playSound( sound, options )
+	if ss.soundOn then
+		return audio.play( sound, options )
+	end
+	return nil
+end
+
 -- Play the ambient sound with the given filename, or stop if filename is nil
 function game.playAmbientSound( filename ) 
 	-- Is the requested sound different from the previous one?
@@ -275,7 +292,7 @@ function game.playAmbientSound( filename )
 	end
 
 	-- Play requested sound if not already playing
-	if ambientSound.handle and not ambientSound.channel then
+	if ss.soundOn and ambientSound.handle and not ambientSound.channel then
 		ambientSound.channel = audio.play( ambientSound.handle, { loops = -1 } )
 	end
 end
