@@ -31,6 +31,7 @@ local debugActs = {
 	"drill",
 	"rover",
 	"greenhouse",
+	"shipLanding",
 }
 
 ------------------------- Start of Activity --------------------------------
