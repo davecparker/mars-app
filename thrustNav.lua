@@ -244,7 +244,8 @@ end
 
 -- Init the act
 function act:init()
-	-- Load sound effects
+	-- Load sound effects in Init so that if scene gets destroyed later and then restarted
+	-- the sound will be reloaded by init
 	thrusterSound = act:loadSound( "ignite3.wav" )
 	
 	-- create group for rotating background space objects
