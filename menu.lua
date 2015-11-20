@@ -28,7 +28,7 @@ local function setSound( on )
 	if on then
 		game.playAmbientSound( "Ship Ambience.mp3" )
 	else
-		game.playAmbientSound( nil )
+		game.stopAmbientSound()
 	end
 end
 
@@ -76,7 +76,7 @@ end
 
 -- Stop the act
 function act:stop()
-	game.playAmbientSound( nil )
+	game.stopAmbientSound()
 end
 
 ------------------------- End of Activity --------------------------------
