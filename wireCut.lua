@@ -29,6 +29,11 @@ local tapeSelected = false
 local wireCutterSelected = false
 local manual  
 local manualPage         -- what page of the manual you are on
+-- audio
+local cutSFX
+local tapeSFX
+local toolboxSFX
+local panelSFX
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -133,6 +138,7 @@ end
 -- function for the toolbox touch
 local function toolboxTouch (event) 
 	if event.phase == "began" then
+		game.playSound (toolboxSFX)
 		if toolWindow == nil then
 			if manual then     -- remove the manual if its up
 				manual:removeSelf( )
@@ -172,8 +178,17 @@ end
 
 -- fade out to next part of game
 local function endFade ()
+	--game.playSound(panelSFX)
 	game.panelFixed = true
 	game.gotoAct ( "mainAct", { effect = "fade", time = 100 } )
+end
+
+-- play the sound effect for the panel after a delay
+local function panelSound ()
+	timer.performWithDelay( 900, 
+				function () 
+					game.playSound(panelSFX) 
+				end )
 end
 
 -- end of act function
@@ -187,7 +202,7 @@ local function endAct()
 	toolbox = nil
 	toolIcon:removeSelf( )
 	toolIcon = nil
-	transition.to( panel, { time = 1000, transition = easing.outSine, x = act.xCenter - 3, delay = 500 } )
+	transition.to( panel, { time = 1000, transition = easing.outSine, x = act.xCenter - 3, delay = 500, onStart = panelSound } )
 	transition.scaleBy( act.group, { xScale = -0.5, yScale = -0.5, time = 2000 } )
 	transition.to( act.group, { time = 2002, x = game.xCenter / 2, y = game.yCenter / 2 - 20, onComplete = endFade } )
 end
@@ -255,9 +270,11 @@ local function wireTouch ( event )
 		if w.wire.isCut == false and wireCutterSelected == true then-- ========================================================================================
 			w.wire:setFrame( 2 )
 			w.wire.isCut = true
+			game.playSound (cutSFX)
 		elseif w.wire.isCut == true and tapeSelected == true then
 			w.wire:setFrame( 1 )
 			w.wire.isCut = false
+			game.playSound (tapeSFX)
 		end
 	end
 	checkState ()  -- check the state of the game
@@ -497,6 +514,11 @@ function act:init()
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
 
+	-- load the sounds
+	cutSFX = act:loadSound ("Cut2.wav")
+	tapeSFX = act:loadSound ("Tape7.wav")
+	toolboxSFX = act:loadSound ("ToolboxOpen.wav")
+	panelSFX = act:loadSound ("Panel.wav")
 
 	-- Touch location text display objects==============================================================================================
 	--local yText = act.yMin + 15   -- relative to actual top of screen
