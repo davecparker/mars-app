@@ -11,15 +11,30 @@
 -- The game object where game global data and functions are stored
 local game = {
     -- Data for the current act to use
+    cheatMode = false,    -- true if cheat mode is on
     actParam = nil,       -- act parameter data from a gem
     actGemName = nil,     -- gem name that triggered the act
     openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
     lockedRoom = nil,     -- locked room that user is trying to enter or nil if none
     doorCode = nil,       -- door code for locked room or nil if none
     doorUnlocked = nil,   -- set to true when a locked door is successfully unlocked
+    panelFixed = nil,     -- set to true when a circuit panel is successfully fixed
+
+    -- Game state tracking
+    stateStartTime = 0,   -- value of system.getTimer() when current game state started
 
     -- The saveState table is saved to a file between runs
     saveState = {
+    	-- Game options settings
+    	soundOn = false,    -- true to enable sounds
+    	fxVolume = 1,       -- sound effects volume (0-1)
+    	ambientVolume = 1,  -- ambient sound volume (0-1)
+
+        -- Game sequence state
+        onMars = false,     -- true when we make it to Mars
+        shipState = 1,      -- ship sequence state number
+
+        -- Gem state
         usedGems = {},  -- set of gem names that have been used
     
         -- The user's current resource levels (and starting values)
@@ -50,7 +65,6 @@ local game = {
             onTarget = false,
             latestXTargetDelta = 100,
             latestYTargetDelta = 100,
-            shipSpinning = true
         },
             
         -- List of document filenames that user has found
@@ -59,10 +73,17 @@ local game = {
 }
 
 -- Shortcuts to access parts of the game data in this module
-local res = game.saveState.resources
+local ss = game.saveState
+local res = ss.resources
+
 
 -- File local variables
-local messageBox       -- currently displayed message box or nil if none
+local messageBox           -- currently displayed message box or nil if none
+local ambientSound = {
+	handle = nil,    -- sound handle of sound loaded or nil if none
+	name = nil,      -- filename of sound loaded or nil if none
+	channel = nil,   -- sound channel number if playing or nil if not
+}
 
 
 ------------------------- Utility Functions  --------------------------------
@@ -240,6 +261,51 @@ function game.messageBox( text, options )
             y = (options.y or game.yCenter) - game.yCenter,
             transition = easing.outQuad } )
 end
+
+
+------------------------------ Sound  --------------------------------------
+
+-- Play the sound if game sound is on
+function game.playSound( sound, options )
+	if ss.soundOn then
+		return audio.play( sound, options )
+	end
+	return nil
+end
+
+-- Play the ambient sound with the given filename, or stop if filename is nil
+function game.playAmbientSound( filename ) 
+	-- Is the requested sound different from the previous one?
+	if filename ~= ambientSound.name then
+		-- Stop and discard previous sound.
+		game.stopAmbientSound()
+		if ambientSound.handle then 
+			audio.dispose( ambientSound.handle )
+			ambientSound.handle = nil
+		end
+
+		-- Load new sound, if any
+		if filename then
+			ambientSound.handle = audio.loadStream( "media/game/music/" .. filename )
+		end
+		ambientSound.name = filename
+	end
+
+	-- Play requested sound if not already playing
+	if ss.soundOn and ambientSound.handle and not ambientSound.channel then
+		ambientSound.channel = audio.play( ambientSound.handle, { loops = -1 } )
+	end
+end
+
+-- Stop the current ambient sound if any
+function game.stopAmbientSound()
+	if ambientSound.channel then
+		-- Stop sound but keep it loaded in case we restart the same sound.
+		audio.stop( ambientSound.channel )
+		ambientSound.channel = nil
+	end
+end
+
 
 ------------------------- Game management  --------------------------------
 

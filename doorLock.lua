@@ -34,6 +34,9 @@ local sound = {}
 
 -- When the Back Button is Pushed
 function backTapped()
+	if game.cheatMode then
+		game.doorUnlocked = true
+	end
 	game.gotoAct( "mainAct", { effect = "slideRight", time = 800 } )
 end
 
@@ -177,11 +180,7 @@ function keyPressed( event )
 	local key = event.target.name
 
 	local r = math.random( 1, 4 )
-	audio.play( sound.button[r], { channel = sound.button[r] } )
-
-	for i = 1, 4 do
-		audio.setVolume( 1.2, { channel = sound.button[r] } )
-	end
+	game.playSound( sound.button[r] )
 
 	-- If Clear Key is Pressed
 	if key == "clr" then
@@ -190,11 +189,13 @@ function keyPressed( event )
 	elseif key == "ent" then
 		if checkKey() then
 			keyedCorrectly = true
-			audio.play( sound.pass, { channel = sound.pass } )
-			system.vibrate( )
+			game.playSound( sound.pass )
+			if game.saveState.soundOn then
+				system.vibrate( )
+			end
 		else
 			keyedCorrectly = false
-			audio.play( sound.fail, { channel = sound.fail } )
+			game.playSound( sound.fail )
 		end
 	-- If Any Other Key is Pressed
 	elseif key ~= "clr" and key ~= "ent" then
@@ -207,8 +208,8 @@ function keyPressed( event )
 		refreshScreen()
 	end 
 end
-
-local function createButton( name, x, y, file, file2 )
+-- Convenience Function 
+local function createButton( scene, name, x, y, file, file2 )
 	local b = widget.newButton {
 		defaultFile = file,
 		overFile = file2,
@@ -217,6 +218,7 @@ local function createButton( name, x, y, file, file2 )
 		x = x, y = y,
 		onPress = keyPressed
 	}
+	scene:insert(b)
 	b.name = name
 	return b
 end
@@ -225,24 +227,20 @@ end
 function act:init()
 
 	-- Title Bar
-	act:makeTitleBar( "Door", backTapped )
+	act:makeTitleBar( "", backTapped )   -- title set in act:prepare()
 
 	-- Background
 	--...
 
 	-- Sound
 	sound.button = {
-		audio.loadSound( "media/doorLock/sounds/button1.wav" ),
-		audio.loadSound( "media/doorLock/sounds/button2.wav" ),
-		audio.loadSound( "media/doorLock/sounds/button3.wav" ),
-		audio.loadSound( "media/doorLock/sounds/button4.wav" )
+		act:loadSound( "sounds/button1.wav" ),
+		act:loadSound( "sounds/button2.wav" ),
+		act:loadSound( "sounds/button3.wav" ),
+		act:loadSound( "sounds/button4.wav" )
 	}
-
-	sound.pass = audio.loadSound( "media/doorLock/sounds/pass.wav" )
-	sound.fail = audio.loadSound( "media/doorLock/sounds/fail.wav" )
-
-	audio.setVolume( 0.5, { channel = sound.pass } )
-	audio.setVolume( 0.5, { channel = sound.fail } )
+	sound.pass = act:loadSound( "sounds/pass.wav" )
+	sound.fail = act:loadSound( "sounds/fail.wav" )
 
 	-- Screen
 	screen = act:newImage( "screen.png", { width=200 })
@@ -255,55 +253,52 @@ function act:init()
 	panel.y = act.yCenter + 50
 
 	-- Buttons
-	button.one = createButton( 1, panel.x - 60, panel.y - 90, 
+	button.one = createButton( act.group, 1, panel.x - 60, panel.y - 90, 
 		"media/doorLock/buttons/1key.png", "media/doorLock/buttons/1key_p.png" )
 
-	button.two = createButton( 2, panel.x, panel.y - 90, 
+	button.two = createButton( act.group, 2, panel.x, panel.y - 90, 
 		"media/doorLock/buttons/2key.png", "media/doorLock/buttons/2key_p.png" )
 
-	button.three = createButton( 3, panel.x + 60, panel.y - 90, 
+	button.three = createButton( act.group, 3, panel.x + 60, panel.y - 90, 
 		"media/doorLock/buttons/3key.png", "media/doorLock/buttons/3key_p.png" )
 
-	button.four = createButton( 4, panel.x - 60, panel.y - 30, 
+	button.four = createButton( act.group, 4, panel.x - 60, panel.y - 30, 
 		"media/doorLock/buttons/4key.png", "media/doorLock/buttons/4key_p.png" )
 
-	button.five = createButton( 5, panel.x, panel.y - 30, 
+	button.five = createButton( act.group, 5, panel.x, panel.y - 30, 
 		"media/doorLock/buttons/5key.png", "media/doorLock/buttons/5key_p.png" )
 
-	button.six = createButton( 6, panel.x + 60, panel.y - 30, 
+	button.six = createButton( act.group, 6, panel.x + 60, panel.y - 30, 
 		"media/doorLock/buttons/6key.png", "media/doorLock/buttons/6key_p.png" )
 
-	button.seven = createButton( 7, panel.x - 60, panel.y + 30, 
+	button.seven = createButton( act.group, 7, panel.x - 60, panel.y + 30, 
 		"media/doorLock/buttons/7key.png", "media/doorLock/buttons/7key_p.png" )
 
-	button.eight = createButton( 8, panel.x, panel.y + 30, 
+	button.eight = createButton( act.group, 8, panel.x, panel.y + 30, 
 		"media/doorLock/buttons/8key.png", "media/doorLock/buttons/8key_p.png" )
 
-	button.nine = createButton( 9, panel.x + 60, panel.y + 30, 
+	button.nine = createButton( act.group, 9, panel.x + 60, panel.y + 30, 
 		"media/doorLock/buttons/9key.png", "media/doorLock/buttons/9key_p.png" )
 
-	button.clear = createButton( "clr", panel.x - 60, panel.y + 90, 
+	button.clear = createButton( act.group, "clr", panel.x - 60, panel.y + 90, 
 		"media/doorLock/buttons/clear.png", "media/doorLock/buttons/clear_p.png" )
 
-	button.zero = createButton( 0, panel.x, panel.y + 90, 
+	button.zero = createButton( act.group, 0, panel.x, panel.y + 90, 
 		"media/doorLock/buttons/0key.png", "media/doorLock/buttons/0key_p.png" )
 
-	button.enter = createButton( "ent", panel.x + 60, panel.y + 90, 
+	button.enter = createButton( act.group, "ent", panel.x + 60, panel.y + 90, 
 		"media/doorLock/buttons/enter.png", "media/doorLock/buttons/enter_p.png" )
 
-	act.group:insert( button.one )
-	act.group:insert( button.two )
-	act.group:insert( button.three )
-	act.group:insert( button.four )
-	act.group:insert( button.five )
-	act.group:insert( button.six )
-	act.group:insert( button.seven )
-	act.group:insert( button.eight )
-	act.group:insert( button.nine )
-	act.group:insert( button.clear )
-	act.group:insert( button.zero )
-	act.group:insert( button.enter )
+end
 
+-- Prepare the act
+function act:prepare()
+	-- Set title bar text to the name of the room
+	if game.lockedRoom then
+		act.title.text = game.lockedRoom.name
+	else
+		act.title.text = "Locked Door"
+	end
 end
 
 ------------------------- End of Activity --------------------------------
