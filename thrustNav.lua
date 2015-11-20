@@ -50,12 +50,12 @@ local spaceGroup    	-- group for rotating space background
 local xVelocity, yVelocity, rotVelocity  -- positional deltas used on each enter frame
 local xVelocityInc, yVelocityInc, rotVelocityInc  -- increments for the deltas
 local xTargetDelta, yTargetDelta  -- delta from Target
-local navStatsText     -- text string for nav stats
+local navStatsText1, navStatsText2, navStatsText3 -- text strings for nav stats
 local targetRect       -- Rectangle target area
 local arrow        		-- directional arrow toward mars
 local totalRocketImpulses = 0    -- number of rocket impulses used
 local bgLeft, bgRight          -- background images
-local thrusterSound = audio.loadSound( "media/thrustNav/ignite3.wav" )
+local thrusterSound     -- thrust sound
 local leftAccelerate, rightAccelerate, upAccelerate, downAccelerate
 local accelerateFrameCount
 local onTargetX, onTargetY, onTargetXY -- graphics that become visible when on target
@@ -69,30 +69,41 @@ end
 
 -- function to send you back when you press the back button
 local function backButtonPress ( event )
+	print ( xVelocity, yVelocity ) 
+
+	-- Cheat mode to succeed immediately
+	if game.cheatMode then
+		xTargetDelta = 0
+		yTargetDelta = 0
+		xVelocity = 0
+		yVelocity = 0
+	end
+	
 	if( ( math.abs( yTargetDelta ) < 2 ) and 
 		( math.abs( xTargetDelta ) < 2 ) and 
 		( math.abs( xVelocity ) < 0.00001 ) and 
 		( math.abs( yVelocity ) < 0.00001 ) ) then
-		game.saveState.onTarget = true
+		game.saveState.thrustNav.onTarget = true
+		game.endMessageBox()  -- clear message box
 		-- game.messageBox( "Nicely Done!")
 		-- game.showHint( "Nicely Done!", "On Target")
 	else
 		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
 			( math.abs( yVelocity )  > 0.00001) ) then
-			-- print ( xVelocity, yVelocity ) 
 			game.messageBox( "Still Spinning!")
 		elseif ( ( math.abs( yTargetDelta ) >= 2 ) or 
 			( math.abs( xTargetDelta ) >= 2 ) ) then
 			game.messageBox( "Still Off Target!")
 		end
 	end
-	if ( math.abs( xVelocity ) < 0.00001 ) then
-		game.saveState.thrustNav.shipSpinning = false
-	end
+	-- if ( math.abs( xVelocity ) < 0.00001 ) then
+	-- 	game.saveState.thrustNav.shipSpinning = false
+	-- end
+
 	-- saved for use in messages
 	game.saveState.thrustNav.lastXTargetDelta = xTargetDelta
 	game.saveState.thrustNav.lastYTargetDelta = yTargetDelta
-
+	
 	game.gotoAct ( "mainAct" )
 	return true
 end
@@ -118,7 +129,7 @@ end
 -- Turn left button 
 function buttonTurnLeftTouch (event)
 	if event.phase == "began" then
-		local s = audio.play( thrusterSound ) 
+		game.playSound( thrusterSound ) 
 		print("Turn Left Button")
 		accelerateFrameCount = 0
 		xVelocity = xVelocity + xVelocityInc
@@ -136,7 +147,7 @@ end
 -- Turn Right button 
 function buttonTurnRightTouch (event)
 	if event.phase == "began" then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
 		accelerateFrameCount = 0
 		xVelocity = xVelocity - xVelocityInc
@@ -155,7 +166,7 @@ end
 --  Roll Left button
 function buttonRollLeftTouch (event)
 	if event.phase == "began" or event.phase == "moved" then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Roll Left Button")
 		rotVelocity = rotVelocity + rotVelocityInc
 		printPositions()
@@ -167,7 +178,7 @@ end
 -- Roll RIght Button
 function buttonRollRightTouch (event)
 	if event.phase == "began" or event.phase == "moved" then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Roll Right Button, rotation= ", spaceGroup.rotation )
 		rotVelocity = rotVelocity - rotVelocityInc
 		printPositions()
@@ -179,7 +190,7 @@ end
 -- Pitch Up Button
 function buttonPitchUpTouch (event)
 	if event.phase == "began" then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity + yVelocityInc
 		accelerateFrameCount = 0
@@ -197,7 +208,7 @@ end
 -- Pitch Down Button
 function buttonPitchDownTouch(event)
 	if event.phase == "began"  then
-		local s = audio.play( thrusterSound )
+		game.playSound( thrusterSound )
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity - yVelocityInc
 		accelerateFrameCount = 0
@@ -233,6 +244,9 @@ end
 
 -- Init the act
 function act:init()
+	-- Load sound effects
+	thrusterSound = act:loadSound( "ignite3.wav" )
+	
 	-- create group for rotating background space objects
 	spaceGroup = act:newGroup()
 
@@ -275,10 +289,16 @@ function act:init()
 	print("bg=", bg )
 
 	local yText = act.yMin + 10
-	navStatsText = display.newText( act.group, "Hello", (act.xCenter-act.xMin) / 2, yText, native.systemFont, 14 )
-	navStatsText.anchorX = 0
-	navStatsText.anchorY = 0
-	print( "navStatsText=" , navStatsText )
+	navStatsText1 = display.newText( act.group, "Hello1", (act.xCenter-act.xMin) / 2, yText, native.systemFont, 14 )
+	navStatsText1.anchorX = 0
+	navStatsText1.anchorY = 0
+	navStatsText2 = display.newText( act.group, "Hello2", (act.xCenter-act.xMin) / 2, yText + 16, native.systemFont, 14 )
+	navStatsText2.anchorX = 0
+	navStatsText2.anchorY = 0
+	navStatsText3 = display.newText( act.group, "Hello3", (act.xCenter-act.xMin) / 2, yText + 32, native.systemFont, 14 )
+	navStatsText3.anchorX = 0
+	navStatsText3.anchorY = 0
+	print( "navStatsText1=" , navStatsText1 )
 	
 	-- spaceGroup.y = act.height / 2 - 100
 	
@@ -426,21 +446,22 @@ function updateNavStats()
 	end
 
 	if( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 ) then
-		game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
-		-- Show hint showed no operational difference to messageBox.  That is it didn't wait for ok.
-		-- game.showHint( "Nicely Done!", "On Target", game.gotoAct ( "mainAct" ) )
-		-- game.gotoAct ( "mainAct" )
+		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
+		game.showHint( "Nicely Done!", "On Target", 
+				function ()
+					game.saveState.thrustNav.onTarget = true
+					game.gotoAct ( "mainAct" )
+				end )
 	end		
 
 	if( hasCollided( earth, targetRect ) ) then
-		navStatsText.text = "Where are you going?  Home?"	
+		navStatsText1.text = "Where are you going?  Home?"	
 	elseif( hasCollided( sun, targetRect ) ) then
-		navStatsText.text = "That will be VERY HOT!"	
+		navStatsText1.text = "That will be VERY HOT!"	
 	else
-		navStatsText.text = string.format("%s  %3d %5.1f   %s\n%s  %3d %5.1f  %s\n%s %3d",  
-		"xDelta=", xTargetDelta , xVelocity, xStr,
-		"yDelta=", yTargetDelta , yVelocity, yStr,
-		"totalImpulses= ", totalRocketImpulses )
+		navStatsText1.text = string.format( "%s  %3d %5.1f   %s", "xDelta=", xTargetDelta , xVelocity, xStr)
+		navStatsText2.text = string.format( "%s  %3d %5.1f   %s", "yDelta=", yTargetDelta , yVelocity, yStr)
+		navStatsText3.text = string.format( "%s %3d", "totalImpulses= ", totalRocketImpulses )
 	end
 end
 
@@ -458,7 +479,7 @@ function updatePosition()
 			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
-			local s = audio.play( thrusterSound )
+			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
 	elseif( rightAccelerate == true ) then
@@ -468,7 +489,7 @@ function updatePosition()
 			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
-			local s = audio.play( thrusterSound )
+			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
 	elseif( upAccelerate == true ) then
@@ -478,7 +499,7 @@ function updatePosition()
 			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
-			local s = audio.play( thrusterSound )
+			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
 	elseif( downAccelerate == true ) then
@@ -488,7 +509,7 @@ function updatePosition()
 			updateEnergy()
 		end
 		if( accelerateFrameCount > 10 ) then
-			local s = audio.play( thrusterSound )
+			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
 	end
@@ -554,7 +575,7 @@ end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
-	if( navStatsText ) then
+	if( navStatsText1 ) then
 		updateNavStats()
 	end
 

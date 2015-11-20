@@ -17,11 +17,11 @@ local selectedTab     -- the tab id of the currently selected tab
 
 -- The tab bar buttons
 local buttons = {
-    { id = "mainAct",    defaultFile = "media/game/map.png" },
+    { id = "mainAct",    defaultFile = "media/game/map.png", selected = true },
     { id = "resources",  defaultFile = "media/game/gauge.png"  },
     { id = "documents",  defaultFile = "media/game/folder.png" },
     { id = "messages",   defaultFile = "media/game/messages.png" },
-    { id = "menu",       defaultFile = "media/game/menu.png", selected = true, },
+    { id = "menu",       defaultFile = "media/game/menu.png" },
 }
 
 -- Table that keeps track of the currnet act viewed on each tab, indexed by tab id.
@@ -96,8 +96,13 @@ end
 function game.showBadge( badge )
     assert( badge )
     if not badge.showing then
+        -- Fade in hidden badge
         transition.fadeIn( badge, { time = 200 } )
         badge.showing = true
+    elseif badge.alpha == 1 then
+        -- Blink already showing badge
+        transition.fadeOut( badge, { time = 200 } )
+        transition.fadeIn( badge, { delay = 250, time = 200 } )
     end
 end
 
