@@ -255,6 +255,9 @@ local function exitRoom()
 		walkTo( roomInside.x, roomInside.y, zoomTime ) 
 		roomInside = nil
 
+		-- Remove any active message box
+		game.endMessageBox()
+		
 		-- Fade out then delete any gem icons
 		if iconGroup then
 			transition.fadeOut( iconGroup, { time = zoomTime, transition = easing.outCubic, 

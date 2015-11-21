@@ -51,7 +51,7 @@ end
 function act:init()
 	-- Background and title bar for the view
 	act:whiteBackground()
-	act:makeTitleBar( "Documents" )
+	act:makeTitleBar( "Files" )
 
 	-- Make the TableView to list the documents
 	tableView = widget.newTableView

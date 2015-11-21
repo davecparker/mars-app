@@ -68,6 +68,12 @@ end
 
 -- Prepare the act before the show transition
 function act:prepare()
+	-- If we got here with no document to open then go back to Documents view
+	if not game.openDoc then
+		game.gotoAct( "Documents" )
+		return
+	end
+
 	-- Set title bar text to name of document
 	act.title.text = game.openDoc
 
