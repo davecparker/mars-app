@@ -113,6 +113,13 @@ local ship = {
 }
 
 
+-- Return the name of the room the user is in, or nil if none
+function game.roomName()
+	if roomInside then
+		return roomInside.name
+	end
+end
+
 -- Return the x, y destination constrained to the hallways of the ship,
 -- taking into account the current position of the dot.
 local function constrainToHalls( x, y )
@@ -164,27 +171,30 @@ local function walkTo( x, y, time )
 	game.addFood( -0.0002 * time )
 end
 
--- Handle tap on a map gem icon
-local function gemTapped( event )
-	local icon = event.target
-	local gem = icon.gem
-	if gem.t == "act" then
-		-- Run the linked activity
-		game.actGemName = icon.name
-		game.actParam = gem.param
-		game.gotoAct( gem.act )
-	elseif gem.t == "doc" then
-		-- Get the document
-		game.foundDocument( gem.file )
-		gems.grabGemIcon( icon )
-	elseif gem.t == "res" then
-		-- Add the resource
-		local r = game.saveState.resources
-		if r[gem.res] then
-			r[gem.res] = r[gem.res] + gem.amount
+-- Handle touch on a map gem icon
+local function gemTouched( event )
+	if event.phase == "began" then
+		local icon = event.target
+		local gem = icon.gem
+		if gem.t == "act" then
+			-- Run the linked activity
+			game.actGemName = icon.name
+			game.actParam = gem.param
+			game.gotoAct( gem.act )
+		elseif gem.t == "doc" then
+			-- Get the document
+			game.foundDocument( gem.file )
+			gems.grabGemIcon( icon )
+		elseif gem.t == "res" then
+			-- Add the resource
+			local r = game.saveState.resources
+			if r[gem.res] then
+				r[gem.res] = r[gem.res] + gem.amount
+			end
+			gems.grabGemIcon( icon )
 		end
-		gems.grabGemIcon( icon )
 	end
+	return true
 end
 
 -- Update the ambient sound depending on the room
@@ -206,7 +216,7 @@ local function zoomToRoom( room )
 	for name, gem in pairs( gems.onShip ) do
 		if gems.shipGemIsActive( name ) and game.xyInRect( gem.x, gem.y, room ) then
 			local icon = gems.newGemIcon( iconGroup, name, gem )
-			icon:addEventListener( "tap", gemTapped )
+			icon:addEventListener( "touch", gemTouched )
 		end
 	end
 	transition.fadeIn( iconGroup, { time = zoomTime, transition = easing.inCubic } )
@@ -381,6 +391,7 @@ end
 -- Stop the act
 function act:stop()
 	game.stopAmbientSound()
+	game.endMessageBox()
 end
 
 

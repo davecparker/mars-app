@@ -86,7 +86,6 @@ function act:prepare()
 			local str = file:read( "*a" )	-- read entire file as a string
 			if str then
 				textBox.text = str
-				print(textBox.text)
 			end
 			io.close( file )
 		else

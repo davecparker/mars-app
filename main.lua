@@ -46,6 +46,11 @@ game.selectGameTab( index, press )    -- Select one of the tab bar tabs
 game.createBadge( x, y )              -- Create a new item indicator badge
 game.showBadge( badge )               -- show an indicator badge
 game.hideBadge( badge )               -- hide an indicator badge
+game.showMessagePreview( text )       -- Show preview of message text
+game.hideMessagePreview()             -- Hide message preview if showing
+
+-- Game functions in mainAct.lua:
+game.roomName()                       -- Name of room user is in or nil if none
 
 -- Game functions in messages.lua:
 game.sendMessage( id )                -- Add message to messages view
@@ -58,6 +63,7 @@ game.foundDocument( filename )        -- Add document to user's list of found do
 game.gotoAct( name, options )         -- Run a given activity/view
 game.removeAct( name )                -- Remove an activity from memory
 game.newAct()                         -- Create a new activity
+game.currentActName()                 -- Name of current act 
 
 -- Variables in the act table you can use:
 act.width    -- width of the activiy area 
