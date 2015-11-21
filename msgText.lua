@@ -19,7 +19,28 @@ local msgText = {
 	data1 = "SAS - Data corruption, multiple files. Data retrieval in progress.",
 
 	antFail = "SAS - Antenna array status report\n" .. 
-			  "Critical antenna array failure. Communication with Mission Control offline.",
+			  "Critical antenna array failure. Communication offline.",
+
+	msgRpt = "SAS - Last Mission Control message received: 37 hours, 14 minutes.",
+
+	codes= "SAS - Security update: classified\n" ..
+				"Protocol trigger: command change\n" ..
+				"Authorized personnel: ranking officer\n" ..
+				"0007\n" ..
+				"1010\n" ..
+				"0122\n" ..
+				"1578\n" ..
+				"1776\n" ..
+				"1812\n" ..
+				"3141\n" ..
+				"2439\n" ..
+				"4242\n" ..
+				"4859\n" ..
+				"5678\n" ..
+				"6482\n" ..
+				"6965\n" ..
+				"7595\n" ..
+				"9928",	
 	
 	panel1 = "SAS - Power generator failure. Panel 22A reconfiguration required. Report to engineering.",
 
