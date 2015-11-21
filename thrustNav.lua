@@ -77,6 +77,7 @@ local function backButtonPress ( event )
 		yTargetDelta = 0
 		xVelocity = 0
 		yVelocity = 0
+		game.saveState.thrustNav.timesPlayed = game.saveState.thrustNav.timesPlayed + 1
 	end
 	
 	if( ( math.abs( yTargetDelta ) < 2 ) and 
@@ -240,6 +241,21 @@ local function hasCollided( obj1, obj2 )
    local down = obj1.contentBounds.yMin >= obj2.contentBounds.yMin and obj1.contentBounds.yMin <= obj2.contentBounds.yMax
 
    return (left or right) and (up or down)
+end
+
+-- Act prepare is called after act:init and also when game is played again
+function act:prepare()
+	print("thrustNav:act:prepare", game.saveState.thrustNav.timesPlayed )
+	if( game.saveState.thrustNav.timesPlayed > 0 ) then
+		-- move and resize marsffor orbit entry
+		print( "playing second round of thrustNav" )
+		-- mars.x = act.xMin - 100
+    	-- mars.y = act.yMin + 100
+     	mars.width = mars.width * 8
+    	mars.height = mars.height * 8
+    	spaceGroup.x = spaceGroup.x - ( mars.width / 2 ) + 20
+    	spaceGroup.y = spaceGroup.y + ( act.height / 3 )
+    end
 end
 
 -- Init the act
@@ -416,9 +432,14 @@ function updateNavStats()
 	local xStr = ""
 	local yStr = ""
 	local rotStr = ""
-	
-	xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter
-	yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
+
+	if( game.saveState.thrustNav.timesPlayed < 1 ) then	
+		xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter
+		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
+	else
+		xTargetDelta = mars.contentBounds.xMax  
+		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
+	end		
 
 	if( math.abs( xTargetDelta ) < 2  ) then 
 		xStr = xStr .. " On Target" 
@@ -446,8 +467,10 @@ function updateNavStats()
 		onTargetXY.isVisible = false
 	end
 
-	if( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 ) then
+	if( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 
+			and game.saveState.thrustNav.timesPlayed < 1 ) then
 		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
+		game.saveState.thrustNav.timesPlayed = game.saveState.thrustNav.timesPlayed + 1
 		game.showHint( "Nicely Done!", "On Target", 
 				function ()
 					game.saveState.thrustNav.onTarget = true

@@ -65,6 +65,7 @@ local game = {
             onTarget = false,
             latestXTargetDelta = 100,
             latestYTargetDelta = 100,
+            timesPlayed = 0
         },
             
         -- List of document filenames that user has found
