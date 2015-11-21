@@ -1,10 +1,10 @@
 SAS - Partial file retrieval: Crew Manifest
 
-Jordan, commander and pilot 
-Maxwell, exobiologist and linguist
-Shaw, navigator 
-Ellis, engineer
-Graham, computer systems specialist
-You, doctor
-Webb, geologist
-Moore, botanist
+Jordan - commander, pilot 
+Maxwell - exobiologist, linguist
+Shaw - navigator 
+Ellis - engineer
+Graham - computer systems specialist
+Webb - geologist
+Moore - botanist
+You - doctor
