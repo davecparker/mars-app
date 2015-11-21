@@ -101,7 +101,7 @@ local shipStateData = {
 	{ delay = 2, action =  -- Notify to fix panel #3
 					function ()
 						game.sendMessage( "panel3" )
-						gems.enableShipGem( "panel1" )
+						gems.enableShipGem( "panel3" )
 						game.panelFixed = false
 						return true
         			end },
