@@ -82,13 +82,15 @@ function gems.enableShipGem( name, enable )
     gems.onShip[name].enabled = enable or true
 end
 
--- Handle tap on a document gem message box
-local function tapDocGemMessageBox()
-	-- Go to Documents view
-	game.endMessageBox()
-	game.selectGameTab( 3 )
-	game.openDoc = nil
-	game.gotoAct( "Documents", { effect = "slideRight", time = 300 }  )
+-- Handle touch on a document gem message box
+local function touchDocGemMessageBox( event )
+    if event.phase == "began" then
+    	-- Go to Documents view
+    	game.endMessageBox()
+        game.openDoc = nil
+    	game.selectGameTab( 3, true )
+    end
+    return true
 end
 
 -- Grab the gem with the given icon, display it for the user in a message box, 
@@ -97,10 +99,10 @@ function gems.grabGemIcon( icon )
     -- Make text for the message box
     local text
     local gem = icon.gem
-    local onTap = nil
+    local onTouch = nil
     if gem.t == "doc" then
         text = gem.file
-        onTap = tapDocGemMessageBox
+        onTouch = touchDocGemMessageBox
     elseif gem.t == "res" then
         local res = gem.res
         local format
@@ -122,7 +124,7 @@ function gems.grabGemIcon( icon )
 
     -- Display message box zooming out from the gem's location
     local x, y = icon:localToContent( 0, 0 )
-    game.messageBox( text, { x = x, y = y, onTap = onTap } )
+    game.messageBox( text, { x = x, y = y, onTouch = onTouch } )
 
     -- Use and remove the gem
 	game.saveState.usedGems[icon.name] = true

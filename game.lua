@@ -202,7 +202,7 @@ end
 --     time       -- milliseconds to leave on screen, default 3000
 --     width      -- multi-line text wrapped to width, default single line
 --     fontSize   -- font size, default 20
---     onTap      -- function to call if message is tapped
+--     onTouch    -- function to call if message is touched
 --     onDismiss  -- function to call when message is dismissed
 function game.messageBox( text, options )
     -- Dismiss existing message box if any, and make new group
@@ -234,10 +234,7 @@ function game.messageBox( text, options )
     rr:setFillColor( 1, 1, 0.4 )   -- pale yellow
     rr:setStrokeColor( 0 )   -- black
     rr.strokeWidth = 2
-    rr:addEventListener( "touch", game.eatTouch )
-    if options.onTap then
-        rr:addEventListener( "tap", options.onTap )
-    end
+    rr:addEventListener( "touch", options.onTouch or game.eatTouch )
 
     -- Make another rounded rect as a shadow
     local dxyOffset = 5
