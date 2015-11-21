@@ -1,0 +1,71 @@
+SAS - Partial file retrieval: Bridge messages record from Mission Control (MC) and Sierra Automated System (SAS). Retrieval incomplete. Message history follows:
+ 
+MC - Remote status check: Sierra systems optimal.
+ 
+MC - Satellites detect shadows in Sierra's vicinity. Report any unusual activity.
+ 
+MC - Research continuing on the device. No new data to report. Continue research with Dr. Maxwell.
+
+SAS - Antenna array failure. 
+
+MC - Remote status check: Sierra systems optimal.
+ 
+MC - International Space Station non-critical event reported. Unclear if same entities are responsible.
+ 
+MC - Supply drop 18 in progress. Site coordinates to follow.
+
+SAS - Greenhouse power loss.
+
+MC - Remote status check: Greenhouse power fluctuations. 
+Directive: Run diagnostics. Repair. Report.
+
+MC - Remote status check: Sierra systems optimal.
+ 
+MC - Systems check due. Pull Graham from stasis for full systems analysis.
+ 
+MC - Satellites detected unknown surface object at coordinates R14.
+After establishing base, conduct reconnaissance. Use extreme caution.	
+ 
+MC - Supply drop successful: coordinates Q22.
+ 
+MC - Remote status check: Sierra energy output sub-optimal.
+Directive: Pull Ellis from stasis.
+
+MC - Repeat. Sierra energy output sub-optimal.
+Directive: Pull Ellis from stasis.
+Confirm, Sierra.
+
+MC - Sierra, report.
+
+SAS - Power failures detected.  
+
+MC - Sierra power disruption detected. 
+Directive: Report.
+
+SAS - Video disabled.   
+
+MC - Sierra video signal is down. 
+Directive: Report status.
+
+SAS - Stasis pod damage detected.
+
+SAS - Manual course correction required. 
+
+MC - Sierra trajectory deviation detected.
+       Directive: Stabilize and report.
+
+SAS - Panel 22A repair required.
+
+MC - Directive: Report status.
+
+MC - Directive: Report status.
+
+SAS - Antenna array failure. 
+
+SAS - Error. Can't receive.
+
+SAS - Course correction required. Panel 22A repair required. Initiating stasis pod 6 revival.
+
+SAS - Data corruption, multiple files. 
+        Data retrieval in progress. 
+        Stand by.

@@ -49,20 +49,50 @@ local ship = {
 			left = 23, top = 5, right = 136, bottom = 78, 
 			x = 12, y = 40, dx = 30, 
 		},
+		{ 
+			name = "Lounge", 
+			left = 23, top = -76, right = 136, bottom = 0, 
+			x = 12, y = -12, dx = 30, 
+		},
 		{
-			name = "Captain's Cabin",
+			name = "Jordan",
 			left = 23, top = -125, right = 136, bottom = -85, 
 			x = 12, y = -92, dx = 30, doorCode = "5678",
 		},
 		{
-			name = "First Officer's Cabin",
+			name = "Maxwell",
 			left = -136, top = -125, right = -20, bottom = -85, 
 			x = -8, y = -92, dx = -30, doorCode = "9110",
 		},
 		{
-			name = "Doctor's Cabin",
+			name = "Graham",
 			left = -55, top = -76, right = -21, bottom = -24, 
 			x = -26, y = -5, dy = -30, 
+		},
+		{
+			name = "Moore",
+			left = -96, top = -76, right = -62, bottom = -24, 
+			x = -68, y = -5, dy = -30, 
+		},
+		{
+			name = "Ellis",
+			left = -137, top = -76, right = -102, bottom = -24, 
+			x = -109, y = -5, dy = -30, 
+		},
+		{
+			name = "Shaw",
+			left = -55, top = 22, right = -21, bottom = 78, 
+			x = -26, y = 5, dy = 30, 
+		},
+		{
+			name = "Webb",
+			left = -96, top = 22, right = -62, bottom = 78, 
+			x = -68, y = 5, dy = 30, 
+		},
+		{
+			name = "Your Quarters",
+			left = -137, top = 22, right = -102, bottom = 78, 
+			x = -109, y = 5, dy = 30, 
 		},
 		{
 			name = "Rover Bay",

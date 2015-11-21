@@ -22,6 +22,8 @@ local gems = {
 	onShip = {
         -- In Bridge
         fly1 =      { x = 0, y = -230, t = "act", act = "thrustNav", param = 1, enabled = true },
+        sierra =    { x = 26, y = -145, t = "doc", file = "The Sierra", enabled = true },
+        crew =      { x = 38, y = -160, t = "doc", file = "Crew Manifest", enabled = true },
 
         -- In Rover Bay
         rover =     { x = -125, y = 125, t = "act", act = "rover" },
@@ -33,8 +35,11 @@ local gems = {
         h2oL1 =     { x = 130,  y = 10, t = "res", res = "h2o", amount = 50, enabled = true  },
         o2L1 =      { x = 130,  y = 30, t = "res", res = "o2", amount = 50, enabled = true  },     
         foodL1 =    { x = 130,  y = 50, t = "res", res = "food", amount = 50, enabled = true  },     
-        codeDoc1 =  { x = 80, y = 70, t = "doc", file = "Security Announcement", enabled = true },
-        resDoc1 =   { x = 110, y = 70, t = "doc", file = "Resource Management", enabled = true  },
+        panel2 =    { x = 130, y = 70, t = "act", act = "circuit", param = 2  },
+        msgHist =   { x = 105, y = 70, t = "doc", file = "Message History", enabled = true  },
+
+        -- In Lounge
+        panel3 =    { x = 50, y = -70, t = "act", act = "circuit", param = 3  },
 
         -- In Greenhouse
         h2oG1 =     { x = 30,  y = 120, t = "res", res = "h2o", amount = 20, enabled = true  },
@@ -44,10 +49,22 @@ local gems = {
  
 		-- In Engineering room 
 		panel1 =	{ x = -10, y = 230, t = "act", act = "circuit", param = 1 },
-		panel2 =	{ x = -40, y = 230, t = "act", act = "circuit", param = 2  },
-		panelDoc = 	{ x = -85, y = 230, t = "doc", file = "Circuit Manual" },
 		battE1 = 	{ x = -50, y = 170, t = "res", res = "kWh", amount = 150, enabled = true  },
-	},
+
+        -- In Captain's Quarters
+        jordan1 =   { x = 130, y = -90, t = "doc", file = "Jordan - personal log", enabled = true },
+        jordan2 =   { x = 110, y = -90, t = "doc", file = "Jordan - personal log 2", enabled = true },
+        cDevice =   { x = 90, y = -90, t = "doc", file = "Classified - device", enabled = true },
+        cEnergy =   { x = 70, y = -90, t = "doc", file = "Classified - energy source", enabled = true },
+
+        -- In Crew Quarters
+        graham1 =   { x = -24, y = -73, t = "doc", file = "Graham - personal log", enabled = true },
+        graham2 =   { x = -24, y = -60, t = "doc", file = "Graham - personal log 2", enabled = true },
+        moore =     { x = -64, y = -73, t = "doc", file = "Moore - personal log", enabled = true },
+        ellis =     { x = -106, y = -73, t = "doc", file = "Ellis - personal log", enabled = true },
+        shaw1 =     { x = -24, y = 72, t = "doc", file = "Shaw - personal log", enabled = true },
+        shaw2 =     { x = -24, y = 60, t = "doc", file = "Shaw - personal log 2", enabled = true },
+        webb =      { x = -64, y = 72, t = "doc", file = "Webb - personal log", enabled = true },	},
 
 	-- Gems on Mars
 	onMars = {
