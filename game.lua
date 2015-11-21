@@ -209,8 +209,8 @@ function game.messageBox( text, options )
     options = options or {}
     game.endMessageBox()
     messageBox = display.newGroup()    -- in global group
-    messageBox.x = game.xCenter      -- centered on screen
-    messageBox.y = game.yCenter
+    messageBox.x = game.xCenter
+    messageBox.y = game.yMin + game.height * 0.25   -- in upper part of screen
 
     -- Make a hit area to cover the screen to capture touch anywhere to dismiss
     local r = display.newRect( messageBox, 0, 0, game.width, game.height)
@@ -257,8 +257,8 @@ function game.messageBox( text, options )
 
     -- Make the box zoom in from the given point
     transition.from( boxGroup, { xScale = 0.2, yScale = 0.2, time = 350,
-            x = (options.x or game.xCenter) - game.xCenter,
-            y = (options.y or game.yCenter) - game.yCenter,
+            x = (options.x or game.xCenter) - messageBox.x,
+            y = (options.y or game.yCenter) - messageBox.y,
             transition = easing.outQuad } )
 end
 

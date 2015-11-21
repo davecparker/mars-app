@@ -8,46 +8,20 @@
 -- Messages have a named index id and a text value.
 local msgText = {
 
-	wake1 = "Wake up dude, we need you!",
+	sas1 = "[== Messaging system online with Sierra Automated System (SAS) ==]",
 
-	wake2 = "We'll explain later, but you need to save the ship right now.",
+	stasis1 = "SAS - You have been brought out of stasis. Automated systems compromised. " ..
+	          "Manual course correction required. Report to the bridge immediately.",	  
 
-	spin1 = "You need to stop the ship from spinning.",
+	correct1 = "SAS - Automated systems compromised. Manual course correction required. " ..
+	           "Restore trajectory. Use the attitude thusters to restore the heading vector directly toward Mars.",
 
-	spin2 = "Go to the bridge and use the thrusters to get the ship pointed back directly at Mars.\n" ..
-	        "Try to use as little energy as possible, you will need it later.",
-
-	fixPanel1 = "The primary oxygen generator circuit has burned out. Go to the Engineering room " ..
-	            "and re-route the power from the backup generator.",
-
-	engCode = "The door code for the Enginneering room is 10 in binary.",
-
-	makeFood1 = "Food supplies are running low. Go to the Greehouse and grow more to have " ..
-	            "at least 150 kg on hand for the next phase of the trip.",
-
-	ufo = "Another UFO has been launched!",
-
-	-------------------------------------------------------
+	data1 = "SAS - Data corruption, multiple files. Data retrieval in progress.",
 
 	antFail = "SAS - Antenna array status report\n" .. 
-			  "Critical antenna array failure. Communication with Mission Control terminated.",
-
-	correct1 = "SAS - Approaching Mars. Manual trajectory alignment required. Report to the bridge immediately.",
+			  "Critical antenna array failure. Communication with Mission Control offline.",
 	
-	data1 = "SAS - Data corruption, multiple files. Data retrieval in progress. Stand by.",
-
-	green1 = "SAS - Report to the Greenhouse. Irrigation system down. Manual irrigation required. Urgent.",
-
-	land = "SAS - Mars orbit achieved. Commence Sierra landing procedure.",
-
-	landed = "SAS - Landing target achieved. Congratulations Sierra crew, " ..
-	         "you've just established the first settlement on Mars!",	
-
-	panelEng = "SAS - Panel 22A repair required. Report to engineering.",
-
-	panelGraham = "SAS - Panel 57C repair required. Report to Graham's quarters.",
-
-	panelJordan = "SAS - Panel 65A repair required. Report to Commander Jordan's quarters.",
+	panel1 = "SAS - Power generator failure. Panel 22A reconfiguration required. Report to engineering.",
 
 	podStatus = "SAS - Stasis pod status report\n" ..
 				"Pod 1, Jordan, empty\n" ..
@@ -55,12 +29,24 @@ local msgText = {
 				"Pod 3, Shaw, damaged, occupant deceased\n" ..
 				"Pod 4, Ellis, damaged, occupant deceased\n" ..
 				"Pod 5, Graham, empty\n" ..
-				"Pod 6, yours, empty\n" ..
+				"Pod 6, You, empty\n" ..
 				"Pod 7, Webb, damaged, occupant deceased\n" ..
 				"Pod 8, Moore, empty",
 
-	stasis1 = "SAS - You have been brought out of stasis. Automated systems compromised. " ..
-	          "Manual course correction required. Report to the bridge immediately.",	  
+	green1 = "SAS - Report to the Greenhouse. Automation failure. Food supply inadequate. " ..
+	         "Restore food level to 150 kg minumum.",
+
+	panel2 = "SAS - Water recirculator failure. Panel 57C reconfiguration required. Report to Lab.",
+
+	correct2 = "SAS - Approaching Mars. Manual trajectory alignment required. Report to the bridge " ..
+	           "immediately and restore heading vector.",
+
+	panel3 = "SAS - Failure in Kitchen unit 2. Report to Lounge.",
+
+	land = "SAS - Mars orbit achieved. Commence Sierra landing procedure.",
+
+	landed = "SAS - Landing target achieved. Congratulations Sierra crew, " ..
+	         "you've just established the first settlement on Mars!",	
 
 }
 
