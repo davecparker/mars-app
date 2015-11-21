@@ -182,47 +182,38 @@ function game.floatMessage( text, x, y )
             onComplete = game.removeObj } )
 end
 
--- Destroy an active message box shown by game.messageBox, if any.
+-- Dismiss an active message box shown by game.messageBox, if any.
 function game.endMessageBox()
     if messageBox then
+        transition.cancel( messageBox )   -- cancel auto fade out
+        local onDismiss = messageBox.onDismiss
         messageBox:removeSelf()
         messageBox = nil
+        if onDismiss then
+            onDismiss()
+        end
     end
 end
 
--- Touch handler for screen when a message box is shown
-local function touchMessageBox( event )
-    if event.phase == "began" then
-        game.endMessageBox()
-        return true
-    end
-end
-
--- Display a message box with the given text, centered on the screen.
--- Touching the screen anywhere will dismiss it.
+-- Display a message box with the given text.
+-- The box will automatically dismiss after a time delay.
 -- The optional options table can include:
 --     x, y       -- screen position to zoom box out from, default screen center
+--     time       -- milliseconds to leave on screen, default 3000
 --     width      -- multi-line text wrapped to width, default single line
 --     fontSize   -- font size, default 20
+--     onTap      -- function to call if message is tapped
+--     onDismiss  -- function to call when message is dismissed
 function game.messageBox( text, options )
     -- Dismiss existing message box if any, and make new group
     options = options or {}
     game.endMessageBox()
     messageBox = display.newGroup()    -- in global group
     messageBox.x = game.xCenter
-    messageBox.y = game.yMin + game.height * 0.25   -- in upper part of screen
+    messageBox.y = game.yMin + game.height * 0.2   -- in upper part of screen
+    messageBox.onDismiss = options.onDismiss
 
-    -- Make a hit area to cover the screen to capture touch anywhere to dismiss
-    local r = display.newRect( messageBox, 0, 0, game.width, game.height)
-    r.isVisible = false
-    r.isHitTestable = true
-    r:addEventListener( "touch", touchMessageBox )
-
-    -- Make a group for the visible part of the message box in the center of the screen
-    local boxGroup = display.newGroup()
-    messageBox:insert( boxGroup )
-
-    -- Create a text object for the message text
+     -- Create a text object for the message text
     local text = display.newText{
         text = text,
         x = 0,
@@ -243,6 +234,10 @@ function game.messageBox( text, options )
     rr:setFillColor( 1, 1, 0.4 )   -- pale yellow
     rr:setStrokeColor( 0 )   -- black
     rr.strokeWidth = 2
+    rr:addEventListener( "touch", game.eatTouch )
+    if options.onTap then
+        rr:addEventListener( "tap", options.onTap )
+    end
 
     -- Make another rounded rect as a shadow
     local dxyOffset = 5
@@ -251,15 +246,20 @@ function game.messageBox( text, options )
     shadow.alpha = 0.5
 
     -- Stack the parts in the right order
-    boxGroup:insert( shadow )
-    boxGroup:insert( rr )
-    boxGroup:insert( text )
+    messageBox:insert( shadow )
+    messageBox:insert( rr )
+    messageBox:insert( text )
 
     -- Make the box zoom in from the given point
-    transition.from( boxGroup, { xScale = 0.2, yScale = 0.2, time = 350,
-            x = (options.x or game.xCenter) - messageBox.x,
-            y = (options.y or game.yCenter) - messageBox.y,
+    transition.from( messageBox, { xScale = 0.2, yScale = 0.2, time = 350,
+            x = (options.x or game.xCenter),
+            y = (options.y or game.yCenter),
             transition = easing.outQuad } )
+
+    -- Set to fade out then dismiss after time delay
+    transition.to( messageBox, { alpha = 0, 
+            delay = (options.time or 3000), time = 250, 
+            onComplete = game.endMessageBox } )
 end
 
 
