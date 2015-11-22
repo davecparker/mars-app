@@ -86,7 +86,6 @@ function act:prepare()
 			local str = file:read( "*a" )	-- read entire file as a string
 			if str then
 				textBox.text = str
-				print(textBox.text)
 			end
 			io.close( file )
 		else
@@ -95,7 +94,6 @@ function act:prepare()
 	end
 
 	-- Set scroll height or disable scrolling if it all fits
-	print(textBox.height)
 	local scrollHeight = textBox.height + dxyMargin * 2
 	scrollView:setScrollHeight( scrollHeight )
 	scrollView:setIsLocked( scrollHeight <= scrollView.height )

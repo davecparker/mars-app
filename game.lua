@@ -11,7 +11,8 @@
 -- The game object where game global data and functions are stored
 local game = {
     -- Data for the current act to use
-    cheatMode = false,    -- true if cheat mode is on
+    cheatMode = false,    -- true if cheat mode is on (debug)
+    allGems = false,      -- true to always show all gems (debug)
     actParam = nil,       -- act parameter data from a gem
     actGemName = nil,     -- gem name that triggered the act
     openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
@@ -65,6 +66,10 @@ local game = {
             onTarget = false,
             latestXTargetDelta = 100,
             latestYTargetDelta = 100,
+            state = 0  -- 0=start of first play
+            --            1=finished first play
+            --            2=start of second play
+            --            3=finished second play
         },
             
         -- List of document filenames that user has found
@@ -202,7 +207,7 @@ end
 --     time       -- milliseconds to leave on screen, default 3000
 --     width      -- multi-line text wrapped to width, default single line
 --     fontSize   -- font size, default 20
---     onTap      -- function to call if message is tapped
+--     onTouch    -- function to call if message is touched
 --     onDismiss  -- function to call when message is dismissed
 function game.messageBox( text, options )
     -- Dismiss existing message box if any, and make new group
@@ -234,10 +239,7 @@ function game.messageBox( text, options )
     rr:setFillColor( 1, 1, 0.4 )   -- pale yellow
     rr:setStrokeColor( 0 )   -- black
     rr.strokeWidth = 2
-    rr:addEventListener( "touch", game.eatTouch )
-    if options.onTap then
-        rr:addEventListener( "tap", options.onTap )
-    end
+    rr:addEventListener( "touch", options.onTouch or game.eatTouch )
 
     -- Make another rounded rect as a shadow
     local dxyOffset = 5

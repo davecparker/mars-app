@@ -16,12 +16,18 @@ local ss = game.saveState
 --     delay (optional)  = delay before start of action in seconds
 --     action (required) = function that returns next state, true for next, or nil to stay
 local shipStateData = {
-	{ delay = 1, action =  -- Send awaken messsages
+	{ delay = 2, action =  -- Send awaken messsages
 					function ()
 			        	game.sendMessages( "sas1", "stasis1" )
         				return true
         			end },
-	{ delay = 5, action =  -- Send course correction #1 messages
+	{ action =  -- Wait for user to be in the Bridge
+					function ()
+						if game.roomName() == "Bridge" then
+        					return true
+        				end
+        			end },
+	{ delay = 1, action =  -- Send course correction #1 message
 					function ()
 	        			game.sendMessage( "correct1" )
         				return true
@@ -29,6 +35,7 @@ local shipStateData = {
 	{ action =  -- Course correction #1
 					function ()
 						if ss.thrustNav.onTarget then
+							gems.enableShipGem( "fly1", false )
         					return true
         				end
         			end },
@@ -90,7 +97,8 @@ local shipStateData = {
 					function ()
 	        			game.sendMessages( "correct2" )
 	        			ss.thrustNav.onTarget = false
-        				return true
+ 						gems.enableShipGem( "fly1" )
+       				return true
         			end },
 	{ action =  -- Course correction #2
 					function ()

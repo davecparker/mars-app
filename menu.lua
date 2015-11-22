@@ -103,7 +103,7 @@ function act:init()
 	-- Debug menu button
 	local button = widget.newButton{
 		x = act.xCenter,
-		y = act.yMax - 30,
+		y = act.yMax - 100,
 		label = "Debug Menu",
 		onRelease = 
 			function ()
