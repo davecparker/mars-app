@@ -37,7 +37,7 @@ function backTapped()
 	if game.cheatMode then
 		game.doorUnlocked = true
 	end
-	game.gotoAct( "mainAct", { effect = "slideRight", time = 800 } )
+	game.gotoAct( "mainAct", { effect = "slideRight", time = 500 } )
 end
 
 -- Checks to see if the numbers entered match the lock code
@@ -225,12 +225,12 @@ end
 
 -- Initiate the Activity (Create)
 function act:init()
+	-- Background
+	local bg = display.newRect( act.group, act.xCenter, act.yCenter, act.width, act.height )
+	bg:setFillColor( 0.3 )  -- dark gray 
 
 	-- Title Bar
 	act:makeTitleBar( "", backTapped )   -- title set in act:prepare()
-
-	-- Background
-	--...
 
 	-- Sound
 	sound.button = {
