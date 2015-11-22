@@ -180,7 +180,7 @@ local function gemTouched( event )
 			-- Run the linked activity
 			game.actGemName = icon.name
 			game.actParam = gem.param
-			game.gotoAct( gem.act )
+			game.gotoAct( gem.act, { effect = "crossFade", time = 500 }  )
 		elseif gem.t == "doc" then
 			-- Get the document
 			game.foundDocument( gem.file )
@@ -206,19 +206,25 @@ local function updateAmbientSound()
 	end
 end
 
--- Change to the zoomed view for the given room
-local function zoomToRoom( room )
-	-- Fade in icons for gems in the room
-	iconGroup = act:newGroup( shipGroup )   -- icons are centered on the ship
-	iconGroup.alpha = 0   -- will be faded in
-
-	-- Find all active gems that are in the bounds of the zoomed room
+-- Make and return a display group of the active icons for the given room
+local function makeIconGroup( room )
+	-- Find all active gems that are in the bounds of the room
+	local group = act:newGroup( shipGroup )   -- icons are centered on the ship
 	for name, gem in pairs( gems.onShip ) do
 		if gems.shipGemIsActive( name ) and game.xyInRect( gem.x, gem.y, room ) then
-			local icon = gems.newGemIcon( iconGroup, name, gem )
+			local icon = gems.newGemIcon( group, name, gem )
 			icon:addEventListener( "touch", gemTouched )
 		end
 	end
+	return group
+end	
+
+-- Change to the zoomed view for the given room
+local function zoomToRoom( room )
+	-- Fade in icons for gems in the room
+	assert( iconGroup == nil )
+	iconGroup = makeIconGroup( room )
+	iconGroup.alpha = 0   -- will be faded in
 	transition.fadeIn( iconGroup, { time = zoomTime, transition = easing.inCubic } )
 
 	-- Animate the dot walking into the room
@@ -400,14 +406,23 @@ end
 
 -- Prepare the view before it shows
 function act:prepare()
-	-- If we just unlocked a door (coming back from doorLock act) then go in
-	if game.lockedRoom and game.doorUnlocked then
-		zoomToRoom( game.lockedRoom )
+	-- Are we zoomed inside a room?
+	if roomInside then
+		-- Reload the room's icons in case the enabled state of any changed
+		if iconGroup then
+			iconGroup:removeSelf()
+			iconGroup = makeIconGroup( roomInside )
+		end
+	else
+		-- If we just unlocked a door (coming back from doorLock act) then go in
+		if game.lockedRoom and game.doorUnlocked then
+			zoomToRoom( game.lockedRoom )
+		end
+		-- Reset for next door
+		game.lockedRoom = nil
+		game.doorCode = nil
+		game.doorUnlocked = nil
 	end
-	-- Reset for next door
-	game.lockedRoom = nil
-	game.doorCode = nil
-	game.doorUnlocked = nil
 end
 
 -- Start the act
