@@ -181,7 +181,7 @@ local function backButtonPress ( event )
 		game.addFood( 150 )
 	end
 	
-	game.gotoAct ( "mainAct" )
+	game.gotoAct ( "mainAct", { effect = "crossFade", time = 500 } )
 	return true
 end
 

@@ -213,6 +213,9 @@ function game.newAct()
         -- When the scene is on-screen and ready to go...
         local act = self.act
         if event.phase == "will" then
+            -- Make sure game state is current before the new view starts
+            game.updateState()
+
             -- Call the act prepare function, if any
             if act.prepare then 
                 act:prepare()
