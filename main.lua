@@ -26,17 +26,31 @@ game.addWater( liters )               -- Add or subtract water
 game.addEnergy( kWh )                 -- Add or subtract energy
 game.addFood( kg )                    -- Add or subtract food
 
+-- Game control functions in gameState.lua:
+game.updateState()                    -- update game state (periodic or forced)
+
 -- User-Interface functions in game.lua:
 game.showHint( text, title, onExit )  -- display help text in popup
 game.floatMessage( text, x, y )       -- Display floating fade-away message
 game.messageBox( text, options )      -- Display message box
 game.endMessageBox()                  -- Dismiss active message box if any
 
+-- Sound functions in game.lua:
+game.playSound( sound, options )      -- Play sound effect, returns channel
+game.stopSound( channel )             -- Stop sound effect 
+game.playAmbientSound( filename )     -- Play background sound/music
+game.stopAmbientSound()               -- Stop background sound/music
+
 -- User-Interface functions in tabBar.lua:
 game.selectGameTab( index, press )    -- Select one of the tab bar tabs
 game.createBadge( x, y )              -- Create a new item indicator badge
 game.showBadge( badge )               -- show an indicator badge
 game.hideBadge( badge )               -- hide an indicator badge
+game.showMessagePreview( text )       -- Show preview of message text
+game.hideMessagePreview()             -- Hide message preview if showing
+
+-- Game functions in mainAct.lua:
+game.roomName()                       -- Name of room user is in or nil if none
 
 -- Game functions in messages.lua:
 game.sendMessage( id )                -- Add message to messages view
@@ -49,6 +63,7 @@ game.foundDocument( filename )        -- Add document to user's list of found do
 game.gotoAct( name, options )         -- Run a given activity/view
 game.removeAct( name )                -- Remove an activity from memory
 game.newAct()                         -- Create a new activity
+game.currentActName()                 -- Name of current act 
 
 -- Variables in the act table you can use:
 act.width    -- width of the activiy area 
@@ -67,6 +82,7 @@ act.name     -- act module name
 act:newImage( filename, options )        -- make a new imageRect display object
 act:newGroup( parent )                   -- make a new display (sub-)group
 act:whiteBackground()                    -- make a solid white background
+act:grayBackground()                     -- make a solid gray background
 act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
 act:loadSound( filename, folder )        -- load sound file (folder defaults to act media)
 
@@ -105,6 +121,7 @@ require( "Act" )
 require( "tabBar" )
 require( "documents" )
 require( "messages" )
+require( "gameState" )
 
 
 -- Return the path name for the user data file where the game state is saved
@@ -154,14 +171,13 @@ local function initGame()
 
 	-- Load the saved game state, if any
 	--loadGameState()   -- TODO: Enable at some point
-	
-	-- Start with some messages (TODO: temporary)
-	game.sendMessage( "wake1" )
-	game.sendMessage( "wake2" )
-	game.sendMessages( "spin1", "spin2" )
 
-	-- Start in the debug menu view for now
-	game.gotoAct( "debugMenu" )
+    -- Start the repeating game state update timer
+	game.stateStartTime = system.getTimer()
+    timer.performWithDelay( 1000, game.updateState, 0 )  -- repeat every second
+
+	-- Start in the main view
+	game.gotoAct( "mainAct" )
 end
 
 -- Start the game

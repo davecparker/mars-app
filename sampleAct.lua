@@ -78,8 +78,6 @@ function act:enterFrame( event )
 
 		-- Use some energy for each UFO pass
 		game.addEnergy( -5 )
-
-		game.sendMessage( "ufo" )  -- TODO: Temporary
 	end
 end
 

@@ -14,14 +14,15 @@ local widget = require( "widget" )
 -- The tab bar widget and info
 local tabBar          -- the tab bar widget
 local selectedTab     -- the tab id of the currently selected tab
+local msgPreview
 
 -- The tab bar buttons
 local buttons = {
-    { id = "mainAct",    defaultFile = "media/game/map.png" },
+    { id = "mainAct",    defaultFile = "media/game/map.png", selected = true },
     { id = "resources",  defaultFile = "media/game/gauge.png"  },
     { id = "documents",  defaultFile = "media/game/folder.png" },
     { id = "messages",   defaultFile = "media/game/messages.png" },
-    { id = "menu",       defaultFile = "media/game/menu.png", selected = true, },
+    { id = "menu",       defaultFile = "media/game/menu.png" },
 }
 
 -- Table that keeps track of the currnet act viewed on each tab, indexed by tab id.
@@ -34,10 +35,19 @@ local function handleTabBarEvent( event )
     -- Go to the current (or default) act for this tab
     selectedTab = event.target._id
     local act = currentActForTab[selectedTab] or selectedTab  -- tab id is default act
-    game.gotoAct( act )
+    local effect = (selectedTab == "mainAct" and "slideRight") or "slideLeft"
+    game.gotoAct( act, { effect = effect, time = 300 } )
 end
 
--- Initialize the app tab bar on the bottom of the screen
+-- Handle touch on message preview 
+local function touchMessagePreview( event )
+    if event.phase == "began" then
+        game.selectGameTab( 4, true )
+    end
+    return true
+end
+
+-- Initialize the app tab bar and message preview on the bottom of the screen
 function initTabBar()
     -- Assign properties common to all buttons and set the selectedTab
     local dxyIcon = game.dyTabBar - 10
@@ -52,6 +62,20 @@ function initTabBar()
         end
     end
     assert( selectedTab )
+
+    -- Make the message preview window (under the tab bar)
+    msgPreview = display.newGroup()
+    msgPreview.x = game.xCenter
+    msgPreview.yHide = game.yMax - game.dyTabBar * 0.5 + 2    -- under tab bar
+    msgPreview.yShow = game.yMax - game.dyTabBar * 1.5 + 2    -- just above tab bar
+    msgPreview.y = msgPreview.yHide
+    local r = display.newRect( msgPreview, 0, 0, game.width, game.dyTabBar )
+    r:setFillColor( 0.3 ) -- dark gray backgroug
+    r:addEventListener( "touch", touchMessagePreview )
+    local text = display.newText( msgPreview, "", 10 - msgPreview.width / 2, 0, native.systemFont, 14 )
+    text.anchorX = 0
+    text:setFillColor( 1 )  -- white text
+    msgPreview.text = text
 
     -- Create the tab bar widget
     tabBar = widget.newTabBar
@@ -68,6 +92,20 @@ function initTabBar()
         tabSelectedFrameHeight = game.dyTabBar - 10,
         buttons = buttons,
     }
+end
+
+-- Show message preview box with the given text
+function game.showMessagePreview( text )
+    msgPreview.text.text = text
+    transition.cancel( msgPreview )
+    transition.to( msgPreview, { y = msgPreview.yShow, time = 500 } )
+    transition.to( msgPreview, { y = msgPreview.yHide, delay = 2500, time = 500 } )
+end
+
+-- Hide the message preview box if showing
+function game.hideMessagePreview()
+    transition.cancel( msgPreview )
+    transition.to( msgPreview, { y = msgPreview.yHide, time = 200 } )
 end
 
 -- Set the current act for the currently selected tab to name
@@ -96,8 +134,13 @@ end
 function game.showBadge( badge )
     assert( badge )
     if not badge.showing then
+        -- Fade in hidden badge
         transition.fadeIn( badge, { time = 200 } )
         badge.showing = true
+    elseif badge.alpha == 1 then
+        -- Blink already showing badge
+        transition.fadeOut( badge, { time = 200 } )
+        transition.fadeIn( badge, { delay = 250, time = 200 } )
     end
 end
 

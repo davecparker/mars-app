@@ -30,6 +30,9 @@ local yNextMsg           -- y position for next text message in the scrollView
 local newMsgTimer        -- timer for checking for new messages
 local badge              -- tab bar badge for new message indicator
 
+-- Load the new text sound
+local textSound = audio.loadSound( "media/game/TextTone.wav" )
+
 
 -- Send the message with the given id
 function game.sendMessage( id )
@@ -40,6 +43,12 @@ function game.sendMessage( id )
 		badge = game.createBadge( act.xMin + act.width * 0.75, act.yMax + 15 )
 	end
 	game.showBadge( badge )
+	game.playSound( textSound )
+
+	-- Show message preview window if not in the messages view
+	if game.currentActName() ~= "messages" then
+		game.showMessagePreview( msgText[id] )
+	end
 end
 
 -- Send all the messages ids given by variable parameter list
@@ -126,6 +135,11 @@ local function checkNewMsg()
 			game.hideBadge( badge )
 		end
 	end
+end
+
+-- Prepare the act
+function act:prepare()
+	game.hideMessagePreview()
 end
 
 -- Prepare the act to show

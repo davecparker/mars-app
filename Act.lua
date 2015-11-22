@@ -103,6 +103,14 @@ function Act:whiteBackground()
     return bg
 end    
 
+-- Make and return a light gray background for the act.
+function Act:grayBackground()
+    -- Background for the whole view
+    local bg = display.newRect( self.group, self.xCenter, self.yCenter, self.width, self.height )
+    bg:setFillColor( 0.7 )  -- light gray
+    return bg
+end    
+
 -- Make a background title bar for a game view with the given title string (default empty).
 -- If backListener is passed, include a back button and call backListener when pressed.
 -- Return a display group containing all the title bar elements.
@@ -142,7 +150,7 @@ end
 -- Load and return a sound file with the given filename. 
 -- Use the folder if given, else media/actName
 function Act:loadSound( filename, folder )
-    folder = folder or "media/" .. self.name 
+    folder = folder or ("media/" .. self.name)
     return audio.loadSound( folder .. "/" .. filename )
 end
 
@@ -159,6 +167,11 @@ end
 -- Destroy the given act scene
 function game.removeAct( name )
     composer.removeScene( name )
+end
+
+-- Return the current act name
+function game.currentActName()
+    return composer.getSceneName( "current" )
 end
 
 -- Call this to create an act object inside the act's source file
