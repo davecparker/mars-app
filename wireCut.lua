@@ -16,19 +16,21 @@ local act = game.newAct()
 local widget = require( "widget" )  -- need to make buttons
 -------------------------- Variables ------------------------------------------------------
 --local xyText		-- text display object for touch location =======================================================================
+local wireCutVersion = 1 -- this is the version of wire cut to be used
 local wireImage
 local wire1, wire2, wire3, wire4, wire5, wire6, wire7, wire8, wire9, wire10, wire11  -- wires
 local orTL, orTR, orBL                -- or gates
-local andTop, andBottom              -- and gates
-local ledTop, ledMid, ledBottom      -- LEDs
+local andTop, andBottom               -- and gates
+local ledTop, ledMid, ledBottom       -- LEDs
 local toolbox
 local backButton
 local toolWindow
-local toolIcon                       -- the tool selected icon
+local toolIcon                        -- the tool selected icon
 local tapeSelected = false
 local wireCutterSelected = false
 local manual  
-local manualPage         -- what page of the manual you are on
+local manualVersion                   -- which version of the manual are we using
+local manualPage                      -- what page of the manual you are on
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -89,9 +91,13 @@ end
 local function manualTouch ( event )
 	if event.phase == "ended" then
 		-- manual image sheet
+		-- picking which manual imageshee to use
+		if wireCutVersion == 1 then
+			manualVersion = "media/circuit/manual.png"
+		end
 		local manualOptions = { width = 440, height = 600, numFrames = 3 }
 		local manualSequence = { name = manual, start = 1, count = 3 }
-		local manualImageSheet = graphics.newImageSheet( "media/circuit/manual.png", manualOptions )
+		local manualImageSheet = graphics.newImageSheet( manualVersion, manualOptions )
 		manual = display.newSprite( act.group, manualImageSheet, manualSequence )
 		manual.x = act.xCenter
 		manual.y = act.yCenter
@@ -242,8 +248,8 @@ local function checkState ()
 		andBottom:setFrame( 1 )
 		ledBottom:setFrame( 1 )
 	end
-	-- vicotory condition
-	if ledTop.frame == 2 and ledMid.frame == 2 and ledBottom.frame == 1 then
+	-- vicotory condition version 1
+	if ledTop.frame == 2 and ledMid.frame == 2 and ledBottom.frame == 1 and wireCutVersion == 1 then
 		endAct()
 	end
 end
