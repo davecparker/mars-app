@@ -3,3 +3,5 @@ SAS - Partial file retrieval: Graham, systems operations officer, personal log
 Day 1. Launch went without a hitch. I hope the rest of the trip is that smooth. Should be--launch is the trickiest part. 
 
 Day 3. I knew it was going to be hard leaving my family behind, but this feels brutal. At least when we land I can say happy birthday to Brian from Mars. What 12-year-old wouldn't love that? I scheduled my terminal to alert me. We just count days while in transit, then on Mars we'll count sols, so I'd probably miss January 22nd without a reminder. 
+
+Day 18. I used my personal time today to program some tricks into RovR. (I know the name will catch on.) If Psych thinks we need a "pet" for morale and mental health, then I think it should come with some skills. 

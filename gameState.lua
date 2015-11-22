@@ -35,6 +35,7 @@ local shipStateData = {
 	{ action =  -- Course correction #1
 					function ()
 						if ss.thrustNav.onTarget then
+							gems.enableShipGem( "fly1", false )
         					return true
         				end
         			end },
@@ -96,7 +97,8 @@ local shipStateData = {
 					function ()
 	        			game.sendMessages( "correct2" )
 	        			ss.thrustNav.onTarget = false
-        				return true
+ 						gems.enableShipGem( "fly1" )
+       				return true
         			end },
 	{ action =  -- Course correction #2
 					function ()

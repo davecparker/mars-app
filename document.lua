@@ -94,7 +94,6 @@ function act:prepare()
 	end
 
 	-- Set scroll height or disable scrolling if it all fits
-	print(textBox.height)
 	local scrollHeight = textBox.height + dxyMargin * 2
 	scrollView:setScrollHeight( scrollHeight )
 	scrollView:setIsLocked( scrollHeight <= scrollView.height )
