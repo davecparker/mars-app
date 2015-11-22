@@ -49,20 +49,50 @@ local ship = {
 			left = 23, top = 5, right = 136, bottom = 78, 
 			x = 12, y = 40, dx = 30, 
 		},
+		{ 
+			name = "Lounge", 
+			left = 23, top = -76, right = 136, bottom = 0, 
+			x = 12, y = -12, dx = 30, 
+		},
 		{
-			name = "Captain's Cabin",
+			name = "Jordan",
 			left = 23, top = -125, right = 136, bottom = -85, 
 			x = 12, y = -92, dx = 30, doorCode = "5678",
 		},
 		{
-			name = "First Officer's Cabin",
+			name = "Maxwell",
 			left = -136, top = -125, right = -20, bottom = -85, 
 			x = -8, y = -92, dx = -30, doorCode = "9110",
 		},
 		{
-			name = "Doctor's Cabin",
+			name = "Graham",
 			left = -55, top = -76, right = -21, bottom = -24, 
 			x = -26, y = -5, dy = -30, 
+		},
+		{
+			name = "Moore",
+			left = -96, top = -76, right = -62, bottom = -24, 
+			x = -68, y = -5, dy = -30, 
+		},
+		{
+			name = "Ellis",
+			left = -137, top = -76, right = -102, bottom = -24, 
+			x = -109, y = -5, dy = -30, 
+		},
+		{
+			name = "Shaw",
+			left = -55, top = 22, right = -21, bottom = 78, 
+			x = -26, y = 5, dy = 30, 
+		},
+		{
+			name = "Webb",
+			left = -96, top = 22, right = -62, bottom = 78, 
+			x = -68, y = 5, dy = 30, 
+		},
+		{
+			name = "Your Quarters",
+			left = -137, top = 22, right = -102, bottom = 78, 
+			x = -109, y = 5, dy = 30, 
 		},
 		{
 			name = "Rover Bay",
@@ -82,6 +112,13 @@ local ship = {
 	},
 }
 
+
+-- Return the name of the room the user is in, or nil if none
+function game.roomName()
+	if roomInside then
+		return roomInside.name
+	end
+end
 
 -- Return the x, y destination constrained to the hallways of the ship,
 -- taking into account the current position of the dot.
@@ -134,27 +171,30 @@ local function walkTo( x, y, time )
 	game.addFood( -0.0002 * time )
 end
 
--- Handle tap on a map gem icon
-local function gemTapped( event )
-	local icon = event.target
-	local gem = icon.gem
-	if gem.t == "act" then
-		-- Run the linked activity
-		game.actGemName = icon.name
-		game.actParam = gem.param
-		game.gotoAct( gem.act )
-	elseif gem.t == "doc" then
-		-- Get the document
-		game.foundDocument( gem.file )
-		gems.grabGemIcon( icon )
-	elseif gem.t == "res" then
-		-- Add the resource
-		local r = game.saveState.resources
-		if r[gem.res] then
-			r[gem.res] = r[gem.res] + gem.amount
+-- Handle touch on a map gem icon
+local function gemTouched( event )
+	if event.phase == "began" then
+		local icon = event.target
+		local gem = icon.gem
+		if gem.t == "act" then
+			-- Run the linked activity
+			game.actGemName = icon.name
+			game.actParam = gem.param
+			game.gotoAct( gem.act )
+		elseif gem.t == "doc" then
+			-- Get the document
+			game.foundDocument( gem.file )
+			gems.grabGemIcon( icon )
+		elseif gem.t == "res" then
+			-- Add the resource
+			local r = game.saveState.resources
+			if r[gem.res] then
+				r[gem.res] = r[gem.res] + gem.amount
+			end
+			gems.grabGemIcon( icon )
 		end
-		gems.grabGemIcon( icon )
 	end
+	return true
 end
 
 -- Update the ambient sound depending on the room
@@ -176,7 +216,7 @@ local function zoomToRoom( room )
 	for name, gem in pairs( gems.onShip ) do
 		if gems.shipGemIsActive( name ) and game.xyInRect( gem.x, gem.y, room ) then
 			local icon = gems.newGemIcon( iconGroup, name, gem )
-			icon:addEventListener( "tap", gemTapped )
+			icon:addEventListener( "touch", gemTouched )
 		end
 	end
 	transition.fadeIn( iconGroup, { time = zoomTime, transition = easing.inCubic } )
@@ -225,6 +265,9 @@ local function exitRoom()
 		walkTo( roomInside.x, roomInside.y, zoomTime ) 
 		roomInside = nil
 
+		-- Remove any active message box
+		game.endMessageBox()
+		
 		-- Fade out then delete any gem icons
 		if iconGroup then
 			transition.fadeOut( iconGroup, { time = zoomTime, transition = easing.outCubic, 
@@ -348,6 +391,7 @@ end
 -- Stop the act
 function act:stop()
 	game.stopAmbientSound()
+	game.endMessageBox()
 end
 
 

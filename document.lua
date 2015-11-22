@@ -19,7 +19,8 @@ local act = game.newAct()
 
 -- Act variables
 local dxyMargin = 10    -- margin around text area
-local text    			-- display object for the document text
+local scrollView
+local textBox
 
 
 -- Handle tap on the back button
@@ -36,42 +37,67 @@ function act:init()
 	act:whiteBackground()
 	act:makeTitleBar( "", backTapped )
 
-	-- Text area
-	-- TODO: Make this a native web view for HTML support?
-	text = display.newText{
-		parent = act.group,
+	-- Make a scroll view that covers the rest of the act area
+	scrollView = widget.newScrollView{
+		left = act.xMin,
+		top = act.yMin + act.dyTitleBar,
+		width = act.width,
+		height = act.height - act.dyTitleBar,
+		horizontalScrollDisabled = true,
+		backgroundColor = { 1, 1, 1 },  -- white
+		hideScrollBar = false,
+	}
+	act.group:insert( scrollView )
+
+	-- Text box inside the scroll view
+	textBox = display.newText{
 		text = "",   -- set in act:prepare()
-		x = act.xMin + dxyMargin,
-		y = act.yMin + act.dyTitleBar + dxyMargin,
+		x = dxyMargin,
+		y = dxyMargin,
 		width = act.width - dxyMargin * 2,
-		height = act.height - dxyMargin * 2,
+		height = 0,   -- autosize
 		font = native.systemFont,
 		fontSize = 14,
 		align = "left",
 	}
-	text:setFillColor( 0 )  -- black text
-	text.anchorX = 0
-	text.anchorY = 0	
+	textBox:setFillColor( 0 )  -- black text
+	textBox.anchorX = 0
+	textBox.anchorY = 0	
+	scrollView:insert( textBox )
 end
 
 -- Prepare the act before the show transition
 function act:prepare()
+	-- If we got here with no document to open then go back to Documents view
+	if not game.openDoc then
+		game.gotoAct( "Documents" )
+		return
+	end
+
 	-- Set title bar text to name of document
 	act.title.text = game.openDoc
 
-	-- Open the document and load the text into the view
-	text.text = ""   -- show empty contents if we fail
+	-- Open the document and load the text into the text box
+	textBox.text = ""   -- show empty contents if we fail
 	local path = system.pathForFile( "docs/" .. game.openDoc .. ".txt", system.ResourceDirectory )
 	if path then
 		local file = io.open( path, "r" )
 		if file then
 			local str = file:read( "*a" )	-- read entire file as a string
 			if str then
-				text.text = str
+				textBox.text = str
 			end
 			io.close( file )
+		else
+			print( "File not Found: [" .. path .. "]" )
 		end	
 	end
+
+	-- Set scroll height or disable scrolling if it all fits
+	print(textBox.height)
+	local scrollHeight = textBox.height + dxyMargin * 2
+	scrollView:setScrollHeight( scrollHeight )
+	scrollView:setIsLocked( scrollHeight <= scrollView.height )
 end
 
 ------------------------- End of Activity --------------------------------

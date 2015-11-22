@@ -49,6 +49,7 @@ local xVelocity, yVelocity, rotVelocity  -- positional deltas used on each enter
 local xVelocityInc, yVelocityInc, rotVelocityInc  -- increments for the deltas
 local xTargetDelta, yTargetDelta  -- delta from Target
 local navStatsText1, navStatsText2, navStatsText3 -- text strings for nav stats
+local stabilityWarning  -- true when vertical stability warning is showing
 local targetRect       -- Rectangle target area
 local arrow        		-- directional arrow toward mars
 local totalRocketImpulses = 0  -- number of rocket impulses used
@@ -81,13 +82,12 @@ local function backButtonPress ( event )
 	game.saveState.thrustNav.lastXTargetDelta = xTargetDelta
 	game.saveState.thrustNav.lastYTargetDelta = yTargetDelta
 	
+	game.endMessageBox()  -- remove existing message box if any
 	if( ( math.abs( yTargetDelta ) < 2 ) and 
 		( math.abs( xTargetDelta ) < 2 ) and 
 		( math.abs( xVelocity ) < 0.00001 ) and 
 		( math.abs( yVelocity ) < 0.00001 ) ) then
 		game.saveState.thrustNav.onTarget = true
-		game.endMessageBox()  -- clear message box
-		-- game.messageBox( "Nicely Done!")
 		game.showHint( "Nicely Done!", "Navigation", goMainAct )
 	else
 		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
@@ -98,7 +98,6 @@ local function backButtonPress ( event )
 			game.showHint( "Still Off Target!", "Navigation", goMainAct )
 		end
 	end
-
 	return true
 end
 
@@ -569,7 +568,13 @@ function updatePosition()
 	or ( ( bgLeft.contentBounds.yMax < act.yMax + 10 ) and ( yVelocity < 0 ) ) ) then
 		-- print( "msg about computer assisted vertical stabilization") 
 		yVelocity = 0
-		game.messageBox( "Vertical Stability Activated")
+		if not stabilityWarning then
+			stabilityWarning = true
+			game.messageBox( "Vertical Stability Activated", { onDismiss = 
+					function ()
+						stabilityWarning = false
+					end })
+		end
 		print( string.format("yVelocity = %5.3f", yVelocity) )
 	end
 end
