@@ -65,7 +65,10 @@ local game = {
             onTarget = false,
             latestXTargetDelta = 100,
             latestYTargetDelta = 100,
-            timesPlayed = 0
+            state = 0  -- 0=start of first play
+            --            1=finished first play
+            --            2=start of second play
+            --            3=finished second play
         },
             
         -- List of document filenames that user has found
