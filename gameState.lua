@@ -16,14 +16,20 @@ local ss = game.saveState
 --     delay (optional)  = delay before start of action in seconds
 --     action (required) = function that returns next state, true for next, or nil to stay
 local shipStateData = {
-	{ delay = 1, action =  -- Send awaken messsages
+	{ delay = 2, action =  -- Send awaken messsages
 					function ()
-			        	game.sendMessages( "wake1", "wake2" )
+			        	game.sendMessages( "sas1", "stasis1" )
         				return true
         			end },
-	{ delay = 5, action =  -- Send course correction messages
+	{ action =  -- Wait for user to be in the Bridge
 					function ()
-	        			game.sendMessages( "spin1", "spin2" )
+						if game.roomName() == "Bridge" then
+        					return true
+        				end
+        			end },
+	{ delay = 1, action =  -- Send course correction #1 message
+					function ()
+	        			game.sendMessage( "correct1" )
         				return true
         			end },
 	{ action =  -- Course correction #1
@@ -32,9 +38,19 @@ local shipStateData = {
         					return true
         				end
         			end },
-	{ delay = 2, action =  -- Notify to fix panel #1
+	{ delay = 2, action = 
 					function ()
-						game.sendMessages( "fixPanel1", "engCode" )
+	        			game.sendMessage( "data1" )
+        				return true
+        			end },
+	{ delay = 2, action = 
+					function ()
+	        			game.sendMessage( "antFail" )
+        				return true
+        			end },
+    { delay = 5, action =  -- Notify to fix panel #1
+					function ()
+						game.sendMessages( "panel1" )
 						gems.enableShipGem( "panel1" )
 						game.panelFixed = false
 						return true
@@ -45,9 +61,14 @@ local shipStateData = {
 							return true
 						end
         			end },
-	{ delay = 2, action =  -- Notify to tend greenhouse
+	{ delay = 2, action = 
 					function ()
-						game.sendMessage( "makeFood1" )
+	        			game.sendMessage( "podStatus" )
+        				return true
+        			end },
+	{ delay = 5, action =  -- Notify to tend greenhouse
+					function ()
+						game.sendMessage( "green1" )
 						gems.enableShipGem( "plants" )
 						return true
         			end },
@@ -56,6 +77,56 @@ local shipStateData = {
 						if game.food() > 150 then
 							return true
 						end
+        			end },
+
+	{ delay = 2, action =  -- Notify to fix panel #2
+					function ()
+						game.sendMessage( "panel2" )
+						gems.enableShipGem( "panel2" )
+						game.panelFixed = false
+						return true
+        			end },
+	{ action =  -- Fix panel #2
+					function ()
+						if game.panelFixed then
+							return true
+						end
+        			end },
+	{ delay = 3, action =  -- Send course correction #2 messages
+					function ()
+	        			game.sendMessages( "correct2" )
+	        			ss.thrustNav.onTarget = false
+        				return true
+        			end },
+	{ action =  -- Course correction #2
+					function ()
+						if ss.thrustNav.onTarget then
+        					return true
+        				end
+        			end },
+	{ delay = 2, action =  -- Notify to fix panel #3
+					function ()
+						game.sendMessage( "panel3" )
+						gems.enableShipGem( "panel3" )
+						game.panelFixed = false
+						return true
+        			end },
+	{ action =  -- Fix panel #3
+					function ()
+						if game.panelFixed then
+							return true
+						end
+        			end },
+	{ delay = 3, action =  -- Send course correction #2 messages
+					function ()
+	        			game.sendMessage( "land" )
+        				return true
+        			end },
+	{ delay = 2, action =  -- Landed
+					function ()
+	        			game.sendMessage( "landed" )
+						ss.onMars = true
+						gems.enableShipGem( "rover" )
         			end },
 } 
 

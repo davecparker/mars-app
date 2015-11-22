@@ -169,6 +169,11 @@ function game.removeAct( name )
     composer.removeScene( name )
 end
 
+-- Return the current act name
+function game.currentActName()
+    return composer.getSceneName( "current" )
+end
+
 -- Call this to create an act object inside the act's source file
 function game.newAct()
     -- The act object to return

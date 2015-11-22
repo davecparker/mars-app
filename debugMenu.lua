@@ -31,6 +31,7 @@ local debugActs = {
 	"drill",
 	"rover",
 	"greenhouse",
+	"shipLanding",
 }
 
 ------------------------- Start of Activity --------------------------------
@@ -64,12 +65,6 @@ function onRowTouch( event )
 	end
 end
 
--- Handle event for the act cheat switch
-local function cheatSwitch( event )
-	game.cheatMode = event.target.isOn
-	print( "Cheat mode = " .. tostring(game.cheatMode) )
-end
-
 -- Handle press of the back button
 local function onBackButton()
 	game.gotoAct( "menu" )
@@ -83,13 +78,31 @@ function act:init()
 
 	-- Cheat mode switch and label
 	local ySwitch = act.yMin + act.dyTitleBar * 1.5
-	local label = display.newText( act.group, "Cheat Mode", act.xCenter, ySwitch, 
+	local label = display.newText( act.group, "Cheat", act.xCenter + 60 , ySwitch, 
 						native.systemFont, 18 )
 	label:setFillColor( 0 )
 	local switch = widget.newSwitch{
-		x = act.xMax - 50,
+		x = act.xMax - 35,
 		y = ySwitch,
-		onRelease = cheatSwitch,
+		onRelease = 
+			function ( event )
+				game.cheatMode = event.target.isOn
+			end
+	}
+	act.group:insert( switch )
+
+	-- All Gems mode switch and label
+	local ySwitch = act.yMin + act.dyTitleBar * 1.5
+	local label = display.newText( act.group, "All Gems", act.xMin + 50 , ySwitch, 
+						native.systemFont, 18 )
+	label:setFillColor( 0 )
+	local switch = widget.newSwitch{
+		x = act.xCenter - 40,
+		y = ySwitch,
+		onRelease = 
+			function ( event )
+				game.allGems = event.target.isOn
+			end
 	}
 	act.group:insert( switch )
 

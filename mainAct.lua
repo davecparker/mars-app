@@ -31,57 +31,94 @@ local yTitleBar        -- y position of title bar when visible
 
 -- Main Ship coordinates
 local ship = {
-	-- Horizontal hallway
+	-- Vertical hallway
 	vHall = { left = -10, top = -115, right = 12, bottom = 152 },
 
-	-- Vertical hallway
-	hHall = { left = -112, top = -11, right = 12, bottom = 14 },
+	-- Horizontal hallway
+	hHall = { left = -133, top = -11, right = 12, bottom = 14 },
 
 	-- Rooms (name, rectangle bounds, position just outside the door, delta to inside)
 	rooms = {
 		{ 
 			name = "Bridge", 
-			left = -45, top = -236, right = 45, bottom = -142, 
+			left = -53, top = -244, right = 56, bottom = -126, 
 			x = 1, y = -116, dy = -30, 
 		},
 		{ 
 			name = "Lab", 
-			left = 23, top = 5, right = 136, bottom = 78, 
+			left = 23, top = 3, right = 140, bottom = 80, 
 			x = 12, y = 40, dx = 30, 
 		},
+		{ 
+			name = "Lounge", 
+			left = 23, top = -78, right = 140, bottom = 0, 
+			x = 12, y = -12, dx = 30, 
+		},
 		{
-			name = "Captain's Cabin",
-			left = 23, top = -125, right = 136, bottom = -85, 
+			name = "Jordan",
+			left = 23, top = -158, right = 140, bottom = -81, 
 			x = 12, y = -92, dx = 30, doorCode = "5678",
 		},
 		{
-			name = "First Officer's Cabin",
-			left = -136, top = -125, right = -20, bottom = -85, 
+			name = "Maxwell",
+			left = -139, top = -158, right = -20, bottom = -81, 
 			x = -8, y = -92, dx = -30, doorCode = "9110",
 		},
 		{
-			name = "Doctor's Cabin",
-			left = -55, top = -76, right = -21, bottom = -24, 
-			x = -26, y = -5, dy = -30, 
+			name = "Graham",
+			left = -56, top = -77, right = -20, bottom = -21, 
+			x = -26, y = -8, dy = -30, 
+		},
+		{
+			name = "Moore",
+			left = -97, top = -77, right = -61, bottom = -21, 
+			x = -68, y = -8, dy = -30, 
+		},
+		{
+			name = "Ellis",
+			left = -138, top = -77, right = -101, bottom = -21, 
+			x = -109, y = -8, dy = -30, 
+		},
+		{
+			name = "Shaw",
+			left = -56, top = 23, right = -20, bottom = 80, 
+			x = -26, y = 12, dy = 30, 
+		},
+		{
+			name = "Webb",
+			left = -97, top = 23, right = -61, bottom = 80, 
+			x = -68, y = 12, dy = 30, 
+		},
+		{
+			name = "Your Quarters",
+			left = -138, top = 23, right = -101, bottom = 80, 
+			x = -109, y = 12, dy = 30, 
 		},
 		{
 			name = "Rover Bay",
-			left = -145, top = 86, right = -20, bottom = 158, 
-			x = -7, y = 94, dx = -30, 
+			left = -145, top = 84, right = -20, bottom = 161, 
+			x = -8, y = 95, dx = -30, 
 		},
 		{
 			name = "Greenhouse",
-			left = 25, top = 85, right = 140, bottom = 235, 
-			x = 10, y = 94, dx = 30, sound = "Light Mood.mp3",
+			left = 23, top = 84, right = 140, bottom = 237, 
+			x = 12, y = 95, dx = 30, sound = "Light Mood.mp3",
 		},
 		{
 			name = "Engineering",
-			left = -94, top = 166, right = 19, bottom = 236, 
-			x = 0, y = 153, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
+			left = -138, top = 165, right = 19, bottom = 237, 
+			x = 1, y = 154, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
 		},
 	},
 }
 
+
+-- Return the name of the room the user is in, or nil if none
+function game.roomName()
+	if roomInside then
+		return roomInside.name
+	end
+end
 
 -- Return the x, y destination constrained to the hallways of the ship,
 -- taking into account the current position of the dot.
@@ -134,27 +171,30 @@ local function walkTo( x, y, time )
 	game.addFood( -0.0002 * time )
 end
 
--- Handle tap on a map gem icon
-local function gemTapped( event )
-	local icon = event.target
-	local gem = icon.gem
-	if gem.t == "act" then
-		-- Run the linked activity
-		game.actGemName = icon.name
-		game.actParam = gem.param
-		game.gotoAct( gem.act )
-	elseif gem.t == "doc" then
-		-- Get the document
-		game.foundDocument( gem.file )
-		gems.grabGemIcon( icon )
-	elseif gem.t == "res" then
-		-- Add the resource
-		local r = game.saveState.resources
-		if r[gem.res] then
-			r[gem.res] = r[gem.res] + gem.amount
+-- Handle touch on a map gem icon
+local function gemTouched( event )
+	if event.phase == "began" then
+		local icon = event.target
+		local gem = icon.gem
+		if gem.t == "act" then
+			-- Run the linked activity
+			game.actGemName = icon.name
+			game.actParam = gem.param
+			game.gotoAct( gem.act )
+		elseif gem.t == "doc" then
+			-- Get the document
+			game.foundDocument( gem.file )
+			gems.grabGemIcon( icon )
+		elseif gem.t == "res" then
+			-- Add the resource
+			local r = game.saveState.resources
+			if r[gem.res] then
+				r[gem.res] = r[gem.res] + gem.amount
+			end
+			gems.grabGemIcon( icon )
 		end
-		gems.grabGemIcon( icon )
 	end
+	return true
 end
 
 -- Update the ambient sound depending on the room
@@ -176,7 +216,7 @@ local function zoomToRoom( room )
 	for name, gem in pairs( gems.onShip ) do
 		if gems.shipGemIsActive( name ) and game.xyInRect( gem.x, gem.y, room ) then
 			local icon = gems.newGemIcon( iconGroup, name, gem )
-			icon:addEventListener( "tap", gemTapped )
+			icon:addEventListener( "touch", gemTouched )
 		end
 	end
 	transition.fadeIn( iconGroup, { time = zoomTime, transition = easing.inCubic } )
@@ -225,6 +265,9 @@ local function exitRoom()
 		walkTo( roomInside.x, roomInside.y, zoomTime ) 
 		roomInside = nil
 
+		-- Remove any active message box
+		game.endMessageBox()
+		
 		-- Fade out then delete any gem icons
 		if iconGroup then
 			transition.fadeOut( iconGroup, { time = zoomTime, transition = easing.outCubic, 
@@ -268,7 +311,7 @@ local function touchMap( event )
 						-- Use the doorLock act
 						game.lockedRoom = room
 						game.doorCode = room.doorCode
-						game.gotoAct( "doorLock" )
+						game.gotoAct( "doorLock", { effect = "slideLeft", time = 500 } )
 					else
 						-- Not locked, just go inside
 						zoomToRoom( room )
@@ -277,6 +320,14 @@ local function touchMap( event )
 				end
 			end
 		end
+
+		-- If the touch is inside a room then walk to just outside the door
+		for i = 1, #ship.rooms do
+			local room = ship.rooms[i]
+			if game.xyInRect( x, y, room ) then
+				x, y = room.x, room.y
+			end
+		end		
 
 		-- Constrain position to walkable portion of the ship and walk there
 		x, y = constrainToHalls( x, y )
@@ -293,6 +344,9 @@ end
 
 -- Init the act
 function act:init()
+	-- Space background (TODO: Use Mars when landed)
+	act:newImage( "space.jpg", { width = act.width, height = act.height } )
+	
 	-- Display group for ship elements (centered on ship)
 	shipGroup = act:newGroup()
 	shipGroup.x = act.xCenter
@@ -308,11 +362,27 @@ function act:init()
 	r.anchorX = 0
 	r.anchorY = 0
 	r:setFillColor( 0.5 )
+	r.alpha = 0.5
 	r = display.newRect( shipGroup, ship.hHall.left, ship.hHall.top, 
 					ship.hHall.right - ship.hHall.left, ship.hHall.bottom - ship.hHall.top )
 	r.anchorX = 0
 	r.anchorY = 0
 	r:setFillColor( 0.3 )
+	r.alpha = 0.5
+	--]]
+
+	--[[ Display room bounds and door locations (testing only)
+	for _, room in pairs(ship.rooms) do 
+		local r = display.newRect( shipGroup, room.left, room.top, 
+						room.right - room.left, room.bottom - room.top )
+		r.anchorX = 0
+		r.anchorY = 0
+		r:setFillColor( 0.5, 0.5, 0 )
+		r.alpha = 0.5
+		local c = display.newCircle( shipGroup, room.x, room.y, 5 )
+		c:setFillColor( 1, 0, 0 )
+		c.alpha = 0.5
+	end
 	--]]
 
 	-- Blue position dot, starting just outside the lab
@@ -348,6 +418,7 @@ end
 -- Stop the act
 function act:stop()
 	game.stopAmbientSound()
+	game.endMessageBox()
 end
 
 

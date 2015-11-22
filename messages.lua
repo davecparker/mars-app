@@ -44,6 +44,11 @@ function game.sendMessage( id )
 	end
 	game.showBadge( badge )
 	game.playSound( textSound )
+
+	-- Show message preview window if not in the messages view
+	if game.currentActName() ~= "messages" then
+		game.showMessagePreview( msgText[id] )
+	end
 end
 
 -- Send all the messages ids given by variable parameter list
@@ -130,6 +135,11 @@ local function checkNewMsg()
 			game.hideBadge( badge )
 		end
 	end
+end
+
+-- Prepare the act
+function act:prepare()
+	game.hideMessagePreview()
 end
 
 -- Prepare the act to show
