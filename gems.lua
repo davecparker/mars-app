@@ -74,7 +74,7 @@ local gems = {
 
 -- Return true if the ship gem with the given name is active (enabled and not used)
 function gems.shipGemIsActive( name )
-    return gems.onShip[name].enabled and not game.saveState.usedGems[name]
+    return game.allGems or (gems.onShip[name].enabled and not game.saveState.usedGems[name])
 end
 
 -- Enable or disable (default enable) the ship gem with the given name

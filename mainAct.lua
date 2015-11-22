@@ -321,6 +321,14 @@ local function touchMap( event )
 			end
 		end
 
+		-- If the touch is inside a room then walk to just outside the door
+		for i = 1, #ship.rooms do
+			local room = ship.rooms[i]
+			if game.xyInRect( x, y, room ) then
+				x, y = room.x, room.y
+			end
+		end		
+
 		-- Constrain position to walkable portion of the ship and walk there
 		x, y = constrainToHalls( x, y )
 		walkTo( x, y )

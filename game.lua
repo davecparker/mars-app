@@ -11,7 +11,8 @@
 -- The game object where game global data and functions are stored
 local game = {
     -- Data for the current act to use
-    cheatMode = false,    -- true if cheat mode is on
+    cheatMode = false,    -- true if cheat mode is on (debug)
+    allGems = false,      -- true to always show all gems (debug)
     actParam = nil,       -- act parameter data from a gem
     actGemName = nil,     -- gem name that triggered the act
     openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
