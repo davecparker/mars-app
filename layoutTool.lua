@@ -43,7 +43,7 @@ function act:init()
 	coordText = display.newText( act.group, "", act.xMin + 2, act.yMin + 15, native.systemFont, 16 )
 	coordText.anchorX = 0
 	coordText.anchorY = 0
-	coordText:setFillColor( 0 )  -- black
+	coordText:setFillColor( 1 )  -- white
 end
 
 

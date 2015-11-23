@@ -65,6 +65,7 @@ local gems = {
         shaw1 =     { x = -24, y = 72, t = "doc", file = "Shaw - personal log" },
         shaw2 =     { x = -24, y = 60, t = "doc", file = "Shaw - personal log 2" },
         webb =      { x = -64, y = 72, t = "doc", file = "Webb - personal log" },
+        maxwell =   { x = -130, y = -100, t = "doc", file = "Maxwell - personal log" },
 	},
 
 	-- Gems on Mars
@@ -89,10 +90,10 @@ end
 -- Handle touch on a document gem message box
 local function touchDocGemMessageBox( event )
     if event.phase == "began" then
-    	-- Go to Documents view
-    	game.endMessageBox()
+        -- Go to Documents view
+        game.endMessageBox()
         game.openDoc = nil
-    	game.selectGameTab( 3, true )
+        game.selectGameTab( 3, true )
     end
     return true
 end
