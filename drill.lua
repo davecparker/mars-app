@@ -40,7 +40,9 @@ local reset
 local bg -- Background image
 local drillSpot -- Effectiveness of drill usage
 local bar -- The bar being adjusted
-local splash -- Splash screen for when the player finishes
+local splashTop -- Splash subset for the start timer
+local splashMiddle -- Splash subset for primary info bits
+local splashBottom -- Splash subset for reset button
 local startTimer -- Timer when beginning
 local range -- Text for range user finished in
 local waterText -- Displays how much water the user has earned
@@ -113,21 +115,38 @@ function act:init()
 	-- Intro screen
 	game.drillPlayed = false
 
-	-- Test text
+	if game.currentCost == nil and game.currentLiters == nil then
+
+		game.currentCost = 11
+		game.currentLiters = 50
+
+	end
+
+	-- Cost text
 	costText = display.newText( act.group, "Cost: " ..  -game.currentCost + math.abs( math.floor( bar.difference / 10 ) ) .. " KWH", XC, YC, native.systemFont, 25 )
 	costText.fill = { 0, 0.42, 1 }
+	costText.xScale, costText.yScale = 0.01, 0.01
+	costText.isVisible = false
+
+	--Water Text
+	waterText = display.newText( act.group, "Water: " .. game.currentLiters .. " Liters", XC, YC - 20, native.systemFont, 25 )
+	waterText.fill = { 0, 0.42, 1 }
+	waterText.xScale, waterText.yScale = 0.01, 0.01
+	waterText.isVisible = false
 
 end
 
 function act:prepare()
 
 	resetButton.isVisible = false
+	game.playAmbientSound( "Engine.wav" )
 	start()
 
 end
 
 function act:stop()
 
+	game.stopAmbientSound()
 	game.removeAct( "drill" )
 
 end
@@ -151,7 +170,18 @@ function start()
 
 	elseif startTimer.count == 0 then
 
-		startTimer.isVisible = false
+		drillSound = act:loadSound( "Drill.wav" )
+		game.playSound( drillSound )
+
+		local function hideTimer()
+
+			startTimer.isVisible = false
+
+		end
+
+		transition.to( startTimer, { time = 150, xScale = 0.01, yScale = 0.01, onComplete = hideTimer } )
+		costText.isVisible = true
+		transition.to( costText, { time = 150, xScale = 1, yScale = 1 } )
 		Runtime:addEventListener( "touch", risingBar )
 		Runtime:addEventListener( "enterFrame", newFrame )
 
@@ -168,6 +198,7 @@ function reset()
 	Runtime:removeEventListener( "touch", risingBar )
 	Runtime:removeEventListener( "enterFrame", newFrame )
 	bar.height = H / 4
+	costText.isVisible = false
 	range.isVisible = false
 	waterText.isVisible = false
 	game.removeAct( "drillScan" )
@@ -197,8 +228,10 @@ function timeLimit()
 	local x = math.abs( bar.difference )
 	range = display.newText( act.group, "", XC, YC + 20, native.systemFontBold, 25 )
 	range.fill = { 0, 0.42, 1 }
-	waterText = display.newText( act.group, "Water: " .. game.currentLiters .. " Liters", XC, YC - 20, native.systemFont, 25 )
-	waterText.fill = { 0, 0.42, 1 }
+	range.xScale, range.yScale = 0.01, 0.01
+	transition.to( range, { time = 100, xScale = 1, yScale = 1 } )
+	waterText.isVisible = true
+	transition.to( waterText, { time = 100, xScale = 1, yScale = 1 } )
 
 
 	if x <= 15 then
