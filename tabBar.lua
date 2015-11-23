@@ -71,6 +71,8 @@ function initTabBar()
     msgPreview.y = msgPreview.yHide
     local r = display.newRect( msgPreview, 0, 0, game.width, game.dyTabBar )
     r:setFillColor( 0.3 ) -- dark gray backgroug
+    r:setStrokeColor( 0 )  -- black frame
+    r.strokeWidth = 1
     r:addEventListener( "touch", touchMessagePreview )
     local text = display.newText( msgPreview, "", 10 - msgPreview.width / 2, 0, native.systemFont, 14 )
     text.anchorX = 0
