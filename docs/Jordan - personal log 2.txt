@@ -1,4 +1,6 @@
-SAS Partial file retrieval: Jordan, commanding officer, personal log
+Partial file retrieval: Jordan, commanding officer, personal log
+
+=====
 
 Day 103. Mission Control reports anomalous satellite imagery near landing site. Nothing conclusive. Rejected my request to inform the rest of the crew.
 
@@ -11,3 +13,5 @@ Day 132. Mission Control might not like it, but I pulled Moore from stasis to ma
 Day 133. Someone was in my quarters. My crew wouldn't trespass, but someone was definitely here. I don't think I'm being paranoid, but ... maybe this mission is getting to me. I changed my lock code: Martian sol hours and minutes. 
 
 Day 135. Bogey on radar. Not a glitch. Can't get a visual. At least the rest of the crew will be out of stasis soon. I don't like leaving them in those pods when we might be at risk.
+
+=====

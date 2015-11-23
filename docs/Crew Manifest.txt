@@ -1,4 +1,4 @@
-SAS - Partial file retrieval: Crew Manifest
+Crew Manifest
 
 Jordan - commander, pilot 
 Maxwell - exobiologist, linguist
