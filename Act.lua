@@ -169,6 +169,11 @@ function game.removeAct( name )
     composer.removeScene( name )
 end
 
+-- Return the current act name
+function game.currentActName()
+    return composer.getSceneName( "current" )
+end
+
 -- Call this to create an act object inside the act's source file
 function game.newAct()
     -- The act object to return
@@ -208,6 +213,9 @@ function game.newAct()
         -- When the scene is on-screen and ready to go...
         local act = self.act
         if event.phase == "will" then
+            -- Make sure game state is current before the new view starts
+            game.updateState()
+
             -- Call the act prepare function, if any
             if act.prepare then 
                 act:prepare()
