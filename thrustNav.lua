@@ -83,19 +83,22 @@ local function backButtonPress ( event )
 	game.saveState.thrustNav.lastYTargetDelta = yTargetDelta
 	
 	game.endMessageBox()  -- remove existing message box if any
-	if( ( math.abs( yTargetDelta ) < 2 ) and 
-		( math.abs( xTargetDelta ) < 2 ) and 
+	if( ( math.abs( yTargetDelta ) < 3 ) and 
+		( math.abs( xTargetDelta ) < 3 ) and 
 		( math.abs( xVelocity ) < 0.00001 ) and 
 		( math.abs( yVelocity ) < 0.00001 ) ) then
 		game.saveState.thrustNav.onTarget = true
-		game.showHint( "Nicely Done!", "Navigation", goMainAct )
+		-- game.showHint( "Nicely Done!", "Navigation", goMainAct )
+		game.messageBox( "Nicely Done!", { onDismiss = goMainAct } )
 	else
 		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
 			( math.abs( yVelocity )  > 0.00001) ) then
-			game.showHint( "Still Spinning!", "Navigation", goMainAct )
-		elseif ( ( math.abs( yTargetDelta ) >= 2 ) or 
-			( math.abs( xTargetDelta ) >= 2 ) ) then
-			game.showHint( "Still Off Target!", "Navigation", goMainAct )
+			-- game.showHint( "Still Spinning!", "Navigation", goMainAct )
+			game.messageBox( "Still Spinning!", { onDismiss = goMainAct } )
+		elseif ( ( math.abs( yTargetDelta ) >= 3 ) or 
+			( math.abs( xTargetDelta ) >= 3 ) ) then
+			-- game.showHint( "Still Off Target!", "Navigation", goMainAct )
+			game.messageBox( "Still Off Target!", { onDismiss = goMainAct } )
 		end
 	end
 	return true
@@ -110,9 +113,9 @@ end
 
 -- Turn left button 
 function buttonTurnLeftTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound ) 
-		print("Turn Left Button")
+		print("Turn Left Button ", game.saveState.thrustNav.state )
 		accelerateFrameCount = 0
 		xVelocity = xVelocity + xVelocityInc
 		leftAccelerate = true
@@ -128,7 +131,7 @@ end
 
 -- Turn Right button 
 function buttonTurnRightTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound )
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
 		accelerateFrameCount = 0
@@ -171,7 +174,7 @@ end
 
 -- Pitch Up Button
 function buttonPitchUpTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound )
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity + yVelocityInc
@@ -189,7 +192,7 @@ end
 
 -- Pitch Down Button
 function buttonPitchDownTouch(event)
-	if event.phase == "began"  then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound )
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity - yVelocityInc
@@ -244,15 +247,35 @@ function act:prepare()
    		totalRocketImpulses = 0
 		xVelocity = 0
 		yVelocity = 0
+		-- printPositions()
     	if( game.cheatMode ) then		-- move spaceGroup to final position	
 			spaceGroup.x = -30
     		spaceGroup.y = 165
     	else
-    		spaceGroup.x = spaceGroup.x - ( mars.width / 2 ) + 20
+    		spaceGroup.x = spaceGroup.x - ( mars.width / 2  ) + 20 
     		spaceGroup.y = spaceGroup.y - ( mars.height )
     	end
-    elseif( game.saveState.thrustNav.state > 2 ) then
-		game.showHint( "You are Already in orbit!", "Ship Navigation", goMainAct )
+    	-- printPositions()
+    	local xCenter = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2
+    	local yCenter = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2
+		local c = display.newCircle( spaceGroup, xCenter, yCenter, ( mars.width / 2 ) + 20 )
+		-- print( "xCenter=", xCenter,"  yCenter=", yCenter )
+		-- print( "mars.width= ", mars.width )
+		c.strokeWidth = 2
+		c:setStrokeColor( 0, 1, 0 ) 
+		c:setFillColor( 0, 0, 0, 0.2 )
+    	printPositions()
+    	if( game.cheatMode ) then
+    		c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 + 30
+    		c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 - act.height / 3.3
+    	else
+    		c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 - 14
+    		c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 + act.height / 7.4
+    	end
+    	print( "xCenter=", xCenter,"  yCenter=", yCenter )
+	elseif( game.saveState.thrustNav.state > 2 ) then
+    	game.messageBox( "You are Already in orbit!", { onDismiss = goMainAct } )
+		-- game.showHint( "You are Already in orbit!", "Ship Navigation", goMainAct )
 	end
 end
 
@@ -423,27 +446,27 @@ function updateNavStats()
 		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
 	end		
 
-	if( math.abs( xTargetDelta ) < 2  ) then 
+	if( math.abs( xTargetDelta ) < 3  ) then 
 		xStr = xStr .. " On Target" 
 		onTargetX.isVisible = true
-	elseif( math.abs( xTargetDelta ) < 5  ) then 
+	elseif( math.abs( xTargetDelta ) < 6  ) then 
 		xStr = xStr .. " Getting close" 
 		onTargetX.isVisible = true
 	else
 		onTargetX.isVisible = false
 		onTargetXY.isVisible = false
 	end
-	if( math.abs( yTargetDelta ) < 2  ) then 
+	if( math.abs( yTargetDelta ) < 3  ) then 
 		yStr = yStr .. " On Target" 
 		onTargetY.isVisible = true
-	elseif( math.abs( yTargetDelta ) < 5  ) then 
+	elseif( math.abs( yTargetDelta ) < 6  ) then 
 		yStr = yStr .. " Getting close" 
 		onTargetY.isVisible = true
 	else
 		onTargetY.isVisible = false
 		onTargetXY.isVisible = false
 	end
-	if( math.abs( yTargetDelta ) < 2 and math.abs( xTargetDelta ) < 2 ) then
+	if( math.abs( yTargetDelta ) < 3 and math.abs( xTargetDelta ) < 3 ) then
 		onTargetXY.isVisible = true
 	else
 		onTargetXY.isVisible = false
@@ -454,20 +477,24 @@ function updateNavStats()
 		printPositions()
 		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
 		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
-		game.showHint( "Nicely Done!  You are On Target!", "Ship Navigation", goMainAct )
+		-- game.showHint( "Nicely Done!  You are On Target!", "Ship Navigation", goMainAct )
+		game.messageBox( "Nicely Done!  You are On Target!", { onDismiss = goMainAct } )
 	elseif( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 
 			and game.saveState.thrustNav.state == 2 ) then
 		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
 		printPositions()
 		print("state=", game.saveState.thrustNav.state )
 		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
-		game.showHint( "Nicely Done!  You are now in Orbit!", "Ship Navigation", goMainAct )
+		-- game.showHint( "Nicely Done!  You are now in Orbit!", "Ship Navigation", goMainAct )
+		game.messageBox( "Nicely Done!  You are in Orbit!", { onDismiss = goMainAct } )
 	end
 
 	if( hasCollided( earth, targetRect ) ) then
+		game.messageBox( "Are you going Home!?!"  )
 		navStatsText1.text = "Where are you going?  Home?"	
 	elseif( hasCollided( sun, targetRect ) ) then
-		navStatsText1.text = "That will be VERY HOT!"	
+		navStatsText1.text = "That will be VERY HOT!"
+		game.messageBox( "That will be VERY HOT!!"  )	
 	else
 		navStatsText1.text = string.format( "%s  %3d %5.1f   %s", "xDelta=", xTargetDelta , xVelocity, xStr)
 		navStatsText2.text = string.format( "%s  %3d %5.1f   %s", "yDelta=", yTargetDelta , yVelocity, yStr)
@@ -482,7 +509,7 @@ function updatePosition()
 	-- spaceGroup.rotation = spaceGroup.rotation + rotVelocity
 
 	-- check for button holds
-	if( leftAccelerate == true ) then
+	if( leftAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			xVelocity = xVelocity + xVelocityInc
@@ -492,7 +519,7 @@ function updatePosition()
 			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
-	elseif( rightAccelerate == true ) then
+	elseif( rightAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			xVelocity = xVelocity - xVelocityInc
@@ -502,7 +529,7 @@ function updatePosition()
 			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
-	elseif( upAccelerate == true ) then
+	elseif( upAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			yVelocity = yVelocity + yVelocityInc
@@ -512,7 +539,7 @@ function updatePosition()
 			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
-	elseif( downAccelerate == true ) then
+	elseif( downAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			yVelocity = yVelocity - yVelocityInc
@@ -582,7 +609,8 @@ end
 -- print debug positon information to console
 function printPositions()
 	print("Mars  x=", mars.x, "  y=", mars.y, "  ax=", mars.anchorX, "  ay=", mars.anchorY )
-	print("Mars  contentBounds.xMin=", mars.contentBounds.xMin )
+	print("Mars  contentBounds.xMin=", mars.contentBounds.xMin, "  Mars cb.xMax=", mars.contentBounds.xMax )
+	print("Mars  contentBounds.yMin=", mars.contentBounds.yMin, "  Mars cb.yMax=", mars.contentBounds.yMax )
 	print("Space x=", spaceGroup.x, "  y=", spaceGroup.y, "  ax=", spaceGroup.anchorX, "  ay=", spaceGroup.anchorY )
 	print("Earth x=", earth.x, "  y=", earth.y, "  ax=", earth.anchorX, "  ay=", earth.anchorY )
 	print("SG minX=", spaceGroup.contentBounds.xMin, "  SG maxX=", spaceGroup.contentBounds.xMax )
