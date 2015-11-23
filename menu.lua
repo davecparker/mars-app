@@ -19,17 +19,42 @@ local ss = game.saveState
 
 -- File local variables
 local soundSwitch
+local volumeControls   -- display group with volume controls
+local fxSlider
+local bgSlider
+local ambientChannel
 
 ------------------------- Start of Activity --------------------------------
 
 -- Set the sound option on or off
-local function setSound( on )
+local function enableSound( on )
 	ss.soundOn = on
+	volumeControls.isVisible = on
 	if on then
-		game.playAmbientSound( "Ship Ambience.mp3" )
+		ambientChannel = game.playAmbientSound( "Ship Ambience.mp3" )
 	else
-		game.playAmbientSound( nil )
+		game.stopAmbientSound()
+		ambientChannel = nil
 	end
+end
+
+-- FX volume slider listener
+local function fxSliderListener( event )
+    ss.fxVolume = event.value / 100
+end
+
+-- FX volume slider listener
+local function bgSliderListener( event )
+    ss.ambientVolume = event.value / 100
+	audio.setVolume( ss.ambientVolume, { channel = ambientChannel } ) 
+end
+
+-- Make a new text label
+local function newLabel( group, text, x, y )
+	local label = display.newText( group, text, x, y, native.systemFont, 18 )
+	label.anchorX = 0
+	label:setFillColor( 0 )
+	return label
 end
 
 -- Init the act
@@ -40,25 +65,45 @@ function act:init()
 
 	-- Sound on/off switch and label
 	local ySwitch = act.yMin + act.dyTitleBar * 2
-	local label = display.newText( act.group, "Sound", act.xMin + 60, ySwitch, 
-						native.systemFont, 18 )
-	label.anchorX = 0
-	label:setFillColor( 0 )
+	newLabel( act.group, "Sound", act.xMin + 60, ySwitch )
 	soundSwitch = widget.newSwitch{
 		x = act.xMin + 30,
 		y = ySwitch,
 		style = "checkbox",
 		onRelease = 
 			function ( event )
-				setSound( event.target.isOn )
+				enableSound( event.target.isOn )
 			end
 	}
 	act.group:insert( soundSwitch )
 
+	-- Sound effect slider
+	volumeControls = act:newGroup()
+	local xSlider = act.xCenter + act.width / 4
+	local dxSlider = act.width * 0.4
+	fxSlider = widget.newSlider{ 
+		x = xSlider,
+		y = act.yMin + act.dyTitleBar * 3,
+		width = dxSlider,
+		listener = fxSliderListener, 
+	}
+	volumeControls:insert( fxSlider )
+	newLabel( volumeControls, "Effects", act.xMin + 30, fxSlider.y ) 
+	
+	-- Background volume slider
+	bgSlider = widget.newSlider{ 
+		x = xSlider,
+		y = act.yMin + act.dyTitleBar * 4,
+		width = dxSlider, 
+		listener = bgSliderListener, 
+	}
+	volumeControls:insert( bgSlider )
+	newLabel( volumeControls, "Background", act.xMin + 30, bgSlider.y )
+
 	-- Debug menu button
 	local button = widget.newButton{
 		x = act.xCenter,
-		y = act.yMax - 30,
+		y = act.yMax - 100,
 		label = "Debug Menu",
 		onRelease = 
 			function ()
@@ -71,12 +116,14 @@ end
 -- Prepare the act
 function act:prepare()
 	soundSwitch:setState( { isOn = ss.soundOn } )
-	setSound( ss.soundOn )
+	enableSound( ss.soundOn )
+	fxSlider:setValue( ss.fxVolume * 100 )
+	bgSlider:setValue( ss.ambientVolume * 100 )
 end
 
 -- Stop the act
 function act:stop()
-	game.playAmbientSound( nil )
+	game.stopAmbientSound()
 end
 
 ------------------------- End of Activity --------------------------------

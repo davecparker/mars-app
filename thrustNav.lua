@@ -9,10 +9,8 @@
 -- 
 -- Rocket controls act as if they are attached to nose of ship 
 -- Things to solve:
---    How to move Mars with background when we go 360 around
---    How to locate earth when it is targetted and say something funny
---    Where to put sun, venus, ..
 --    Need little retro rocket image for buttons when pressed
+--    Need sound effect for on target
 
 -----------------------------------------------------------------------------------------
 
@@ -28,7 +26,7 @@ local act = game.newAct()
 -- To change to limitted vertical space we:
 --   1) elimiate roll
 --   2) use two space images (one with Mars, one with Earth) for left and right
---   3) detect and stop vertical up/down with equal revers thrust
+--   3) detect and stop vertical up/down with equal reverse thrust
 
 ------------------------- Start of Activity --------------------------------
 
@@ -51,9 +49,10 @@ local xVelocity, yVelocity, rotVelocity  -- positional deltas used on each enter
 local xVelocityInc, yVelocityInc, rotVelocityInc  -- increments for the deltas
 local xTargetDelta, yTargetDelta  -- delta from Target
 local navStatsText1, navStatsText2, navStatsText3 -- text strings for nav stats
+local stabilityWarning  -- true when vertical stability warning is showing
 local targetRect       -- Rectangle target area
 local arrow        		-- directional arrow toward mars
-local totalRocketImpulses = 0    -- number of rocket impulses used
+local totalRocketImpulses = 0  -- number of rocket impulses used
 local bgLeft, bgRight          -- background images
 local thrusterSound     -- thrust sound
 local leftAccelerate, rightAccelerate, upAccelerate, downAccelerate
@@ -78,45 +77,31 @@ local function backButtonPress ( event )
 		xVelocity = 0
 		yVelocity = 0
 	end
-	
-	if( ( math.abs( yTargetDelta ) < 2 ) and 
-		( math.abs( xTargetDelta ) < 2 ) and 
-		( math.abs( xVelocity ) < 0.00001 ) and 
-		( math.abs( yVelocity ) < 0.00001 ) ) then
-		game.saveState.thrustNav.onTarget = true
-		game.endMessageBox()  -- clear message box
-		-- game.messageBox( "Nicely Done!")
-		-- game.showHint( "Nicely Done!", "On Target")
-	else
-		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
-			( math.abs( yVelocity )  > 0.00001) ) then
-			game.messageBox( "Still Spinning!")
-		elseif ( ( math.abs( yTargetDelta ) >= 2 ) or 
-			( math.abs( xTargetDelta ) >= 2 ) ) then
-			game.messageBox( "Still Off Target!")
-		end
-	end
-	-- if ( math.abs( xVelocity ) < 0.00001 ) then
-	-- 	game.saveState.thrustNav.shipSpinning = false
-	-- end
 
 	-- saved for use in messages
 	game.saveState.thrustNav.lastXTargetDelta = xTargetDelta
 	game.saveState.thrustNav.lastYTargetDelta = yTargetDelta
 	
-	game.gotoAct ( "mainAct" )
+	game.endMessageBox()  -- remove existing message box if any
+	if( ( math.abs( yTargetDelta ) < 3 ) and 
+		( math.abs( xTargetDelta ) < 3 ) and 
+		( math.abs( xVelocity ) < 0.00001 ) and 
+		( math.abs( yVelocity ) < 0.00001 ) ) then
+		game.saveState.thrustNav.onTarget = true
+		-- game.showHint( "Nicely Done!", "Navigation", goMainAct )
+		game.messageBox( "Nicely Done!", { onDismiss = goMainAct } )
+	else
+		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
+			( math.abs( yVelocity )  > 0.00001) ) then
+			-- game.showHint( "Still Spinning!", "Navigation", goMainAct )
+			game.messageBox( "Still Spinning!", { onDismiss = goMainAct } )
+		elseif ( ( math.abs( yTargetDelta ) >= 3 ) or 
+			( math.abs( xTargetDelta ) >= 3 ) ) then
+			-- game.showHint( "Still Off Target!", "Navigation", goMainAct )
+			game.messageBox( "Still Off Target!", { onDismiss = goMainAct } )
+		end
+	end
 	return true
-end
-
--- Handle touches on the background by updating the text displays
-local function touched( event )
-	-- Get touch location but pin to the act bounds
-	local x = game.pinValue( event.x, act.xMin, act.xMax )
-	local y = game.pinValue( event.y, act.yMin, act.yMax )
-
-	-- Update the absolute and center-relative coordinate displays
-	xyText.text = string.format( "(%d, %d)", x, y )
-	xyCenterText.text = string.format( "Center + (%d, %d)", x - act.xCenter, y - act.yCenter )
 end
 
 -- Update energy consumed
@@ -128,9 +113,9 @@ end
 
 -- Turn left button 
 function buttonTurnLeftTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound ) 
-		print("Turn Left Button")
+		print("Turn Left Button ", game.saveState.thrustNav.state )
 		accelerateFrameCount = 0
 		xVelocity = xVelocity + xVelocityInc
 		leftAccelerate = true
@@ -146,7 +131,7 @@ end
 
 -- Turn Right button 
 function buttonTurnRightTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound )
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
 		accelerateFrameCount = 0
@@ -189,7 +174,7 @@ end
 
 -- Pitch Up Button
 function buttonPitchUpTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound )
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity + yVelocityInc
@@ -207,7 +192,7 @@ end
 
 -- Pitch Down Button
 function buttonPitchDownTouch(event)
-	if event.phase == "began"  then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound )
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity - yVelocityInc
@@ -242,17 +227,66 @@ local function hasCollided( obj1, obj2 )
    return (left or right) and (up or down)
 end
 
+-- Act prepare is called after act:init and also when game is played again
+function act:prepare()
+	print("thrustNav:act:prepare", game.saveState.thrustNav.state )
+	if( game.saveState.thrustNav.state < 1 ) then  -- start of first time played
+		if( game.cheatMode ) then
+			-- move spaceGroup to final position
+			xVelocity = 0
+			yVelocity = 0
+			spaceGroup.x = 110
+    		spaceGroup.y = 165
+    	end
+    elseif( game.saveState.thrustNav.state == 1  ) then  -- start of round 2
+		-- move and resize marsffor orbit entry
+		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
+		print( "playing second round of thrustNav", game.saveState.thrustNav.state )
+		mars.width = mars.width * 8
+   		mars.height = mars.height * 8
+   		totalRocketImpulses = 0
+		xVelocity = 0
+		yVelocity = 0
+		-- printPositions()
+    	if( game.cheatMode ) then		-- move spaceGroup to final position	
+			spaceGroup.x = -30
+    		spaceGroup.y = 165
+    	else
+    		spaceGroup.x = spaceGroup.x - ( mars.width / 2  ) + 20 
+    		spaceGroup.y = spaceGroup.y - ( mars.height )
+    	end
+    	-- printPositions()
+    	local xCenter = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2
+    	local yCenter = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2
+		local c = display.newCircle( spaceGroup, xCenter, yCenter, ( mars.width / 2 ) + 20 )
+		-- print( "xCenter=", xCenter,"  yCenter=", yCenter )
+		-- print( "mars.width= ", mars.width )
+		c.strokeWidth = 2
+		c:setStrokeColor( 0, 1, 0 ) 
+		c:setFillColor( 0, 0, 0, 0.2 )
+    	printPositions()
+    	if( game.cheatMode ) then
+    		c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 + 30
+    		c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 - act.height / 3.3
+    	else
+    		c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 - 14
+    		c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 + act.height / 7.4
+    	end
+    	print( "xCenter=", xCenter,"  yCenter=", yCenter )
+	elseif( game.saveState.thrustNav.state > 2 ) then
+    	game.messageBox( "You are Already in orbit!", { onDismiss = goMainAct } )
+		-- game.showHint( "You are Already in orbit!", "Ship Navigation", goMainAct )
+	end
+end
+
 -- Init the act
 function act:init()
-	-- Load sound effects
+	-- Load sound effects in Init so that if scene gets destroyed later and then restarted
+	-- the sound will be reloaded by init when it is run again
 	thrusterSound = act:loadSound( "ignite3.wav" )
 	
 	-- create group for rotating background space objects
 	spaceGroup = act:newGroup()
-
-	-- tried and didn't wrap as desired
-	-- display.setDefault("textureWrapX", "mirrorRepeat" )
-	-- display.setDefault("textureWrapY", "mirrorRepeat")
 
 	-- Create control buttons, background, etc.
 	buttonTurnLeft = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
@@ -274,20 +308,9 @@ function act:init()
 	bgRight.x = act.xCenter * 5
 	bgRight.y = act.yCenter
 
- 	-- transition.to( bgLeft, { time = 12000, x = 0, iterations = 0 } )
-	-- transition.to( bgRight, { time = 12000, x = act.xCenter, iterations = 0 } )
+	-- print("bg=", bg )
 
-	print("transitions launched")
-		-- local paint = { 
-	-- 		type = "image", 
-	--		filename = "media/thrustNav/starrynight.png"
-	-- 	}
-	-- local bg = display.newRect( spaceGroup, 0, 0, 5*act.width, 5*act.height  )
-	-- bg.fill = paint  -- obj.fill is Pro version of Corona only
-
-	-- bg:addEventListener( "touch", touched )
-	print("bg=", bg )
-
+	-- Create position information text for top of screen
 	local yText = act.yMin + 10
 	navStatsText1 = display.newText( act.group, "Hello1", (act.xCenter-act.xMin) / 2, yText, native.systemFont, 14 )
 	navStatsText1.anchorX = 0
@@ -300,10 +323,7 @@ function act:init()
 	navStatsText3.anchorY = 0
 	print( "navStatsText1=" , navStatsText1 )
 	
-	-- spaceGroup.y = act.height / 2 - 100
-	
-	-- ship = display.newImageRect(spaceGroup, "media/thrustNav/shipconcepts.png", 30, 30 )
-	
+    -- create planets in spaceGroup
     mars = display.newImageRect( spaceGroup, "media/thrustNav/mars.png", 30, 30 )
     print("act.xMin=",act.xMin, " act.yMin=", act.yMin)
     mars.x = act.xMin + 50
@@ -321,26 +341,14 @@ function act:init()
     sun.x = mars.x + ( 1.3 * act.width )
     sun.y = act.yCenter 
 
-	-- place ship at center of lines
-	-- ship.x = 0
-	-- ship.y = 0
   
-  	-- Fix anchors to be at cross hairs for start
-    -- spaceGroup.x = act.xCenter 
-    -- spaceGroup.anchorX = spaceGroup.x
-    -- spaceGroup.y = act.yCenter
-    -- spaceGroup.anchorY =spaceGroup.y
-    -- spaceGroup.rotation = 10
-
+    -- Set values for moving background
 	xVelocity = 2.1 -- 3.5
 	yVelocity = 0.1
 	rotVelocity = 0
 	xVelocityInc = 0.1
 	yVelocityInc = 0.1
 	rotVelocityInc = 0.01
-
-	-- Could try transition with iterations=-1 for continuous
-	--- transition.to(fuseObj, { iterations=-1,rotation=-360,time=250})
 
     -- Crosshair in the center
 	local dy = 200
@@ -395,73 +403,102 @@ function act:init()
 	backButton.x = act.xMin + 30
 	backButton.y = act.yMin + 30
 	backButton:addEventListener( "tap", backButtonPress )
+
+	-- print("spaceGroup.x= ",spaceGroup.x )
 end
 
--- draw arrow toward mars
+-- draw arrow toward mars or orbit target
 function updateArrow()
+	
 	local marsCenterX = (mars.contentBounds.xMax + mars.contentBounds.xMin)/2 
 	local marsCenterY = (mars.contentBounds.yMax + mars.contentBounds.yMin)/2 
+	local marsRightEdge = mars.contentBounds.xMax + 20 
 	if ( arrow ~= nil) then
 		arrow:removeSelf()
 		arrow = nil
 	end
-	arrow = display.newLine( act.group, act.xCenter, act.yCenter, marsCenterX, marsCenterY )
+	if( game.saveState.thrustNav.state < 2 ) then  -- start of first play
+		arrow = display.newLine( act.group, act.xCenter, act.yCenter, marsCenterX, marsCenterY )
+	else
+		arrow = display.newLine( act.group, act.xCenter, act.yCenter, marsRightEdge, marsCenterY )
+	end
 	-- print("xc=", marsCenterX, "  yc=", marsCenterY )
 end
+	
+-- function definition to use in showHint call
+function goMainAct()
+	game.saveState.thrustNav.onTarget = true
+	game.gotoAct ( "mainAct" )
+end
+	
 
-
--- Update on screen stats for users reference
+-- Update on navigation stats for users reference
 function updateNavStats()
 	local xStr = ""
 	local yStr = ""
 	local rotStr = ""
-	
-	xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter
-	yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
 
-	if( math.abs( xTargetDelta ) < 2  ) then 
+	if( game.saveState.thrustNav.state < 1 ) then	-- start of first play
+		xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter
+		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
+	elseif ( game.saveState.thrustNav.state == 2 ) then	-- start of second play
+		xTargetDelta = ( mars.contentBounds.xMax + 20 ) - act.xCenter  
+		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
+	end		
+
+	if( math.abs( xTargetDelta ) < 3  ) then 
 		xStr = xStr .. " On Target" 
 		onTargetX.isVisible = true
-	elseif( math.abs( xTargetDelta ) < 5  ) then 
+	elseif( math.abs( xTargetDelta ) < 6  ) then 
 		xStr = xStr .. " Getting close" 
 		onTargetX.isVisible = true
 	else
 		onTargetX.isVisible = false
 		onTargetXY.isVisible = false
 	end
-	if( math.abs( yTargetDelta ) < 2  ) then 
+	if( math.abs( yTargetDelta ) < 3  ) then 
 		yStr = yStr .. " On Target" 
 		onTargetY.isVisible = true
-	elseif( math.abs( yTargetDelta ) < 5  ) then 
+	elseif( math.abs( yTargetDelta ) < 6  ) then 
 		yStr = yStr .. " Getting close" 
 		onTargetY.isVisible = true
 	else
 		onTargetY.isVisible = false
 		onTargetXY.isVisible = false
 	end
-	if( math.abs( yTargetDelta ) < 2 and math.abs( xTargetDelta ) < 2 ) then
+	if( math.abs( yTargetDelta ) < 3 and math.abs( xTargetDelta ) < 3 ) then
 		onTargetXY.isVisible = true
 	else
 		onTargetXY.isVisible = false
 	end
 
-	if( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 ) then
+	if( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 
+			and game.saveState.thrustNav.state < 1 ) then   -- start of first play
+		printPositions()
 		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
-		game.showHint( "Nicely Done!", "On Target", 
-				function ()
-					game.saveState.thrustNav.onTarget = true
-					game.gotoAct ( "mainAct" )
-				end )
-	end		
+		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
+		-- game.showHint( "Nicely Done!  You are On Target!", "Ship Navigation", goMainAct )
+		game.messageBox( "Nicely Done!  You are On Target!", { onDismiss = goMainAct } )
+	elseif( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 
+			and game.saveState.thrustNav.state == 2 ) then
+		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
+		printPositions()
+		print("state=", game.saveState.thrustNav.state )
+		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
+		-- game.showHint( "Nicely Done!  You are now in Orbit!", "Ship Navigation", goMainAct )
+		game.messageBox( "Nicely Done!  You are in Orbit!", { onDismiss = goMainAct } )
+	end
 
 	if( hasCollided( earth, targetRect ) ) then
+		game.messageBox( "Are you going Home!?!"  )
 		navStatsText1.text = "Where are you going?  Home?"	
 	elseif( hasCollided( sun, targetRect ) ) then
-		navStatsText1.text = "That will be VERY HOT!"	
+		navStatsText1.text = "That will be VERY HOT!"
+		game.messageBox( "That will be VERY HOT!!"  )	
 	else
 		navStatsText1.text = string.format( "%s  %3d %5.1f   %s", "xDelta=", xTargetDelta , xVelocity, xStr)
 		navStatsText2.text = string.format( "%s  %3d %5.1f   %s", "yDelta=", yTargetDelta , yVelocity, yStr)
-		navStatsText3.text = string.format( "%s %3d", "totalImpulses= ", totalRocketImpulses )
+		navStatsText3.text = string.format( "%s %4d", "Total Impulses= ", totalRocketImpulses )
 	end
 end
 
@@ -469,10 +506,10 @@ end
 function updatePosition()
 	spaceGroup.x = spaceGroup.x + xVelocity
 	spaceGroup.y = spaceGroup.y + yVelocity
-	spaceGroup.rotation = spaceGroup.rotation + rotVelocity
+	-- spaceGroup.rotation = spaceGroup.rotation + rotVelocity
 
 	-- check for button holds
-	if( leftAccelerate == true ) then
+	if( leftAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			xVelocity = xVelocity + xVelocityInc
@@ -482,7 +519,7 @@ function updatePosition()
 			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
-	elseif( rightAccelerate == true ) then
+	elseif( rightAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			xVelocity = xVelocity - xVelocityInc
@@ -492,7 +529,7 @@ function updatePosition()
 			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
-	elseif( upAccelerate == true ) then
+	elseif( upAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			yVelocity = yVelocity + yVelocityInc
@@ -502,7 +539,7 @@ function updatePosition()
 			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
-	elseif( downAccelerate == true ) then
+	elseif( downAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			yVelocity = yVelocity - yVelocityInc
@@ -556,18 +593,24 @@ function updatePosition()
 	--- Vertical stability override
 	if( ( ( bgLeft.contentBounds.yMin > act.yMin - 10 ) and ( yVelocity > 0 ) )
 	or ( ( bgLeft.contentBounds.yMax < act.yMax + 10 ) and ( yVelocity < 0 ) ) ) then
-		print( "msg about computer assisted vertical stabilization") 
+		-- print( "msg about computer assisted vertical stabilization") 
 		yVelocity = 0
-		game.messageBox( "Vertical Stability Activated")
+		if not stabilityWarning then
+			stabilityWarning = true
+			game.messageBox( "Vertical Stability Activated", { onDismiss = 
+					function ()
+						stabilityWarning = false
+					end })
+		end
 		print( string.format("yVelocity = %5.3f", yVelocity) )
 	end
-
 end
 
 -- print debug positon information to console
 function printPositions()
 	print("Mars  x=", mars.x, "  y=", mars.y, "  ax=", mars.anchorX, "  ay=", mars.anchorY )
-	print("Mars  contentBounds.xMin=", mars.contentBounds.xMin )
+	print("Mars  contentBounds.xMin=", mars.contentBounds.xMin, "  Mars cb.xMax=", mars.contentBounds.xMax )
+	print("Mars  contentBounds.yMin=", mars.contentBounds.yMin, "  Mars cb.yMax=", mars.contentBounds.yMax )
 	print("Space x=", spaceGroup.x, "  y=", spaceGroup.y, "  ax=", spaceGroup.anchorX, "  ay=", spaceGroup.anchorY )
 	print("Earth x=", earth.x, "  y=", earth.y, "  ax=", earth.anchorX, "  ay=", earth.anchorY )
 	print("SG minX=", spaceGroup.contentBounds.xMin, "  SG maxX=", spaceGroup.contentBounds.xMax )

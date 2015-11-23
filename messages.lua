@@ -29,6 +29,7 @@ local scrollView         -- scrollView widget for the list
 local yNextMsg           -- y position for next text message in the scrollView
 local newMsgTimer        -- timer for checking for new messages
 local badge              -- tab bar badge for new message indicator
+local newMarksGroup      -- display group for individual new message indicators
 
 -- Load the new text sound
 local textSound = audio.loadSound( "media/game/TextTone.wav" )
@@ -44,6 +45,11 @@ function game.sendMessage( id )
 	end
 	game.showBadge( badge )
 	game.playSound( textSound )
+
+	-- Show message preview window if not in the messages view
+	if game.currentActName() ~= "messages" then
+		game.showMessagePreview( msgText[id] )
+	end
 end
 
 -- Send all the messages ids given by variable parameter list
@@ -111,9 +117,16 @@ local function checkNewMsg()
 		rr.anchorY = 0
 		rr:setFillColor( 0.3 )   -- dark gray
 
-		-- Put box and text into the scrollView
+		-- Make the new message indicator in the upper right of the rounded rect
+		local c = display.newCircle( newMarksGroup, rr.x + rr.width - 3, rr.y + 3, 6 )
+	    c:setFillColor( 1, 1, 0 ) -- yellow fill
+	    c:setStrokeColor( 0 )     -- black frame
+	    c.strokeWidth = 1
+
+		-- Put the items into the scrollView in the right stacking order
 		scrollView:insert( rr )
 		scrollView:insert( text )
+		scrollView:insert( newMarksGroup )  -- keep indicators on top
 		
 		-- Calculate position for the next message and scroll to make sure that
 		-- the last message is fully visible.
@@ -132,6 +145,12 @@ local function checkNewMsg()
 	end
 end
 
+-- Prepare the act
+function act:prepare()
+	game.hideMessagePreview()
+	newMarksGroup = act:newGroup( scrollView )
+end
+
 -- Prepare the act to show
 function act:start()
 	-- Start a repeating timer to check for messages after a brief interval each
@@ -144,6 +163,12 @@ function act:stop()
 	if newMsgTimer then
 		timer.cancel( newMsgTimer )
 		newMsgTimer = nil
+	end
+
+	-- Remove the individual new message indicators
+	if newMarksGroup then
+		newMarksGroup:removeSelf()
+		newMarksGroup = nil
 	end
 end
 
