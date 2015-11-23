@@ -144,8 +144,9 @@ local shipStateData = {
 						gems.enableShipGem( "jordan2" )
  						gems.enableShipGem( "webb" )
  						gems.enableShipGem( "shaw2" )
-						gems.enableShipGem( "cDevice" )
 	 					gems.enableShipGem( "ellis" )
+	 					gems.enableShipGem( "maxwell" )
+						gems.enableShipGem( "cDevice" )
 						gems.enableShipGem( "cEnergy" )
 	        			game.sendMessage( "land" )
         				return true

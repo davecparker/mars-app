@@ -57,12 +57,12 @@ local ship = {
 		{
 			name = "Jordan",
 			left = 23, top = -158, right = 140, bottom = -81, 
-			x = 12, y = -92, dx = 30, doorCode = "5678",
+			x = 12, y = -92, dx = 30, doorCode = "2439",
 		},
 		{
 			name = "Maxwell",
 			left = -139, top = -158, right = -20, bottom = -81, 
-			x = -8, y = -92, dx = -30, doorCode = "9110",
+			x = -8, y = -92, dx = -30,
 		},
 		{
 			name = "Graham",
