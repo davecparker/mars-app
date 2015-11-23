@@ -113,9 +113,9 @@ end
 
 -- Turn left button 
 function buttonTurnLeftTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound ) 
-		print("Turn Left Button")
+		print("Turn Left Button ", game.saveState.thrustNav.state )
 		accelerateFrameCount = 0
 		xVelocity = xVelocity + xVelocityInc
 		leftAccelerate = true
@@ -131,7 +131,7 @@ end
 
 -- Turn Right button 
 function buttonTurnRightTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound )
 		print("Turn Right Button, rotation= ", spaceGroup.rotation )
 		accelerateFrameCount = 0
@@ -174,7 +174,7 @@ end
 
 -- Pitch Up Button
 function buttonPitchUpTouch (event)
-	if event.phase == "began" then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound )
 		print("Pitch Up Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity + yVelocityInc
@@ -192,7 +192,7 @@ end
 
 -- Pitch Down Button
 function buttonPitchDownTouch(event)
-	if event.phase == "began"  then
+	if event.phase == "began" and game.saveState.thrustNav.state % 2 == 0 then
 		game.playSound( thrusterSound )
 		print("Pitch Down Button - Rotation = ", spaceGroup.rotation)
 		yVelocity = yVelocity - yVelocityInc
@@ -509,7 +509,7 @@ function updatePosition()
 	-- spaceGroup.rotation = spaceGroup.rotation + rotVelocity
 
 	-- check for button holds
-	if( leftAccelerate == true ) then
+	if( leftAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			xVelocity = xVelocity + xVelocityInc
@@ -519,7 +519,7 @@ function updatePosition()
 			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
-	elseif( rightAccelerate == true ) then
+	elseif( rightAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			xVelocity = xVelocity - xVelocityInc
@@ -529,7 +529,7 @@ function updatePosition()
 			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
-	elseif( upAccelerate == true ) then
+	elseif( upAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			yVelocity = yVelocity + yVelocityInc
@@ -539,7 +539,7 @@ function updatePosition()
 			game.playSound( thrusterSound )
 			accelerateFrameCount = 0
 		end
-	elseif( downAccelerate == true ) then
+	elseif( downAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
 		if( accelerateFrameCount % 5 == 0 ) then
 			yVelocity = yVelocity - yVelocityInc
