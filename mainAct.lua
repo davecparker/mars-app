@@ -120,6 +120,16 @@ function game.roomName()
 	end
 end
 
+-- Return true if the user has entered the given room name
+function game.roomEntered( roomName )
+	for _, room in ipairs( ship.rooms ) do
+		if room.name == roomName and room.entered then
+			return true
+		end
+	end
+	return false
+end
+
 -- Return the x, y destination constrained to the hallways of the ship,
 -- taking into account the current position of the dot.
 local function constrainToHalls( x, y )
@@ -165,6 +175,9 @@ local function walkTo( x, y, time )
 	transition.cancel( dot )  -- stop previous movement if any
 	transition.to( dot, { x = x, y = y, time = time, transition = easing.inOutSin } )
 
+	-- Count total moves
+	game.moves = game.moves + 1
+	
 	-- Use a little o2, h2o, and food proportional to the walking time
 	game.addOxygen( -0.02 * time )
 	game.addWater( -0.001 * time )
@@ -232,6 +245,7 @@ local function zoomToRoom( room )
 	local y = room.y + (room.dy or 0)
 	walkTo( x, y, zoomTime )
 	roomInside = room
+	room.entered = true
 
 	-- Zoom the map in, centered at the room's center
 	local scale = 2

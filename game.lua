@@ -23,11 +23,12 @@ local game = {
 
     -- Game state tracking
     stateStartTime = 0,   -- value of system.getTimer() when current game state started
+    moves = 0,            -- number of times dot has moved since game start
 
     -- The saveState table is saved to a file between runs
     saveState = {
     	-- Game options settings
-    	soundOn = false,    -- true to enable sounds
+    	soundOn = true,    -- true to enable sounds
     	fxVolume = 0.7,       -- sound effects volume (0-1)
     	ambientVolume = 0.7,  -- ambient sound volume (0-1)
 
@@ -206,7 +207,7 @@ end
 --     x, y       -- screen position to zoom box out from, default screen center
 --     time       -- milliseconds to leave on screen, default 3000
 --     width      -- multi-line text wrapped to width, default single line
---     fontSize   -- font size, default 20
+--     fontSize   -- font size, default 18
 --     onTouch    -- function to call if message is touched
 --     onDismiss  -- function to call when message is dismissed
 function game.messageBox( text, options )
@@ -226,7 +227,7 @@ function game.messageBox( text, options )
         width = options.width,
         height = 0,
         font = native.systemFontBold,
-        fontSize = options.fontSize or 20,
+        fontSize = options.fontSize or 18,
         align = "center",
     }
     text:setFillColor( 0 )  -- black

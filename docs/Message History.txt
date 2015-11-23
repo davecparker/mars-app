@@ -1,4 +1,6 @@
-SAS - Partial file retrieval: Message record from Mission Control (MC) and Sierra Automated System (SAS). Message history follows:
+Partial file retrieval: Message record from Mission Control (MC) and Sierra Automated System (SAS).
+
+=====
  
 MC - Remote status check: Sierra systems optimal.
  
@@ -69,3 +71,5 @@ SAS - Course correction required. Panel 22A repair required. Initiating stasis p
 SAS - Data corruption, multiple files. 
       Data retrieval in progress. 
       Stand by.
+
+=====
