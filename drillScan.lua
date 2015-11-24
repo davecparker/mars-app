@@ -335,8 +335,8 @@ function waterSpotStats( event )
 
 			drillButton.isVisible = true
 
-			currentLiters = math.floor( t.liters )
-			currentCost = math.floor( t.energyCost )
+			game.currentLiters = math.floor( t.liters )
+			game.currentCost = math.floor( t.energyCost )
 			game.drillDiff = t.difficulty
 
 		elseif t.group.isVisible == true then
@@ -350,8 +350,8 @@ function waterSpotStats( event )
 
 			drillButton.isVisible = false
 
-			currentLiters = 0
-			currentCost = 0
+			game.currentLiters = 0
+			game.currentCost = 0
 			game.drillDiff = 0
 
 		end
@@ -374,8 +374,8 @@ function transitionDrill()
 
 	-- Move game to Water Drilling game automatically. Will need to use Act transition
 
-	game.addWater( currentLiters )
-	game.addEnergy( currentCost )
+	game.addWater( game.currentLiters )
+	game.addEnergy( game.currentCost )
 
 	game.gotoAct( "drill", { effect = "zoomInOutFade", time = 333 } )
 
