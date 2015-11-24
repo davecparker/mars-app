@@ -91,10 +91,16 @@ end
 -- controls what happnes when you touch the manual
 local function manualTouch ( event )
 	if event.phase == "ended" then
+		-- manual image sheets to be used, set to 1 for debug mode
+		local param = 1
+		local manualVersion = {"manual.png", "manual2.png", "manual3.png", "manual4.png"}
+		if game.actParam then
+			param = game.actParam
+		end
 		-- manual image sheet
 		local manualOptions = { width = 440, height = 600, numFrames = 3 }
 		local manualSequence = { name = manual, start = 1, count = 3 }
-		local manualImageSheet = graphics.newImageSheet( "media/circuit/manual.png", manualOptions )
+		local manualImageSheet = graphics.newImageSheet( "media/circuit/" .. manualVersion[param], manualOptions )
 		manual = display.newSprite( act.group, manualImageSheet, manualSequence )
 		manual.x = act.xCenter
 		manual.y = act.yCenter
