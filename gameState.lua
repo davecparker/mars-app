@@ -80,7 +80,10 @@ local shipStateData = {
         			end },
 	{ action =  -- Fix panel #1
 					function ()
-						if game.panelFixed then
+						if game.panelFixed and game.currentActName() == "mainAct" then
+							gems.enableShipGem( "panel1", false )
+							game.removeAct( "circuit" )
+							game.removeAct( "wireCut" )
 							return true
 						end
         			end },
@@ -109,7 +112,6 @@ local shipStateData = {
         				return true
         			end },
 
---[[
 	{ delay = 2, action =  -- Notify to fix panel #2
 					function ()
 						game.sendMessage( "panel2" )
@@ -119,11 +121,12 @@ local shipStateData = {
         			end },
 	{ action =  -- Fix panel #2
 					function ()
-						if game.panelFixed then
+						if game.panelFixed and game.currentActName() == "mainAct" then
+							gems.enableShipGem( "panel2", false )
+							game.removeAct( "circuit" )
+							game.removeAct( "wireCut" )
 							return true
-						end
-        			end },
---]]
+						end        			end },
 	{ moves = 3, action =  -- Send course correction #2 messages
 					function ()
 	 					gems.enableShipGem( "graham2" )
@@ -152,7 +155,6 @@ local shipStateData = {
 	        			game.sendMessage( "land" )
         				return true
         			end },
---[[
 	{ moves = 3, action =  -- Notify to fix panel #3
 					function ()
 						game.sendMessage( "panel3" )
@@ -162,11 +164,12 @@ local shipStateData = {
         			end },
 	{ action =  -- Fix panel #3
 					function ()
-						if game.panelFixed then
+						if game.panelFixed and game.currentActName() == "mainAct" then
+							gems.enableShipGem( "panel3", false )
+							game.removeAct( "circuit" )
+							game.removeAct( "wireCut" )
 							return true
-						end
-        			end },
---]]
+						end        			end },
 	{ delay = 2, action =  -- Landed
 					function ()
 						game.landShip()
