@@ -118,15 +118,19 @@ local function checkNewMsg()
 		rr:setFillColor( 0.3 )   -- dark gray
 
 		-- Make the new message indicator in the upper right of the rounded rect
-		local c = display.newCircle( newMarksGroup, rr.x + rr.width - 3, rr.y + 3, 6 )
-	    c:setFillColor( 1, 1, 0 ) -- yellow fill
-	    c:setStrokeColor( 0 )     -- black frame
-	    c.strokeWidth = 1
+		if newMarksGroup then
+			local c = display.newCircle( newMarksGroup, rr.x + rr.width - 3, rr.y + 3, 6 )
+		    c:setFillColor( 1, 1, 0 ) -- yellow fill
+		    c:setStrokeColor( 0 )     -- black frame
+		    c.strokeWidth = 1
+		end
 
 		-- Put the items into the scrollView in the right stacking order
 		scrollView:insert( rr )
 		scrollView:insert( text )
-		scrollView:insert( newMarksGroup )  -- keep indicators on top
+		if newMarksGroup then
+			scrollView:insert( newMarksGroup )  -- keep indicators on top
+		end
 		
 		-- Calculate position for the next message and scroll to make sure that
 		-- the last message is fully visible.

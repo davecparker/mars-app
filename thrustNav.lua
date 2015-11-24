@@ -230,6 +230,7 @@ end
 -- Act prepare is called after act:init and also when game is played again
 function act:prepare()
 	print("thrustNav:act:prepare", game.saveState.thrustNav.state )
+	game.saveState.thrustNav.onTarget = false
 	if( game.saveState.thrustNav.state < 1 ) then  -- start of first time played
 		if( game.cheatMode ) then
 			-- move spaceGroup to final position
@@ -427,7 +428,6 @@ end
 	
 -- function definition to use in showHint call
 function goMainAct()
-	game.saveState.thrustNav.onTarget = true
 	game.gotoAct ( "mainAct" )
 end
 	
@@ -479,6 +479,7 @@ function updateNavStats()
 		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
 		-- game.showHint( "Nicely Done!  You are On Target!", "Ship Navigation", goMainAct )
 		game.messageBox( "Nicely Done!  You are On Target!", { onDismiss = goMainAct } )
+		game.saveState.thrustNav.onTarget = true
 	elseif( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 
 			and game.saveState.thrustNav.state == 2 ) then
 		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
@@ -487,6 +488,7 @@ function updateNavStats()
 		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
 		-- game.showHint( "Nicely Done!  You are now in Orbit!", "Ship Navigation", goMainAct )
 		game.messageBox( "Nicely Done!  You are in Orbit!", { onDismiss = goMainAct } )
+		game.saveState.thrustNav.onTarget = true
 	end
 
 	if( hasCollided( earth, targetRect ) ) then

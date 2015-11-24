@@ -216,6 +216,7 @@ end
 
 -- Stop the act
 function act:stop()
+	game.endMessageBox()
 	game.stopAmbientSound()
 	-- TODO: Keep timer running when act is not active?
 	if timerID then
