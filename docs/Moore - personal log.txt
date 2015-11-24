@@ -1,7 +1,11 @@
-SAS - partial file retrieval. Moore, botany officer, personal log
+Partial file retrieval: Moore, botany officer, personal log
 
-Day 4. Launch was perfect--everything happened just like it was supposed to. Amazing considering we basically use a controlled explosion to lift off.  That's the part this mission I was the most nervous about, so I'm glad we made it. 
+=====
+
+Day 4. Launch was perfect--everything happened just like it was supposed to. Amazing considering we basically use a controlled explosion to lift off.  That was the riskiest part of this mission, so I'm glad we made it. 
  
-Day 10. Everything's perfect in the greenhouse, I've just been running routine experiments. It would feel like I'm on vacation if it weren't for the drills Mission Control's been ordering.
+Day 10. Everything's perfect in the greenhouse, I've just been running routine experiments. This would feel like a vacation if it weren't for the drills Mission Control's been ordering.
 
-Day 133. Systems are failing in the greenhouse for no apparent reason. I'm trying to track down the problem so I'll have something to fix--but I can't find anything. I'm watering manually to keep the plants alive and waiting on authorization to do a complete rebuild. It's the only thing left I can think of to try.
+Day 133. Systems are failing in the greenhouse for no apparent reason. I'm trying to track down the problem so I'll have something to fix--but I can't find anything. I'm watering manually to keep the plants alive and waiting on authorization to do a complete rebuild. It's the only thing left to try.
+
+=====

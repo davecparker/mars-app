@@ -51,6 +51,8 @@ game.hideMessagePreview()             -- Hide message preview if showing
 
 -- Game functions in mainAct.lua:
 game.roomName()                       -- Name of room user is in or nil if none
+game.roomEntered( roomName )          -- true if the user has entered the room name
+game.landShip()                       -- Update ship state for after landing on Mars
 
 -- Game functions in messages.lua:
 game.sendMessage( id )                -- Add message to messages view

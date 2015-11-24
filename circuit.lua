@@ -27,6 +27,8 @@ local toolbox
 local toolIcon           -- the tool selected icon
 local manual  
 local manualPage         -- what page of the manual you are on
+-- audio
+local toolboxSFX
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -89,10 +91,16 @@ end
 -- controls what happnes when you touch the manual
 local function manualTouch ( event )
 	if event.phase == "ended" then
+		-- manual image sheets to be used, set to 1 for debug mode
+		local param = 1
+		local manualVersion = {"manual.png", "manual2.png", "manual3.png", "manual4.png"}
+		if game.actParam then
+			param = game.actParam
+		end
 		-- manual image sheet
 		local manualOptions = { width = 440, height = 600, numFrames = 3 }
 		local manualSequence = { name = manual, start = 1, count = 3 }
-		local manualImageSheet = graphics.newImageSheet( "media/circuit/manual.png", manualOptions )
+		local manualImageSheet = graphics.newImageSheet( "media/circuit/" .. manualVersion[param], manualOptions )
 		manual = display.newSprite( act.group, manualImageSheet, manualSequence )
 		manual.x = act.xCenter
 		manual.y = act.yCenter
@@ -123,6 +131,7 @@ end
 -- function for the toolbox touch
 local function toolboxTouch (event) 
 	if event.phase == "began" then
+		game.playSound (toolboxSFX)
 		if toolWindow == nil then
 			if wrench then      --- remove the wrech if there is already one on screen
 				wrench:removeSelf()
@@ -367,6 +376,9 @@ function act:init()
 	nut.BR.y = act.yCenter + 158
 	nut.BR:addEventListener( "touch", nutTouch )
 	nut.BR.angle = 225
+
+	-- load the sound
+	toolboxSFX = act:loadSound ("ToolboxOpen.wav", "media/wireCut")
 	
 	-- Draws the large background (NEEDS TO BE LAST THING DRAWN)
 	largeBG = act:newImage ( "backgroundLarge.jpg", { width = 480 / 1.5} )

@@ -1,4 +1,6 @@
-SAS - Partial file retrieval: Bridge messages record from Mission Control (MC) and Sierra Automated System (SAS). Retrieval incomplete. Message history follows:
+Partial file retrieval: Message record from Mission Control (MC) and Sierra Automated System (SAS).
+
+=====
  
 MC - Remote status check: Sierra systems optimal.
  
@@ -19,9 +21,9 @@ SAS - Greenhouse power loss.
 MC - Remote status check: Greenhouse power fluctuations. 
 Directive: Run diagnostics. Repair. Report.
 
+SAS - Greenhouse power resotred.
+
 MC - Remote status check: Sierra systems optimal.
- 
-MC - Systems check due. Pull Graham from stasis for full systems analysis.
  
 MC - Satellites detected unknown surface object at coordinates R14.
 After establishing base, conduct reconnaissance. Use extreme caution.	
@@ -32,27 +34,27 @@ MC - Remote status check: Sierra energy output sub-optimal.
 Directive: Pull Ellis from stasis.
 
 MC - Repeat. Sierra energy output sub-optimal.
-Directive: Pull Ellis from stasis.
-Confirm, Sierra.
+     Directive: Pull Ellis from stasis.
+     Confirm, Sierra.
 
 MC - Sierra, report.
 
-SAS - Power failures detected.  
+SAS - Power fluctuations detected.  
 
 MC - Sierra power disruption detected. 
-Directive: Report.
+     Directive: Report.
 
 SAS - Video disabled.   
 
 MC - Sierra video signal is down. 
-Directive: Report status.
+     Directive: Report status.
 
 SAS - Stasis pod damage detected.
 
 SAS - Manual course correction required. 
 
 MC - Sierra trajectory deviation detected.
-       Directive: Stabilize and report.
+     Directive: Stabilize and report.
 
 SAS - Panel 22A repair required.
 
@@ -62,10 +64,12 @@ MC - Directive: Report status.
 
 SAS - Antenna array failure. 
 
-SAS - Error. Can't receive.
+SAS - Error. Not receiving.
 
 SAS - Course correction required. Panel 22A repair required. Initiating stasis pod 6 revival.
 
 SAS - Data corruption, multiple files. 
-        Data retrieval in progress. 
-        Stand by.
+      Data retrieval in progress. 
+      Stand by.
+
+=====

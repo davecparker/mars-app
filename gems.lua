@@ -36,7 +36,7 @@ local gems = {
         o2L1 =      { x = 130,  y = 30, t = "res", res = "o2", amount = 50, enabled = true  },     
         foodL1 =    { x = 130,  y = 50, t = "res", res = "food", amount = 50, enabled = true  },     
         panel2 =    { x = 130, y = 70, t = "act", act = "circuit", param = 2  },
-        msgHist =   { x = 105, y = 70, t = "doc", file = "Message History", enabled = true  },
+        msgHist =   { x = 105, y = 70, t = "doc", file = "Message History" },
 
         -- In Lounge
         panel3 =    { x = 50, y = -70, t = "act", act = "circuit", param = 3  },
@@ -52,19 +52,21 @@ local gems = {
 		battE1 = 	{ x = -50, y = 170, t = "res", res = "kWh", amount = 150, enabled = true  },
 
         -- In Captain's Quarters
-        jordan1 =   { x = 130, y = -90, t = "doc", file = "Jordan - personal log", enabled = true },
-        jordan2 =   { x = 110, y = -90, t = "doc", file = "Jordan - personal log 2", enabled = true },
-        cDevice =   { x = 90, y = -90, t = "doc", file = "Classified - device", enabled = true },
-        cEnergy =   { x = 70, y = -90, t = "doc", file = "Classified - energy source", enabled = true },
+        jordan1 =   { x = 130, y = -90, t = "doc", file = "Jordan - personal log" },
+        jordan2 =   { x = 110, y = -90, t = "doc", file = "Jordan - personal log 2" },
+        cDevice =   { x = 90, y = -90, t = "doc", file = "Classified - device" },
+        cEnergy =   { x = 70, y = -90, t = "doc", file = "Classified - energy source" },
 
         -- In Crew Quarters
-        graham1 =   { x = -24, y = -73, t = "doc", file = "Graham - personal log", enabled = true },
-        graham2 =   { x = -24, y = -60, t = "doc", file = "Graham - personal log 2", enabled = true },
-        moore =     { x = -64, y = -73, t = "doc", file = "Moore - personal log", enabled = true },
-        ellis =     { x = -106, y = -73, t = "doc", file = "Ellis - personal log", enabled = true },
-        shaw1 =     { x = -24, y = 72, t = "doc", file = "Shaw - personal log", enabled = true },
-        shaw2 =     { x = -24, y = 60, t = "doc", file = "Shaw - personal log 2", enabled = true },
-        webb =      { x = -64, y = 72, t = "doc", file = "Webb - personal log", enabled = true },	},
+        graham1 =   { x = -24, y = -73, t = "doc", file = "Graham - personal log" },
+        graham2 =   { x = -24, y = -60, t = "doc", file = "Graham - personal log 2" },
+        moore =     { x = -64, y = -73, t = "doc", file = "Moore - personal log" },
+        ellis =     { x = -106, y = -73, t = "doc", file = "Ellis - personal log" },
+        shaw1 =     { x = -24, y = 72, t = "doc", file = "Shaw - personal log" },
+        shaw2 =     { x = -24, y = 60, t = "doc", file = "Shaw - personal log 2" },
+        webb =      { x = -64, y = 72, t = "doc", file = "Webb - personal log" },
+        maxwell =   { x = -130, y = -100, t = "doc", file = "Maxwell - personal log" },
+	},
 
 	-- Gems on Mars
 	onMars = {
@@ -74,21 +76,24 @@ local gems = {
 
 -- Return true if the ship gem with the given name is active (enabled and not used)
 function gems.shipGemIsActive( name )
-    return gems.onShip[name].enabled and not game.saveState.usedGems[name]
+    return game.allGems or (gems.onShip[name].enabled and not game.saveState.usedGems[name])
 end
 
 -- Enable or disable (default enable) the ship gem with the given name
 function gems.enableShipGem( name, enable )
-    gems.onShip[name].enabled = enable or true
+    if enable == nil then
+        enable = true
+    end
+    gems.onShip[name].enabled = enable
 end
 
 -- Handle touch on a document gem message box
 local function touchDocGemMessageBox( event )
     if event.phase == "began" then
-    	-- Go to Documents view
-    	game.endMessageBox()
+        -- Go to Documents view
+        game.endMessageBox()
         game.openDoc = nil
-    	game.selectGameTab( 3, true )
+        game.selectGameTab( 3, true )
     end
     return true
 end
@@ -101,7 +106,7 @@ function gems.grabGemIcon( icon )
     local gem = icon.gem
     local onTouch = nil
     if gem.t == "doc" then
-        text = gem.file
+        text = "File: " .. gem.file
         onTouch = touchDocGemMessageBox
     elseif gem.t == "res" then
         local res = gem.res
@@ -133,20 +138,23 @@ end
 
 -- Make a gem icon in the group with the given gem name and data
 function gems.newGemIcon( group, name, gem )
-    -- Create a rotating rectangle with a black frame and tap listener
-    local icon = display.newRect( group, gem.x, gem.y, 6, 6 )
-    icon:setStrokeColor( 0 )   -- black
-    icon.strokeWidth = 1
-    transition.to( icon, { delta = true, rotation = 360, time = 3000, iterations = 0 })
-
-    -- Set the fill color based on the icon type
+    -- Select image based on the icon type
+    local image
+    local size = 10
     if gem.t == "act" then
-        icon:setFillColor( 1, 0, 0 )  -- red
+        image = "gemStar.png"
+        size = 12
     elseif gem.t == "doc" then
-        icon:setFillColor( 1, 1, 0 )  -- yellow
+        image = "gemDoc.png"
     else
-        icon:setFillColor( 0, 1, 0 )  -- green
+        image = "gemRes.png"
     end
+
+    -- Create a rotating image
+    local icon = display.newImageRect( group, "media/game/" .. image, size, size )
+    icon.x = gem.x
+    icon.y = gem.y
+    transition.to( icon, { delta = true, rotation = 360, time = 3000, iterations = 0 })
 
     -- Store the gem name and data inside the icon
     icon.name = name
