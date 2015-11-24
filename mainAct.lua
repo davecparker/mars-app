@@ -22,6 +22,8 @@ local zoomTime = 500   -- time for zoom in/out transition (ms)
 local walkSpeed = 0.1  -- user's walking speed factor
 
 -- Act variables
+local spaceBg          -- space background image
+local marsBg           -- Mars background image
 local shipGroup        -- display group centered on ship
 local iconGroup        -- display group for map icons, within shipGroup
 local dot              -- user's position dot on map
@@ -364,8 +366,9 @@ end
 
 -- Init the act
 function act:init()
-	-- Space background (TODO: Use Mars when landed)
-	act:newImage( "space.jpg", { width = act.width, height = act.height } )
+	-- Background images (one is chosen in act:show)
+	spaceBg = act:newImage( "space.jpg", { height = act.height } )
+	marsBg = act:newImage( "mars.jpg", { height = act.height } )
 	
 	-- Display group for ship elements (centered on ship)
 	shipGroup = act:newGroup()
@@ -418,8 +421,22 @@ function act:init()
 	titleBar.isVisible = false
 end
 
+-- Select the proper background image
+local function selectBackground()
+	spaceBg.isVisible = not game.saveState.onMars
+	marsBg.isVisible = game.saveState.onMars
+end
+
+-- Land the ship and update ship state as necessary
+function game.landShip()
+	game.saveState.onMars = true
+	selectBackground()
+end
+
 -- Prepare the view before it shows
 function act:prepare()
+	selectBackground()  -- Select correct background image
+
 	-- Are we zoomed inside a room?
 	if roomInside then
 		-- Reload the room's icons in case the enabled state of any changed
