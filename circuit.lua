@@ -27,6 +27,8 @@ local toolbox
 local toolIcon           -- the tool selected icon
 local manual  
 local manualPage         -- what page of the manual you are on
+-- audio
+local toolboxSFX
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -123,6 +125,7 @@ end
 -- function for the toolbox touch
 local function toolboxTouch (event) 
 	if event.phase == "began" then
+		game.playSound (toolboxSFX)
 		if toolWindow == nil then
 			if wrench then      --- remove the wrech if there is already one on screen
 				wrench:removeSelf()
@@ -367,6 +370,9 @@ function act:init()
 	nut.BR.y = act.yCenter + 158
 	nut.BR:addEventListener( "touch", nutTouch )
 	nut.BR.angle = 225
+
+	-- load the sound
+	toolboxSFX = act:loadSound ("ToolboxOpen.wav", "media/wireCut")
 	
 	-- Draws the large background (NEEDS TO BE LAST THING DRAWN)
 	largeBG = act:newImage ( "backgroundLarge.jpg", { width = 480 / 1.5} )
