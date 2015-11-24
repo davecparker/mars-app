@@ -23,7 +23,7 @@ local foodLabel
 
 -- Create a text label at the given y location and initally empty text
 local function makeLabel( y )
-	local t = display.newText( act.group, "Hey", act.xCenter, y, native.systemFontBold, 24 )
+	local t = display.newText( act.group, "", act.xCenter, y, native.systemFontBold, 24 )
 	t:setFillColor( 0 )   -- black text
 	return t
 end
@@ -45,11 +45,10 @@ end
 
 -- Refresh the labels to read current values
 function act:prepare()
-	local r = game.saveState.resources
-	o2Label.text = string.format( "Oxygen: %d liters",  r.o2)
-	h2oLabel.text = string.format( "Water: %d liters", r.h2o )
-	kWhLabel.text = string.format( "Energy: %d kWh", r.kWh )
-	foodLabel.text = string.format( "Food: %d kg", r.food )
+	o2Label.text = string.format( "Oxygen: %d liters",  game.oxygen() )
+	h2oLabel.text = string.format( "Water: %d liters", game.water() )
+	kWhLabel.text = string.format( "Energy: %d kWh", game.energy() )
+	foodLabel.text = string.format( "Food: %d kg", game.food() )
 end
 
 

@@ -79,73 +79,71 @@ function act:init()
 		hideScrollBar = false,
 	}
 	act.group:insert( scrollView )
+
+	-- TODO: Add previously sent messages from saved state (and save them there)
 end
 
 -- Display the next new message if there is one waiting
 local function checkNewMsg()
-	-- Is there a message waiting?
-	if #newMsgs > 0 then 
-		-- Move the next new message id to the end of the displayed messages list
-		local id = table.remove( newMsgs, 1 )
-		msgs[#msgs + 1] = id
-		local str = msgText[id]
+	-- Nothing to do if no message waiting. Also ignore stray timer triggers.
+	if #newMsgs <= 0 or not newMarksGroup then
+		return
+	end
 
-		-- Calculate x metrics for the messages (wrt the scrollView)
-		local x = dxyMargin
-		local textWidth = act.width - dxyMargin * 2 - dxyMarginText * 2
+	-- Move the next new message id to the end of the displayed messages list
+	local id = table.remove( newMsgs, 1 )
+	msgs[#msgs + 1] = id
+	local str = msgText[id]
 
-		-- Create a multi-line wrapped text object for the message string
-		local text = display.newText{
-			text = str,
-			x = x + dxyMarginText,
-			y = yNextMsg + dxyMarginText,
-			width = textWidth,
-			height = 0,  -- auto-size the height
-			font = native.systemFont,
-			fontSize = 14,
-			align = "left",
-		}
-		text:setFillColor( 1 )  -- white
-		text.anchorX = 0
-		text.anchorY = 0
+	-- Create a multi-line wrapped text object for the message string
+	local x = dxyMargin
+	local textWidth = act.width - dxyMargin * 2 - dxyMarginText * 2
+	local text = display.newText{
+		text = str,
+		x = x + dxyMarginText,
+		y = yNextMsg + dxyMarginText,
+		width = textWidth,
+		height = 0,  -- auto-size the height
+		font = native.systemFont,
+		fontSize = 14,
+		align = "left",
+	}
+	text:setFillColor( 1 )  -- white
+	text.anchorX = 0
+	text.anchorY = 0
 
-		-- Make a rounded rect for the message box with height sized for the text
-		local rr = display.newRoundedRect( scrollView, x, yNextMsg, 
-						textWidth + dxyMarginText * 2, 
-						text.height + dxyMarginText * 2, 5 )
-		rr.anchorX = 0
-		rr.anchorY = 0
-		rr:setFillColor( 0.3 )   -- dark gray
+	-- Make a rounded rect for the message box with height sized for the text
+	local rr = display.newRoundedRect( scrollView, x, yNextMsg, 
+					textWidth + dxyMarginText * 2, 
+					text.height + dxyMarginText * 2, 5 )
+	rr.anchorX = 0
+	rr.anchorY = 0
+	rr:setFillColor( 0.3 )   -- dark gray
 
-		-- Make the new message indicator in the upper right of the rounded rect
-		if newMarksGroup then
-			local c = display.newCircle( newMarksGroup, rr.x + rr.width - 3, rr.y + 3, 6 )
-		    c:setFillColor( 1, 1, 0 ) -- yellow fill
-		    c:setStrokeColor( 0 )     -- black frame
-		    c.strokeWidth = 1
-		end
+	-- Make the new message indicator in the upper right of the rounded rect
+	local c = display.newCircle( newMarksGroup, rr.x + rr.width - 3, rr.y + 3, 6 )
+    c:setFillColor( 1, 1, 0 ) -- yellow fill
+    c:setStrokeColor( 0 )     -- black frame
+    c.strokeWidth = 1
 
-		-- Put the items into the scrollView in the right stacking order
-		scrollView:insert( rr )
-		scrollView:insert( text )
-		if newMarksGroup then
-			scrollView:insert( newMarksGroup )  -- keep indicators on top
-		end
-		
-		-- Calculate position for the next message and scroll to make sure that
-		-- the last message is fully visible.
-		yNextMsg = yNextMsg + rr.height + dxyMargin
-		scrollView:setScrollHeight( yNextMsg )
-		local yScroll = scrollView.height - yNextMsg
-		if yScroll > 0 then 
-			yScroll = 0 
-		end
-		scrollView:scrollToPosition( { y = yScroll, time = 200 } )
+	-- Put the items into the scrollView in the right stacking order
+	scrollView:insert( rr )
+	scrollView:insert( text )
+	scrollView:insert( newMarksGroup )  -- keep indicators on top
+	
+	-- Calculate position for the next message and scroll to make sure that
+	-- the last message is fully visible.
+	yNextMsg = yNextMsg + rr.height + dxyMargin
+	scrollView:setScrollHeight( yNextMsg )
+	local yScroll = scrollView.height - yNextMsg
+	if yScroll > 0 then 
+		yScroll = 0 
+	end
+	scrollView:scrollToPosition( { y = yScroll, time = 200 } )
 
-		-- Hide the badge if this was the last message waiting
-		if #newMsgs <= 0 then
-			game.hideBadge( badge )
-		end
+	-- Hide the badge if this was the last message waiting
+	if #newMsgs <= 0 then
+		game.hideBadge( badge )
 	end
 end
 
