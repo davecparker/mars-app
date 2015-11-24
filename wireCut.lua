@@ -29,7 +29,6 @@ local toolIcon                        -- the tool selected icon
 local tapeSelected = false
 local wireCutterSelected = false
 local manual  
-local manualVersion                   -- which version of the manual are we using
 local manualPage                      -- what page of the manual you are on
 -- audio
 local cutSFX
@@ -95,14 +94,15 @@ end
 -- controls what happnes when you touch the manual
 local function manualTouch ( event )
 	if event.phase == "ended" then
-		-- manual image sheet
-		-- picking which manual imageshee to use
-		if wireCutVersion == 1 then
-			manualVersion = "media/circuit/manual.png"
+		-- manual image sheets to be used, set to 1 for debug mode
+		local param = 1
+		local manualVersion = {"manual.png", "manual2.png", "manual3.png", "manual4.png"}
+		if game.actParam then
+			param = game.actParam
 		end
 		local manualOptions = { width = 440, height = 600, numFrames = 3 }
 		local manualSequence = { name = manual, start = 1, count = 3 }
-		local manualImageSheet = graphics.newImageSheet( manualVersion, manualOptions )
+		local manualImageSheet = graphics.newImageSheet( "media/circuit/" .. manualVersion[param], manualOptions )
 		manual = display.newSprite( act.group, manualImageSheet, manualSequence )
 		manual.x = act.xCenter
 		manual.y = act.yCenter
@@ -264,7 +264,23 @@ local function checkState ()
 		ledBottom:setFrame( 1 )
 	end
 	-- vicotory condition version 1
-	if ledTop.frame == 2 and ledMid.frame == 2 and ledBottom.frame == 1 and wireCutVersion == 1 then
+	if ledTop.frame == 2 and ledMid.frame == 2 and ledBottom.frame == 1 and game.actParam == 1 then
+		endAct()
+	end
+	-- vicotory condition version 2
+	if ledTop.frame == 1 and ledMid.frame == 2 and ledBottom.frame == 2 and game.actParam == 2 then
+		endAct()
+	end
+	-- vicotory condition version 3
+	if ledTop.frame == 1 and ledMid.frame == 1 and ledBottom.frame == 2 and game.actParam == 3 then
+		endAct()
+	end
+	-- vicotory condition version 4
+	if ledTop.frame == 1 and ledMid.frame == 2 and ledBottom.frame == 1 and game.actParam == 4 then
+		endAct()
+	end
+	-- vicotory condition version debug version
+	if ledTop.frame == 2 and ledMid.frame == 2 and ledBottom.frame == 1 and game.actParam == nil then
 		endAct()
 	end
 end
@@ -525,6 +541,8 @@ function act:init()
 	tapeSFX = act:loadSound ("Tape7.wav")
 	toolboxSFX = act:loadSound ("ToolboxOpen.wav")
 	panelSFX = act:loadSound ("Panel.wav")
+
+	print(game.actParam)
 
 	-- Touch location text display objects==============================================================================================
 	--local yText = act.yMin + 15   -- relative to actual top of screen
