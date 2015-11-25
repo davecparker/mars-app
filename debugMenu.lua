@@ -20,18 +20,18 @@ local act = game.newAct()
 -- List of activities that can be run directly from the debug menu
 local debugActs = {
 	"mainAct",
-	"layoutTool",
-	"sampleAct",
-	"blankAct",
-	"circuit",
-	"doorLock",
-	"wireCut",
 	"thrustNav",
+	"doorLock",
+	"circuit",
+	"wireCut",
+	"greenhouse",
 	"drillScan",
 	"drill",
 	"rover",
-	"greenhouse",
 	"shipLanding",
+	"blankAct",
+	"layoutTool",
+	"sampleAct",
 }
 
 ------------------------- Start of Activity --------------------------------
