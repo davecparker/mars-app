@@ -326,8 +326,8 @@ local function mapTouched( event )
 		end
 
 		-- set global variables to new destination coordinates
-		x2 = game.saveState.rover.x2
-		y2 = game.saveState.rover.y2
+		x2 = game.saveState.rover.x2 - mapGrp.x
+		y2 = game.saveState.rover.y2 - mapGrp.y
 
 		-- calculate new course length
 		map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
@@ -455,7 +455,7 @@ local function newMap()
 	-- Add touch event listener to background image
 	map:addEventListener( "touch", mapTouched )
 
-	-- create spaceship
+	-- Create spaceship
 	local spaceshipData = { 
 		parent = mapZoomGrp, 
 		x = 0, 
@@ -591,7 +591,7 @@ local function brakeRover()
 	if rover.kph < 20 then
 		rover.angularV = 0
 	else 
-		rover.angularV = rover.angularV * rover.kph/500
+		rover.angularV = rover.angularV * rover.kph/400
 	end
 end
 
@@ -617,7 +617,7 @@ end
 local function updatePosition()
 
 	-- Calculate distance rover has moved in the scrolling view
-	local distMoved = ( rover.x - rover.distOldX )/500
+	local distMoved = ( rover.x - rover.distOldX )/400
 	rover.distOldX = rover.x
 
 	-- Update the unscaled rover coordinates
@@ -628,14 +628,24 @@ local function updatePosition()
 	map.rover.x = (game.saveState.rover.x1 - mapGrp.x) * mapZoomGrp.xScale
 	map.rover.y = (game.saveState.rover.y1 - mapGrp.y) * mapZoomGrp.yScale
 
-	local x1 = map.rover.x
-	local y1 = map.rover.y
-	local x2 = (game.saveState.rover.x2 - mapGrp.x)
-	local y2 = (game.saveState.rover.y2 - mapGrp.y)
+	local x1 = map.rover.x 
+	local y1 = map.rover.y 
+	local x2 = mapZoomGrp.x/map.xScale
+	local y2 = mapZoomGrp.y/map.yScale
 
 	-- Calculate the rover's distance from the ship
-	local distanceFromShip = math.sqrt(x1*x1 + y1*y1)
+	local distanceFromShip = math.sqrt((x1*x1) + (y1*y1)) + math.sqrt((x2*x2) + (y2*y2)) 
+	--print( distanceFromShip, map.rover.x, game.saveState.rover.x1, mapZoomGrp.x, map.xScale )
+	-- local a = math.sqrt((x1*x1) + (y1*y1)) 
+	-- local b = math.sqrt((x2*x2) + (y2*y2)) 
+	-- print(a,b)
 
+	x1 = map.rover.x
+	y1 = map.rover.y
+	x2 = (game.saveState.rover.x2 - mapGrp.x)
+	y2 = (game.saveState.rover.y2 - mapGrp.y)
+
+	
 	-- If the rover has returned to the ship, then go to mainAct
 	if distanceFromShip <= 6 and rover.leftShip then
 		rover.leftShip = false
@@ -728,9 +738,10 @@ local function moveRover()
 	if (rover.rotation % 360 > 90 and rover.rotation % 360 < 270) and rover.kph == 0 then
 
 		function displayRecoverButton()
-			if (rover.rotation % 360 > 90 and rover.rotation % 360 < 270) and rover.kph == 0 then
+			if (rover.rotation % 360 > 80 and rover.rotation % 360 < 280) and rover.kph == 0 then
 				recoverButton.isVisible = true
 				ctrlPanelGrp.accelButton.isVisible = false
+				rover.accelerate = false
 			end
 		end
 
@@ -775,14 +786,19 @@ local function onAccelRelease( event )
 	rover.accelerate = false
 end
 
--- Stop button event handler
-local function onStopPress( event )
+-- Brake button event handler
+local function onBrakePress( event )
 	rover.brake = true
 end
 
--- Stop button event handler
-local function onStopRelease( event )
+-- Brake button event handler
+local function onBrakeRelease( event )
 	rover.brake = false
+end
+
+-- Water scan button event handler
+local function onWaterRelease( event )
+	game.gotoAct ( "drillScan", { effect = "zoomInOutFade", time = 1000 } )
 end
 
 -- Reset button event handler
@@ -849,34 +865,46 @@ local function newControlPanel()
 	}
 
 	-- create the stop button
-	local stopButton = widget.newButton
+	local brakeButton = widget.newButton
 	{
 		x = act.xCenter - 35,
 		y = act.yMax - 24,
 		width = 40,
 		height = 40,
-		defaultFile = "media/rover/stop_unpressed.png",
-		overFile = "media/rover/stop_pressed.png",
-		onPress = onStopPress,
-		onRelease = onStopRelease
+		defaultFile = "media/rover/brake_unpressed.png",
+		overFile = "media/rover/brake_pressed.png",
+		onPress = onBrakePress,
+		onRelease = onBrakeRelease
+	}
+
+	-- create the water scan button
+	local waterButton = widget.newButton
+	{
+		x = act.xMax - 28,
+		y = act.yMax - 24,
+		width = 40,
+		height = 40,
+		defaultFile = "media/rover/water3_unpressed.png",
+		overFile = "media/rover/water3_pressed.png",
+		onRelease = onWaterRelease
 	}
 
 	-- create the reset button
 	recoverButton = widget.newButton
 	{
 		x = act.xCenter + 35,
-		y = act.yMax - 24,
-		width = 40,
-		height = 40,
+		y = act.yMax - 23.5,
+		width = 48,
+		height = 48,
 		defaultFile = "media/rover/reset_unpressed.png",
 		overFile = "media/rover/reset_pressed.png",
 		onPress = onRecoverPress
 	}
-
 	recoverButton.isVisible = false
 
 	ctrlPanelGrp:insert( ctrlPanelGrp.accelButton )
-	ctrlPanelGrp:insert( stopButton )
+	ctrlPanelGrp:insert( brakeButton )
+	ctrlPanelGrp:insert( waterButton )
 	ctrlPanelGrp:insert( recoverButton )
 end
 
