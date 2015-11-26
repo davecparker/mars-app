@@ -884,8 +884,8 @@ local function newControlPanel()
 		y = act.yMax - 24,
 		width = 40,
 		height = 40,
-		defaultFile = "media/rover/water3_unpressed.png",
-		overFile = "media/rover/water3_pressed.png",
+		defaultFile = "media/rover/water_unpressed.png",
+		overFile = "media/rover/water_pressed.png",
 		onRelease = onWaterRelease
 	}
 
