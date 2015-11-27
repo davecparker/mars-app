@@ -98,7 +98,7 @@ end
 
 -- Show message preview box with the given text
 function game.showMessagePreview( text )
-    msgPreview.text.text = text
+    msgPreview.text.text = string.gsub( text, "\n", " ")  -- replace newlines with spaces
     transition.cancel( msgPreview )
     transition.to( msgPreview, { y = msgPreview.yShow, time = 500 } )
     transition.to( msgPreview, { y = msgPreview.yHide, delay = 2500, time = 500 } )
