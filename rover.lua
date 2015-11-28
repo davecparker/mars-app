@@ -199,7 +199,7 @@ local function newRover( roverY )
 	rover.kph = 0 
 	rover.accelerate = false
 	rover.brake = false
-	rover.active = false
+	rover.isActive = true
 
 	-- rover body physics: low density for minimal sway & increased stability
 	physics.addBody( rover, "dynamic", { density = 0.2, friction = 0.3, bounce = 0.2 } )
@@ -242,6 +242,13 @@ local function newRover( roverY )
 		-- per x-axis, a higher y-axis value decreases translation; 25-50 y-axis gives best results
 		suspension[i] = physics.newJoint( "wheel", rover, wheelSprite[i], 
 		wheelSprite[i].x, wheelSprite[i].y, 1, 30 )
+
+		-- load sound effects
+		rover.engineSound = act:loadSound( "rover_engine.wav" )
+		rover.startSound = act:loadSound( "rover_start.wav" )
+		rover.stage1Sound = act:loadSound( "rover_stage_1.wav" )
+		rover.stage2Sound = act:loadSound( "rover_stage_2.wav" )
+		rover.stopSound = act:loadSound( "rover_stop.wav" )	
 	end
 
 	-- wheel-to-wheel distance joints to limit lateral wheel translation 
@@ -338,8 +345,8 @@ local function mapTouched( event )
 		-- record the current x-axis position of the side scrolling rover
 		rover.distOldX = rover.x
 
-		-- Make rover active to allow for position updating
-		rover.active = true
+		-- Make rover active to allow for position updating and to enable the accelerator
+		rover.isActive = true
 	end
 
 	return true
@@ -479,17 +486,26 @@ local function newMap()
 	-- Calculate new course length
 	map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
 
-	-- Calculate the course coordinates
-	calcCourseCoords( x2, y2 )
+	-- if course exists, calculate unit vectors & find map zoomBoundary intersection point
+	if map.courseLength > 0 then
+		calcCourseCoords( x2, y2 )
+	else
+		map.courseVX = 0
+		map.courseVY = 0
+	end
+
+	-- set global variables to new destination coordinates
+	x2 = game.saveState.rover.x2 - mapGrp.x
+	y2 = game.saveState.rover.y2 - mapGrp.y
+
+	-- Calculate new course length
+	map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
 
 	-- Draw the initial course
 	drawCourse( x1, y1, x2, y2 )
 
 	-- Record the current x-axis position of the side scrolling rover
 	rover.distOldX = rover.x
-
-	-- Make rover active to allow for position updating
-	rover.active = true
 end
 
 -- Create the speed display text
@@ -635,23 +651,17 @@ local function updatePosition()
 
 	-- Calculate the rover's distance from the ship
 	local distanceFromShip = math.sqrt((x1*x1) + (y1*y1)) + math.sqrt((x2*x2) + (y2*y2)) 
-	--print( distanceFromShip, map.rover.x, game.saveState.rover.x1, mapZoomGrp.x, map.xScale )
-	-- local a = math.sqrt((x1*x1) + (y1*y1)) 
-	-- local b = math.sqrt((x2*x2) + (y2*y2)) 
-	-- print(a,b)
 
-	x1 = map.rover.x
-	y1 = map.rover.y
-	x2 = (game.saveState.rover.x2 - mapGrp.x)
-	y2 = (game.saveState.rover.y2 - mapGrp.y)
+	x2 = game.saveState.rover.x2 - mapGrp.x
+	y2 = game.saveState.rover.y2 - mapGrp.y
 
-	
 	-- If the rover has returned to the ship, then go to mainAct
-	if distanceFromShip <= 6 and rover.leftShip then
-		rover.leftShip = false
+	if distanceFromShip <= 6 and map.rover.leftShip then
+		map.rover.leftShip = false
+		audio.stop()
 		game.gotoAct ( "mainAct" )
-	elseif not rover.leftShip and distanceFromShip > 6 then
-		rover.leftShip = true
+	elseif not map.rover.leftShip and distanceFromShip > 6 then
+		map.rover.leftShip = true
 	end
 
 	-- Calculate new course length
@@ -665,8 +675,47 @@ local function updatePosition()
 
 	else -- If map edge has been reached
 
-		-- deactivate rover to brake side-scroller and discontinue tracking dot position updating
-		rover.active = false
+		-- Deactivate rover to brake side-scroller and discontinue tracking dot position updating
+		rover.isActive = false
+
+		-- Cease acceleration and initiate braking
+		rover.accelerate = false
+		rover.brake = true
+
+		-- Play the rover stop sound followed by engine sound, first halting any other sounds
+		if audio.isChannelPlaying( 4 ) then
+		audio.stop( 4 )
+		end
+		
+		if audio.isChannelPlaying( 3 ) then
+			audio.stop( 3 )
+		end
+
+		if audio.isChannelPlaying( 2 ) then
+			audio.stop( 2 )
+		end
+
+		if not audio.isChannelPlaying( 5 ) 
+			and not audio.isChannelPlaying( 1 ) then
+
+			local options2 = {
+				channel = 1,
+				loops = -1,
+			}
+
+			local options1 = {
+				channel = 5,
+				loops = 0,
+				-- Play engine sound indefinitely upon completion
+				onComplete = function() if not rover.accelerate then 
+											rover.engineChannel = game.playSound(rover.engineSound, options2); 
+										end
+									end
+			}
+
+			rover.stopChannel = game.playSound(rover.stopSound, options1)
+		end
+
 		map.courseLength = 0
 
 		-- ensure the tracking dot is within map bounds
@@ -693,30 +742,34 @@ end
 -- Adjust and apply rover wheel angular velocity
 local function moveRover()
 
-	if rover.active then
-
-		-- Accelerate, brake, or coast rover
-		if rover.accelerate then
-			accelRover()
-		elseif rover.brake then
-			brakeRover()
-		else
-			coastRover()
-		end
-
-		-- Apply wheel angular velocity & sprite frame to the wheel sprites
-		-- Rear wheel at half speed for stability
-		wheelSprite[1].angularVelocity = rover.angularV/2
-
-		for i = 2, 3 do
-			wheelSprite[i].angularVelocity = rover.angularV
-		end
-
-		-- Update map position
-		updatePosition()
-	else 
-		brakeRover()
+	if not audio.isChannelPlaying( 1 ) 
+		and not audio.isChannelPlaying( 2 )
+		and not audio.isChannelPlaying( 3 )
+		and not audio.isChannelPlaying( 4 )
+		and not audio.isChannelPlaying( 5 )
+	then
+		rover.engineChannel = game.playSound(rover.engineSound, { channel = 1, loops = -1 } )
 	end
+
+	-- Accelerate, brake, or coast rover
+	if rover.accelerate then
+		accelRover()
+	elseif rover.brake then
+		brakeRover()
+	else
+		coastRover()
+	end
+
+	-- Apply wheel angular velocity & sprite frame to the wheel sprites
+	-- Rear wheel at half speed for stability
+	wheelSprite[1].angularVelocity = rover.angularV/2
+
+	for i = 2, 3 do
+		wheelSprite[i].angularVelocity = rover.angularV
+	end
+
+	-- Update map position
+	if rover.isActive then updatePosition() end
 
 	-- Determine wheel sprite frame
 	local wheelFrame
@@ -778,12 +831,86 @@ end
 
 -- Acceleration touch event handler
 local function onAccelPress( event )
-	rover.accelerate = true
+
+	if rover.isActive then
+		rover.accelerate = true
+
+		-- Halt engine or stop sounds and play start sound, then stage1 sound, then stage2 sound
+		if audio.isChannelPlaying( 1 ) then
+			audio.stop( 1 )
+		elseif audio.isChannelPlaying( 5 ) then
+			audio.stop( 5 )
+		end
+
+		local options3 = {
+			channel = 4,
+			loops = -1,
+		}
+
+		local options2 = {
+			channel = 3,
+			loops = 0,
+			-- Play stage2 sound indefinitely upon completion
+			onComplete = function() if rover.accelerate then 
+										rover.stage2Channel = game.playSound(rover.stage2Sound, options3); 
+									end
+								end
+		}
+
+		local options1 = {
+			channel = 2,
+			loops = 0,
+			-- Play stage1 sound upon completion
+			onComplete = function() if rover.accelerate then 
+										rover.stage1Channel = game.playSound(rover.stage1Sound, options2); 
+									end
+								end
+		}
+		rover.startChannel = game.playSound(rover.startSound, options1)
+	end
 end
 
 -- Acceleration touch event handler
 local function onAccelRelease( event )
-	rover.accelerate = false
+
+	if rover.isActive then
+
+		rover.accelerate = false
+
+		-- Play the rover stop sound followed by rover engine sound, first halting any other sounds
+		if audio.isChannelPlaying( 4 ) then
+			audio.stop( 4 )
+		end
+		
+		if audio.isChannelPlaying( 3 ) then
+			audio.stop( 3 )
+		end
+
+		if audio.isChannelPlaying( 2 ) then
+			audio.stop( 2 )
+		end
+
+		if not audio.isChannelPlaying( 5 ) 
+			and not audio.isChannelPlaying( 1 ) then
+
+			local options2 = {
+				channel = 1,
+				loops = -1,
+			}
+
+			local options1 = {
+				channel = 5,
+				loops = 0,
+				-- Play the rover engine sound indefinitely upon completion
+				onComplete = function() if not rover.accelerate then 
+											rover.engineChannel = game.playSound(rover.engineSound, options2); 
+										end
+									end
+			}
+
+			rover.stopChannel = game.playSound(rover.stopSound, options1)
+		end
+	end
 end
 
 -- Brake button event handler
@@ -793,12 +920,28 @@ end
 
 -- Brake button event handler
 local function onBrakeRelease( event )
-	rover.brake = false
+	if rover.isActive then
+		rover.brake = false
+	end
 end
 
 -- Water scan button event handler
 local function onWaterRelease( event )
-	game.gotoAct ( "drillScan", { effect = "zoomInOutFade", time = 1000 } )
+	-- Cease acceleration and initiate braking
+	rover.accelerate = false
+	rover.brake = true
+
+	-- leave the game and go to drillScan; allow time for rover to decelerate and sound to complete
+	local function goToDrillScan( event )
+		audio.stop()
+		game.gotoAct ( "drillScan", { effect = "zoomInOutFade", time = 1000 } )
+	end
+
+	if rover.kph < 20 then
+		timer.performWithDelay( 3500, goToDrillScan )	
+	else
+		timer.performWithDelay( 5000, goToDrillScan )	
+	end
 end
 
 -- Reset button event handler
@@ -833,9 +976,6 @@ local function onRecoverPress( event )
 	-- display accelerator, hide recover button
 	ctrlPanelGrp.accelButton.isVisible = true
 	recoverButton.isVisible = false
-	
-	-- reactivate rover
-	rover.active = true
 end
 
 local function newControlPanel()
@@ -922,6 +1062,18 @@ local function updateDisplay()
 	rover.speedOldX = rover.x
 end
 
+local function testPrint()
+	print( string.format("%s %.2f %s %.2f %s %.2f %s %.2f %s %.2f %s %s %s %s",
+						"mapZoomGrp.x: ", mapZoomGrp.x,
+						"map.rover.x: ", map.rover.x,
+						"mapZoomGrp.y: ", mapZoomGrp.y,
+						"map.rover.y: ", map.rover.y,
+						"map.courseLength: ", map.courseLength,
+						"rover.isActive: ", tostring(rover.isActive),
+						"rover.leftShip: ", tostring(map.rover.leftShip)
+						))
+end 
+
 -- Init the act
 function act:init()
 	-- include Corona's physics and widget libraries
@@ -959,8 +1111,10 @@ end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
+
 	-- adjust and apply rover wheel angular velocity
 	moveRover() 
+
 	-- move dynamicGrp along the x-axis the distance the rover has moved
 	dynamicGrp.x = act.xMin + 100 - rover.x
 
@@ -970,6 +1124,8 @@ function act:enterFrame( event )
 	-- move the static group to the foreground
 	staticBgGrp:toBack()
 	staticFgGrp:toFront()
+
+	testPrint()
 end
 
 ------------------------- End of Activity --------------------------------
