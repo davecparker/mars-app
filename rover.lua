@@ -52,9 +52,10 @@ local widget = require "widget"
 local staticBgGrp 		-- display group for static background objects
 local staticFgGrp 		-- display group for static foreground objects
 local displayPanelGrp 	-- display group for the display panel
-local controlPanelGrp	-- display group for the control panel
-local mapGrp 			-- display group for the map
-local dynamicGrp 		-- display group for dynamic objects
+local ctrlPanelGrp		-- display group for the control panel
+local mapGrp 			-- display group for map elements
+local mapZoomGrp		-- display group for the maps elements subject to zooming
+local dynamicGrp 		-- display group for dynamic objects (rover & terrain elements)
 local terrain = {} 		-- basic terrain
 local obstacle = {} 	-- terrain obstacles
 local shape = {} 		-- possible terrain obstacles
@@ -62,7 +63,7 @@ local wheelSprite = {} 	-- rover wheels
 local rover 			-- the rover
 local map 				-- the map
 local bg 				-- background
-local resetButton
+local recoverButton
 local zoomInButton
 local zoomOutButton
 local speedText
@@ -83,7 +84,7 @@ local function newBackground()
 		height = act.height 
 	} 
 
-	sky = act:newImage( "sky2.jpg", skyData )
+	sky = act:newImage( "sky.jpg", skyData )
 	sky.x = act.xCenter
 	sky.y = act.yCenter
 end
@@ -91,8 +92,9 @@ end
 -- Create new 1-corona unit wide terrain component rectangle 
 -- Accepts x-coord & height, returns rectangle display object
 local function newRectangle( x, h )
-	local rect = display.newRect( dynamicGrp, x, act.yMax, 1, h )
+	local rect = display.newRect( dynamicGrp, x, act.yMax, act.width + terrainExcess - terrainOffset, h )
 	rect:setFillColor( unpack(terrainColor) )
+	rect.anchorX = 0
 	rect.anchorY = 1
 	physics.addBody( rect, "static", { friction = 1.0 } )
 	return rect
@@ -149,11 +151,13 @@ local function newTerrain( nObstacles)
 	-- fill shape table with terrain obstacle shape functions
 	shape = { randCircle, randSquare, randRoundSquare, randPoly }
 	
+	local terrainExtent = act.width + terrainExcess - terrainOffset
+
 	-- fill obstacle table with shapes randomly distributed along terrain x-axis extent
-	-- obsolete: local zoneLength = math.floor( (act.width + terrainExcess)/nObstacles )	
+	-- obsolete: local zoneLength = math.floor( (act.width + terrainExcess)/nObstacles )
 	for i = 1, nObstacles do
 		-- obsolete: local x = math.random( (i - 1) * zoneLength, i * zoneLength ) + terrainOffset
-		local x = math.random( (i - 1) + terrainOffset, act.width + terrainExcess + terrainOffset )
+		local x = math.random( (i - 1) + terrainOffset, terrainExtent )
 		local y = act.yMax - elevation
 		local size = math.random( 5, 10 )
 		obstacle[i] = shape[math.random(1, 4)]( x, y, size )
@@ -165,8 +169,8 @@ local function newTerrain( nObstacles)
 	--end
 
 	-- fill terrain with rectangles to span display width plus terrainExcess
-	for i = 1, act.width + terrainExcess do
-		terrain[i] = newRectangle( i - 1 + terrainOffset, elevation )
+	for i = 1, 2 do
+		terrain[i] = newRectangle( act.xMin + terrainOffset + (i - 1) * terrainExtent, elevation )
 	end
 end
 
@@ -191,7 +195,7 @@ local function newRover( roverY )
 	rover.anchorY = 1.0
 	rover.angularV = 0
 	rover.distOldX = rover.x -- previous x for distance traveled calculation
-	rover.speedOldX = rover.x -- previous x for speed calculation
+	rover.speedOldX = rover.x -- previous x for speed (kph) calculation
 	rover.kph = 0 
 	rover.accelerate = false
 	rover.brake = false
@@ -247,6 +251,23 @@ local function newRover( roverY )
 	end
 end
 
+-- Create new rover map location tracking dot
+local function newMapDot()
+	local dotData = { 
+		parent = mapGrp, 
+		x = 0,
+		y = 0,
+		width = 6, 
+		height = 6
+	} 
+
+	map.rover = act:newImage( "tracking_dot.png", dotData )
+	map.rover.x = (game.saveState.rover.x1 - mapGrp.x) * mapZoomGrp.xScale
+	map.rover.y = (game.saveState.rover.y1 - mapGrp.y) * mapZoomGrp.yScale
+	map.rover.leftShip = false
+	map.rover.lastShipDistance = 0
+end
+
 -- Draw a new rover course on map
 local function drawCourse( x1, y1, x2, y2 )
 
@@ -271,6 +292,20 @@ local function drawCourse( x1, y1, x2, y2 )
 	map.rover:toFront()	
 end
 
+-- Calculate course coordinates
+local function calcCourseCoords( x2, y2 )
+	map.courseVX = (x2 - map.rover.x)/map.courseLength
+	map.courseVY = (y2 - map.rover.y)/map.courseLength
+
+	while game.xyInRect( x2, y2, mapGrp ) do
+		x2 = x2 + map.courseVX
+		y2 = y2 + map.courseVY
+	end
+
+	game.saveState.rover.x2 = x2 - 2 * map.courseVX + mapGrp.x
+	game.saveState.rover.y2 = y2 - 2 * map.courseVY + mapGrp.y
+end
+
 -- Map touch event handler
 local function mapTouched( event )
 	if event.phase == "began" then
@@ -284,24 +319,15 @@ local function mapTouched( event )
 
 		-- if course exists, calculate unit vectors & find map zoomBoundary intersection point
 		if map.courseLength > 0 then
-			map.courseVX = (x2 - x1)/map.courseLength
-			map.courseVY = (y2 - y1)/map.courseLength
-
-			while game.xyInRect( x2, y2, mapGrp ) do
-				x2 = x2 + map.courseVX
-				y2 = y2 + map.courseVY
-			end
-
-			x2 = x2 - 2 * map.courseVX
-			y2 = y2 - 2 * map.courseVY
+			calcCourseCoords( x2, y2 )
 		else
 			map.courseVX = 0
 			map.courseVY = 0
 		end
 
 		-- set global variables to new destination coordinates
-		game.saveState.rover.x2 = x2 + mapGrp.x
-		game.saveState.rover.y2 = y2 + mapGrp.y
+		x2 = game.saveState.rover.x2 - mapGrp.x
+		y2 = game.saveState.rover.y2 - mapGrp.y
 
 		-- calculate new course length
 		map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
@@ -323,8 +349,8 @@ end
 local function mapZoom( event )
 
 	-- Convert the tracking dot position into zoom point coordinates 
-	local roverX = ((game.saveState.rover.x1 - mapGrp.x) - map.x/map.xScale) * map.scale  
-	local roverY = ((game.saveState.rover.y1 - mapGrp.y) - map.y/map.yScale) * map.scale  
+	local roverX = ((game.saveState.rover.x1 - mapGrp.x) - mapZoomGrp.x/mapZoomGrp.xScale) * map.scale  
+	local roverY = ((game.saveState.rover.y1 - mapGrp.y) - mapZoomGrp.y/mapZoomGrp.yScale) * map.scale  
 
 	-- Calculate the boundary coordinates beyond which the map will pan beyond its container
 	local zoomBoundary = (map.width * map.scale - map.width)/2
@@ -345,7 +371,7 @@ local function mapZoom( event )
 		yScale = map.scale,
 		time = 1000,
 	}
-	transition.to( map, zoomData )
+	transition.to( mapZoomGrp, zoomData )
 
 	-- Transition the tracking dot to roverX, roverY
 	-- On completion, update game.saveState and re-enable zoom button
@@ -354,8 +380,8 @@ local function mapZoom( event )
 		y = roverY,
 		time = 1000,
 		onComplete = function() event.target:setEnabled( true );
-								game.saveState.rover.x1 = map.rover.x/map.xScale + mapGrp.x; 
-								game.saveState.rover.y1 = map.rover.y/map.yScale + mapGrp.y;
+								game.saveState.rover.x1 = map.rover.x/mapZoomGrp.xScale + mapGrp.x; 
+								game.saveState.rover.y1 = map.rover.y/mapZoomGrp.yScale + mapGrp.y;
 						end 
 	}
 	transition.moveTo( map.rover, dotMoveData )
@@ -379,21 +405,6 @@ local function onZoomOutRelease( event )
 	end
 end
 
--- Create new rover map location tracking dot
-local function newMapDot()
-	local dotData = { 
-		parent = mapGrp, 
-		x = 0,
-		y = 0,
-		width = 6, 
-		height = 6
-	} 
-
-	map.rover = act:newImage( "tracking_dot1.png", dotData )
-	map.rover.x = (game.saveState.rover.x1 - mapGrp.x) * map.xScale
-	map.rover.y = (game.saveState.rover.y1 - mapGrp.y) * map.yScale
-end
-
 -- Create new map
 local function newMap()
 
@@ -408,7 +419,7 @@ local function newMap()
 		mapBgRect[i] = display.newRect( displayPanelGrp, mapX, mapY, mapLength + 6 - i, mapLength + 6 - i )
 		mapBgRect[i]:setFillColor( 0.5 - i/10, 0.5 - i/10, 0.5 - i/10 )
 	end
-	
+
 	-- create map display container
 	mapGrp = display.newContainer( displayPanelGrp, mapLength, mapLength )
 	mapGrp:translate( mapX, mapY )
@@ -417,20 +428,21 @@ local function newMap()
 	game.saveState.rover.x1 = mapGrp.x
 	game.saveState.rover.y1 = mapGrp.y
 
+	mapZoomGrp = act:newGroup( mapGrp )
+
 	-- create map
 	local mapData = { 
-		parent = mapGrp, 
+		parent = mapZoomGrp, 
 		x = 0, 
 		y = 0, 
 		width = mapLength,
 		height = mapLength
 	} 
 
-	-- create map image
-	map = act:newImage( "valles_marineris1.jpg", mapData )
+	-- Create map image
+	map = act:newImage( "valles_marineris.png", mapData )
 	map.course = nil
 	map.courseArrow = nil
-	map.courseLength = 0
 	map.courseVX = 0
 	map.courseVY = 0
 	map.scale = 1
@@ -440,11 +452,44 @@ local function newMap()
 	mapGrp.top = -map.width/2
 	mapGrp.bottom = map.width/2
 
-	-- add touch event listener to background image
+	-- Add touch event listener to background image
 	map:addEventListener( "touch", mapTouched )
 
-	-- add tracking dot to the map
+	-- Create spaceship
+	local spaceshipData = { 
+		parent = mapZoomGrp, 
+		x = 0, 
+		y = 0, 
+		width = 5, 
+		height = 5 
+	} 
+	
+	spaceship = act:newImage( "spaceship.png", spaceshipData )	
+
+	-- Add tracking dot to the map
 	newMapDot()
+	
+	local x1 = (game.saveState.rover.x1 - mapGrp.x) * mapZoomGrp.xScale
+	local y1 = (game.saveState.rover.y1 - mapGrp.y) * mapZoomGrp.yScale
+	local x2 = math.random(-map.width/2, map.width/2)
+	local y2 = math.random(-map.width/2, map.width/2)
+	game.saveState.rover.x2 = x2 
+	game.saveState.rover.y2 = y2
+
+	-- Calculate new course length
+	map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
+
+	-- Calculate the course coordinates
+	calcCourseCoords( x2, y2 )
+
+	-- Draw the initial course
+	drawCourse( x1, y1, x2, y2 )
+
+	-- Record the current x-axis position of the side scrolling rover
+	rover.distOldX = rover.x
+
+	-- Make rover active to allow for position updating
+	rover.active = true
 end
 
 -- Create the speed display text
@@ -459,7 +504,7 @@ local function newDisplayPanel()
 		height = act.height/3 + 10 ,
 	} 
 
-	displayPanel = act:newImage( "panel8.png", dispPanelData )
+	displayPanel = act:newImage( "panel.png", dispPanelData )
 
 	-- Create map
 	newMap()
@@ -470,10 +515,10 @@ local function newDisplayPanel()
 	    id = "zoomInButton",
 	    left = act.xMin + map.width + 10, 
 	    top = mapGrp.y - 20, 
-	    width = 20, 
-	    height = 20,
-	    label = "+",
-	    font = native.systemFontBold,
+	    width = 40, 
+	    height = 40,
+	    defaultFile = "media/rover/zoom_in_unpressed.png",
+		overFile = "media/rover/zoom_in_pressed.png",
 	    onRelease = onZoomInRelease
 	}
 
@@ -482,11 +527,11 @@ local function newDisplayPanel()
 	{
 	    id = "zoomOutButton",
 	    left = act.xMin + map.width + 10, 
-	    top = mapGrp.y, 
-	    width = 20, 
-	    height = 20,
-	    label = "-",
-	    font = native.systemFontBold,
+	    top = mapGrp.y + 20, 
+	    width = 40, 
+	    height = 40,
+	    defaultFile = "media/rover/zoom_out_unpressed.png",
+		overFile = "media/rover/zoom_out_pressed.png",
 	    onRelease = onZoomOutRelease
 	}
 
@@ -546,7 +591,7 @@ local function brakeRover()
 	if rover.kph < 20 then
 		rover.angularV = 0
 	else 
-		rover.angularV = rover.angularV * rover.kph/500
+		rover.angularV = rover.angularV * rover.kph/400
 	end
 end
 
@@ -571,22 +616,43 @@ end
 
 local function updatePosition()
 
-	-- Calculate distance rover has moved
-	local distMoved = ( rover.x - rover.distOldX )/100
+	-- Calculate distance rover has moved in the scrolling view
+	local distMoved = ( rover.x - rover.distOldX )/400
 	rover.distOldX = rover.x
 
 	-- Update the unscaled rover coordinates
-	game.saveState.rover.x1 = map.rover.x/map.xScale + mapGrp.x + distMoved * map.courseVX; 
-	game.saveState.rover.y1 = map.rover.y/map.yScale + mapGrp.y + distMoved * map.courseVY;
+	game.saveState.rover.x1 = map.rover.x/mapZoomGrp.xScale + mapGrp.x + distMoved * map.courseVX; 
+	game.saveState.rover.y1 = map.rover.y/mapZoomGrp.yScale + mapGrp.y + distMoved * map.courseVY;
 
 	-- Update the scaled rover coordinates
-	map.rover.x = (game.saveState.rover.x1 - mapGrp.x) * map.xScale
-	map.rover.y = (game.saveState.rover.y1 - mapGrp.y) * map.yScale
+	map.rover.x = (game.saveState.rover.x1 - mapGrp.x) * mapZoomGrp.xScale
+	map.rover.y = (game.saveState.rover.y1 - mapGrp.y) * mapZoomGrp.yScale
 
-	local x1 = map.rover.x
-	local y1 = map.rover.y
-	local x2 = game.saveState.rover.x2 - mapGrp.x
-	local y2 = game.saveState.rover.y2 - mapGrp.y
+	local x1 = map.rover.x 
+	local y1 = map.rover.y 
+	local x2 = mapZoomGrp.x/map.xScale
+	local y2 = mapZoomGrp.y/map.yScale
+
+	-- Calculate the rover's distance from the ship
+	local distanceFromShip = math.sqrt((x1*x1) + (y1*y1)) + math.sqrt((x2*x2) + (y2*y2)) 
+	--print( distanceFromShip, map.rover.x, game.saveState.rover.x1, mapZoomGrp.x, map.xScale )
+	-- local a = math.sqrt((x1*x1) + (y1*y1)) 
+	-- local b = math.sqrt((x2*x2) + (y2*y2)) 
+	-- print(a,b)
+
+	x1 = map.rover.x
+	y1 = map.rover.y
+	x2 = (game.saveState.rover.x2 - mapGrp.x)
+	y2 = (game.saveState.rover.y2 - mapGrp.y)
+
+	
+	-- If the rover has returned to the ship, then go to mainAct
+	if distanceFromShip <= 6 and rover.leftShip then
+		rover.leftShip = false
+		game.gotoAct ( "mainAct" )
+	elseif not rover.leftShip and distanceFromShip > 6 then
+		rover.leftShip = true
+	end
 
 	-- Calculate new course length
 	map.courseLength = map.courseLength - distMoved
@@ -613,8 +679,8 @@ local function updatePosition()
 		end
 		
 		-- Update saveState coordinates
-		game.saveState.rover.x1 = map.rover.x / map.xScale + mapGrp.x
-		game.saveState.rover.y1 = map.rover.y / map.yScale + mapGrp.y
+		game.saveState.rover.x1 = map.rover.x / mapZoomGrp.xScale + mapGrp.x
+		game.saveState.rover.y1 = map.rover.y / mapZoomGrp.yScale + mapGrp.y
 		game.saveState.rover.x2 = map.rover.x + mapGrp.x
 		game.saveState.rover.y2 = map.rover.y + mapGrp.y
 
@@ -670,16 +736,27 @@ local function moveRover()
 
 	-- If rover is upturned, then reveal the reset button
 	if (rover.rotation % 360 > 90 and rover.rotation % 360 < 270) and rover.kph == 0 then
-		resetButton.isVisible = true
+
+		function displayRecoverButton()
+			if (rover.rotation % 360 > 80 and rover.rotation % 360 < 280) and rover.kph == 0 then
+				recoverButton.isVisible = true
+				ctrlPanelGrp.accelButton.isVisible = false
+				rover.accelerate = false
+			end
+		end
+
+		timer.performWithDelay( 2000, displayRecoverButton() )
 	end
 end
 
 -- Scroll the terrain to the left
 local function moveTerrain()
+	local terrainExtent = act.width + terrainExcess - terrainOffset
+
 	-- recycle terrain rectangle if sufficiently offscreen
     for i = 1, #terrain do
 		if terrain[i].contentBounds.xMax < act.xMin + terrainOffset then
-			terrain[i].x = terrain[i].x + act.width + terrainExcess
+			terrain[i].x = terrain[i].x + 2 * terrainExtent
 		end
 	end
 
@@ -688,8 +765,7 @@ local function moveTerrain()
 	for i = 1, #obstacle do
 		if obstacle[i].contentBounds.xMax < act.xMin + terrainOffset then
 			local x = math.random( 
-				obstacle[i].x + act.width + terrainExcess, 
-				obstacle[i].x + 2 * ( act.width + terrainExcess ) )
+				obstacle[i].x + terrainExtent, obstacle[i].x + 2 * terrainExtent )
 			local size = math.random( 5, 10 )
 			display.remove( obstacle[i] )
 			obstacle[i] = shape[math.random(1, 4)]( x, act.yMax - elevation, size )
@@ -710,18 +786,23 @@ local function onAccelRelease( event )
 	rover.accelerate = false
 end
 
--- Stop button event handler
-local function onStopPress( event )
+-- Brake button event handler
+local function onBrakePress( event )
 	rover.brake = true
 end
 
--- Stop button event handler
-local function onStopRelease( event )
+-- Brake button event handler
+local function onBrakeRelease( event )
 	rover.brake = false
 end
 
+-- Water scan button event handler
+local function onWaterRelease( event )
+	game.gotoAct ( "drillScan", { effect = "zoomInOutFade", time = 1000 } )
+end
+
 -- Reset button event handler
-local function onResetPress( event )
+local function onRecoverPress( event )
 	-- reposition terrain
 	for i = 1, #terrain do
 		terrain[i].x = terrain[i].x - rover.x + 100
@@ -749,24 +830,29 @@ local function onResetPress( event )
 	rover.speedOldX = rover.x
 	speedText.text = string.format( speedText.format, 0, "kph" )
 
-	resetButton.isVisible = false
+	-- display accelerator, hide recover button
+	ctrlPanelGrp.accelButton.isVisible = true
+	recoverButton.isVisible = false
+	
+	-- reactivate rover
+	rover.active = true
 end
 
 local function newControlPanel()
 
 	-- set panel backgroud image
 	local ctrlPanelData = { 
-		parent = controlPanelGrp, 
+		parent = ctrlPanelGrp, 
 		x = act.xCenter, 
 		y = act.yMax + act.height/12, 
 		width = act.width, 
 		height = act.height/3 + 10,
 	} 
 
-	displayPanel = act:newImage( "panel8.png", ctrlPanelData )
+	displayPanel = act:newImage( "panel.png", ctrlPanelData )
 
 	-- create the accelerator
-	local accelButton = widget.newButton
+	ctrlPanelGrp.accelButton = widget.newButton
 	{
 		x = act.xCenter + 35,
 		y = act.yMax - 24,
@@ -779,35 +865,47 @@ local function newControlPanel()
 	}
 
 	-- create the stop button
-	local stopButton = widget.newButton
+	local brakeButton = widget.newButton
 	{
 		x = act.xCenter - 35,
 		y = act.yMax - 24,
 		width = 40,
 		height = 40,
-		defaultFile = "media/rover/stop_unpressed.png",
-		overFile = "media/rover/stop_pressed.png",
-		onPress = onStopPress,
-		onRelease = onStopRelease
+		defaultFile = "media/rover/brake_unpressed.png",
+		overFile = "media/rover/brake_pressed.png",
+		onPress = onBrakePress,
+		onRelease = onBrakeRelease
+	}
+
+	-- create the water scan button
+	local waterButton = widget.newButton
+	{
+		x = act.xMax - 28,
+		y = act.yMax - 24,
+		width = 40,
+		height = 40,
+		defaultFile = "media/rover/water_unpressed.png",
+		overFile = "media/rover/water_pressed.png",
+		onRelease = onWaterRelease
 	}
 
 	-- create the reset button
-	resetButton = widget.newButton
+	recoverButton = widget.newButton
 	{
-		x = act.xCenter,
-		y = act.yMax - 35,
-		width = 30,
-		height = 30,
+		x = act.xCenter + 35,
+		y = act.yMax - 23.5,
+		width = 48,
+		height = 48,
 		defaultFile = "media/rover/reset_unpressed.png",
 		overFile = "media/rover/reset_pressed.png",
-		onPress = onResetPress
+		onPress = onRecoverPress
 	}
+	recoverButton.isVisible = false
 
-	resetButton.isVisible = false
-
-	controlPanelGrp:insert( accelButton )
-	controlPanelGrp:insert( stopButton )
-	controlPanelGrp:insert( resetButton )
+	ctrlPanelGrp:insert( ctrlPanelGrp.accelButton )
+	ctrlPanelGrp:insert( brakeButton )
+	ctrlPanelGrp:insert( waterButton )
+	ctrlPanelGrp:insert( recoverButton )
 end
 
 -- Update the speed display
@@ -842,7 +940,7 @@ function act:init()
 	staticBgGrp = act:newGroup()
 	staticFgGrp = act:newGroup()
 	dynamicGrp = act:newGroup()	
-	controlPanelGrp = act:newGroup( staticFgGrp )
+	ctrlPanelGrp = act:newGroup( staticFgGrp )
 	displayPanelGrp = act:newGroup( staticFgGrp )
 
 	-- create background
