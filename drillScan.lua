@@ -37,10 +37,12 @@ local transitionDrill
 local backButton
 local chooseBg
 local returnTrue
+local infoGroupDismiss
 
 -- Display group declaration
 
 local textGroup
+local infoGroup
 
 -- Variable declaration
 
@@ -133,22 +135,22 @@ function act:init()
 	textGroup.x = XC
 	textGroup.y = H - 1.8 * H / 5
 
-	contamOrigin = 0
+	local contamOrigin = 0
 	contamText = display.newText( textGroup, contamOrigin .. "% Contaminated", -150, 0, native.systemFont, 17 )
 	contamText.fill = { 0 }
 	contamText.anchorX = 0
 
-	freezeOrigin = 0
+	local freezeOrigin = 0
 	freezeText = display.newText( textGroup, freezeOrigin .. "% Frozen", -150, 17, native.systemFont, 17 )
 	freezeText.fill = { 0 }
 	freezeText.anchorX = 0
 
-	litersOrigin = 0
+	local litersOrigin = 0
 	litersText = display.newText( textGroup, litersOrigin .. " Liters", -150, 34, native.systemFont, 17 )
 	litersText.fill = { 0 }
 	litersText.anchorX = 0
 
-	energyOrigin = 0
+	local energyOrigin = 0
 	energyText = display.newText( textGroup, "Energy Cost:  " .. energyOrigin .. " kWh", -150, 51, native.systemFont, 17 )
 	energyText.fill = { 0 }
 	energyText.anchorX = 0
@@ -171,8 +173,31 @@ function act:init()
 	drillButton.y = H - 1.5 * H / 5
 	drillButton.isVisible = false
 
+	infoGroup = display.newGroup()
+	infoGroup.x, infoGroup.y = XC, YC
+
+	local infoScreen = display.newRect( infoGroup, 0, 0, W, H )
+	infoScreen.fill = { 0, 0, 0, 0.7 }
+
+	local infoText1 = display.newText( infoGroup, "Tap to scan the surface of mars", 0, -60, native.systemFont, 20 )
+	local infoText1 = display.newText( infoGroup, "Tap water spots to select them", 0, -30, native.systemFont, 20 )
+	local infoText1 = display.newText( infoGroup, "Level indicates difficulty from 1-10", 0, 0, native.systemFont, 20 )
+	local infoText1 = display.newText( infoGroup, "Tap drill button to go to Drill activity", 0, 30, native.systemFont, 20 )
+	local infoText1 = display.newText( infoGroup, "Tap this screen to dismiss it", 0, 60, native.systemFont, 20 )
+
+	if game.drillDone then
+
+		infoGroup.isVisible = false
+
+	else
+
+		infoGroup.isVisible = true
+
+	end
+
 	act.group:insert( drillButton )
 	act.group:insert( textGroup )
+	act.group:insert( infoGroup )
 
 end
 
@@ -180,6 +205,7 @@ function act:prepare()
 
 	marsSurface:addEventListener( "touch", scan )
 	infoConsole:addEventListener( "touch", returnTrue )
+	infoGroup:addEventListener( "touch", infoGroupDismiss )
 
 end
 
@@ -190,6 +216,19 @@ function returnTrue(event)
 		return true
 
 	end
+
+end
+
+function infoGroupDismiss( event )
+
+	if event.phase == "began" then
+
+		infoGroup.isVisible = false
+		game.drillDone = true
+
+	end
+
+	return true
 
 end
 
