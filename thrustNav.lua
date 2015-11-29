@@ -246,8 +246,9 @@ function act:prepare()
 			-- move spaceGroup to final position
 			xVelocity = 0
 			yVelocity = 0
-			spaceGroup.x = 110
-    		spaceGroup.y = 165
+			print( "act.width=", act.width, "act.height=", act.height )
+			spaceGroup.x = act.width * 0.34375  -- 110 works for iPhone5
+    		spaceGroup.y = act.height * 0.4128    -- 165 works for iPhone5
     	end
     elseif( game.saveState.thrustNav.state == 1  ) then  -- start of round 2
 		-- move and resize marsffor orbit entry
@@ -257,15 +258,16 @@ function act:prepare()
    		mars.height = mars.height * 8
    		totalRocketImpulses = 0
 		xVelocity = 0
-		yVelocity = 0
 		-- printPositions()
     	if( game.cheatMode ) then		-- move spaceGroup to final position	
-			spaceGroup.x = -30
-    		spaceGroup.y = 165
-    	else
+			spaceGroup.x = act.width * ( -0.09375 )  --   -30 works for iphone5
+    		spaceGroup.y = act.height * 0.4128 -- 165 works for iphone 5
+    		yVelocity = 0
+		else
     		spaceGroup.x = spaceGroup.x - ( mars.width / 2  ) + 20 
     		spaceGroup.y = spaceGroup.y - ( mars.height )
-    	end
+    		yVelocity = 0.1
+		end
     	-- printPositions()
     	local xCenter = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2
     	local yCenter = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2
@@ -354,8 +356,8 @@ function act:init()
     -- create planets in spaceGroup
     mars = display.newImageRect( spaceGroup, "media/thrustNav/mars.png", 30, 30 )
     print("act.xMin=",act.xMin, " act.yMin=", act.yMin)
-    mars.x = act.xMin + 50
-    mars.y = act.yMin + 100
+    mars.x = act.xMin + act.width * 0.15625
+    mars.y = act.yMin + act.height * 0.08803
     print("Mars anchorX=", mars.anchorX, "anchorY=", mars.anchorY )
     print("Mars is placed at ", mars.x, ",", mars.y , " in spaceGroup before move") 
 
