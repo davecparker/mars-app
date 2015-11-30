@@ -43,6 +43,8 @@ local buttonRollLeft   	-- button to Roll ship left
 local buttonRollRight  	-- button to Roll ship right
 local buttonPitchUp    	-- button to pitch ship up
 local buttonPitchDown  	-- button to pitch ship down
+local buttonTurnRightFlame, buttonTurnLeftFlame  -- Rocket Flames for button press
+local buttonPitchUpFlame, buttonPitchDownFlame  -- Rocket Flames for button press
 local ship             	-- ship object
 local spaceGroup    	-- group for rotating space background
 local xVelocity, yVelocity, rotVelocity  -- positional deltas used on each enter frame
@@ -119,11 +121,13 @@ function buttonTurnLeftTouch (event)
 		accelerateFrameCount = 0
 		xVelocity = xVelocity + xVelocityInc
 		leftAccelerate = true
+		buttonTurnLeftFlame.isVisible = true
 		-- printPositions()
 		updateEnergy()
 		display.getCurrentStage():setFocus( event.target )  -- helps when fingers move
 	elseif event.phase == "ended" or event.phase == "cancelled" then
 		leftAccelerate = false
+		buttonTurnLeftFlame.isVisible = false
 		display.getCurrentStage():setFocus(nil)
 	end
 	return true
@@ -139,10 +143,12 @@ function buttonTurnRightTouch (event)
 		-- xVelocity = xVelocity - xVelocityInc
 		-- printPositions()
 		rightAccelerate = true
+		buttonTurnRightFlame.isVisible = true
 		updateEnergy()
 		display.getCurrentStage():setFocus( event.target )  -- helps when fingers move
 	elseif event.phase == "ended" or event.phase == "cancelled" then
 		rightAccelerate = false
+		buttonTurnRightFlame.isVisible = false
 		display.getCurrentStage():setFocus(nil)
 	end
 	return true
@@ -180,11 +186,13 @@ function buttonPitchUpTouch (event)
 		yVelocity = yVelocity + yVelocityInc
 		accelerateFrameCount = 0
 		upAccelerate = true
+		buttonPitchUpFlame.isVisible = true
 		-- printPositions()
 		updateEnergy()
 		display.getCurrentStage():setFocus( event.target )  -- helps when fingers move
 	elseif event.phase == "ended" or event.phase == "cancelled" then
 		upAccelerate = false
+		buttonPitchUpFlame.isVisible = false
 		display.getCurrentStage():setFocus(nil)
 	end
 	return true
@@ -198,11 +206,13 @@ function buttonPitchDownTouch(event)
 		yVelocity = yVelocity - yVelocityInc
 		accelerateFrameCount = 0
 		downAccelerate = true
+		buttonPitchDownFlame.isVisible = true
 		-- printPositions()
 		updateEnergy()
 		display.getCurrentStage():setFocus( event.target )  -- helps when fingers move
 	elseif event.phase == "ended" or event.phase == "cancelled" then
 		downAccelerate = false
+		buttonPitchDownFlame.isVisible = false
 		display.getCurrentStage():setFocus(nil)
 	end
 	return true
@@ -230,6 +240,7 @@ end
 -- Act prepare is called after act:init and also when game is played again
 function act:prepare()
 	print("thrustNav:act:prepare", game.saveState.thrustNav.state )
+	game.saveState.thrustNav.onTarget = false
 	if( game.saveState.thrustNav.state < 1 ) then  -- start of first time played
 		if( game.cheatMode ) then
 			-- move spaceGroup to final position
@@ -279,6 +290,11 @@ function act:prepare()
 	end
 end
 
+-- Start the act
+function act:start()
+	game.playAmbientSound( "Ship Ambience.mp3" )
+end
+
 -- Init the act
 function act:init()
 	-- Load sound effects in Init so that if scene gets destroyed later and then restarted
@@ -291,13 +307,20 @@ function act:init()
 	-- Create control buttons, background, etc.
 	buttonTurnLeft = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
 	buttonTurnLeft.rotation = -90
+	buttonTurnLeftFlame = act:newImage( "rocketfire.png", { width = 17, height = 50 } )
+	buttonTurnLeftFlame.rotation = 90
 	buttonTurnRight = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
 	buttonTurnRight.rotation = 90
+	buttonTurnRightFlame = act:newImage( "rocketfire.png", { width = 17, height = 50 } )
+	buttonTurnRightFlame.rotation = -90
 --	buttonRollLeft = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
 --	buttonRollRight = act:newImage( "arrowbutton.png", { width = 30, height = 30 } )
 	buttonPitchUp = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
+	buttonPitchUpFlame = act:newImage( "rocketfire.png", { width = 17, height = 50 } )
+	buttonPitchUpFlame.rotation = 180
 	print( "buttonPitchUp=",buttonPitchUp )
 	buttonPitchDown = act:newImage( "arrowbutton.png" , { width = 50, height = 50 } )
+	buttonPitchDownFlame = act:newImage( "rocketfire.png", { width = 17, height = 50 } )
 	print( "buttonPitchDown=",buttonPitchDown )
 	buttonPitchDown.rotation = 180
 
@@ -369,10 +392,18 @@ function act:init()
 	buttonTurnLeft.x = act.xMin + act.width / 8
 	buttonTurnLeft.y = act.yMax - act.height / 12
 	buttonTurnLeft.isVisible = true
+	buttonTurnLeftFlame.x = buttonTurnLeft.x + buttonTurnLeft.width / 2 + buttonTurnLeftFlame.height / 2
+	buttonTurnLeftFlame.y = buttonTurnLeft.y
+	buttonTurnLeftFlame.isVisible = false 
 
 	buttonTurnRight.x = act.xMax - act.width / 8
 	buttonTurnRight.y = act.yMax - act.height / 12
 	buttonTurnRight.isVisible = true
+	buttonTurnRightFlame.rotation = -90
+	print("width=", buttonTurnRightFlame.width)
+	buttonTurnRightFlame.x = buttonTurnRight.x - buttonTurnRight.width / 2 - buttonTurnRightFlame.height / 2
+	buttonTurnRightFlame.y = buttonTurnRight.y
+	buttonTurnRightFlame.isVisible = false 
 
 	--- buttonRollLeft.x = act.xMax - (act.xMax - act.xMin) / 8
 	--- buttonRollLeft.y = act.yMax - (act.yMax - act.yMin) / 20
@@ -386,10 +417,17 @@ function act:init()
 	buttonPitchUp.x = act.xCenter
 	buttonPitchUp.y = act.yMax - act.height / 8 
 	buttonPitchUp.isVisible = true
+	buttonPitchUpFlame.x = buttonPitchUp.x 
+	buttonPitchUpFlame.y = buttonPitchUp.y + buttonPitchUp.width / 4 + buttonPitchUpFlame.height / 2
+	buttonPitchUpFlame.isVisible = false 
+
 
 	buttonPitchDown.x = act.xCenter
 	buttonPitchDown.y = act.yMax - act.height / 30 
 	buttonPitchDown.isVisible = true
+	buttonPitchDownFlame.x = buttonPitchDown.x 
+	buttonPitchDownFlame.y = buttonPitchDown.y - buttonPitchDown.width / 4 - buttonPitchDownFlame.height / 2
+	buttonPitchDownFlame.isVisible = false 
 
 	buttonTurnLeft:addEventListener( "touch", buttonTurnLeftTouch )
 	buttonTurnRight:addEventListener( "touch", buttonTurnRightTouch )
@@ -427,7 +465,6 @@ end
 	
 -- function definition to use in showHint call
 function goMainAct()
-	game.saveState.thrustNav.onTarget = true
 	game.gotoAct ( "mainAct" )
 end
 	
@@ -479,6 +516,7 @@ function updateNavStats()
 		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
 		-- game.showHint( "Nicely Done!  You are On Target!", "Ship Navigation", goMainAct )
 		game.messageBox( "Nicely Done!  You are On Target!", { onDismiss = goMainAct } )
+		game.saveState.thrustNav.onTarget = true
 	elseif( onTargetXY.isVisible == true and math.abs( xVelocity ) < 0.00001 and math.abs( yVelocity ) < 0.00001 
 			and game.saveState.thrustNav.state == 2 ) then
 		-- game.messageBox( "Nicely Done!!", { width = act.width * 4, fontSize = 200 })
@@ -487,6 +525,7 @@ function updateNavStats()
 		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
 		-- game.showHint( "Nicely Done!  You are now in Orbit!", "Ship Navigation", goMainAct )
 		game.messageBox( "Nicely Done!  You are in Orbit!", { onDismiss = goMainAct } )
+		game.saveState.thrustNav.onTarget = true
 	end
 
 	if( hasCollided( earth, targetRect ) ) then

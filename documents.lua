@@ -19,7 +19,6 @@ local act = game.newAct()
 
 -- Act variables
 local tableView     -- TableView widget to display list of documents
-local badge         -- tab bar badge for new document indicator
 
 
 -- Draw a row in the tableView
@@ -43,7 +42,7 @@ local function onRowTouch( event )
 	if event.phase == "tap" or event.phase == "release" then
 		-- Set name of doc to open and switch to document view
 		game.openDoc = game.saveState.docs[event.row.index]
-		game.gotoAct( "document", { effect = "slideLeft", time = 300 } )
+		game.gotoScene( "document", { effect = "slideLeft", time = 300 } )
 	end
 end
 
@@ -76,12 +75,6 @@ function act:prepare()
 	end
 end
 
--- Start the act
-function act:start()
-	-- Hide the new document badge if showing
-	game.hideBadge( badge )
-end
-
 -- Add the document with the given filename to the user's found documents
 function game.foundDocument( filename )
     -- Do nothing if the user already has this document
@@ -94,12 +87,6 @@ function game.foundDocument( filename )
 
     -- Add the new document to the end of the list
     docs[#docs + 1] = filename
-
-    -- Create new document badge if necessary, and show it
-	if not badge then
-		badge = game.createBadge( act.xMin + act.width * 0.55, act.yMax + 15 )
-	end
-	game.showBadge( badge )
 end
 
 

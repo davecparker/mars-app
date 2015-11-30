@@ -73,6 +73,9 @@ local gems = {
 	},
 }
 
+-- File local variables
+local gemGrabbed       -- the most recent gem grabbed by the user
+
 
 -- Return true if the ship gem with the given name is active (enabled and not used)
 function gems.shipGemIsActive( name )
@@ -87,13 +90,22 @@ function gems.enableShipGem( name, enable )
     gems.onShip[name].enabled = enable
 end
 
--- Handle touch on a document gem message box
-local function touchDocGemMessageBox( event )
+-- Handle touch on a gem message box
+local function touchGemMessageBox( event )
     if event.phase == "began" then
-        -- Go to Documents view
         game.endMessageBox()
-        game.openDoc = nil
-        game.selectGameTab( 3, true )
+
+        -- Do action associated with the gem message, if any
+        if gemGrabbed then
+            if gemGrabbed.t == "doc" then
+                -- Open the gem's document 
+                game.openDoc = gemGrabbed.file
+                game.gotoTab( 3 )
+            elseif gemGrabbed.t == "res" then
+                -- Go to Resources view
+                game.gotoTab( 2 )
+            end
+        end
     end
     return true
 end
@@ -101,15 +113,14 @@ end
 -- Grab the gem with the given icon, display it for the user in a message box, 
 -- then mark it as used and remove it from the screen.
 function gems.grabGemIcon( icon )
+    gemGrabbed = icon.gem
+
     -- Make text for the message box
     local text
-    local gem = icon.gem
-    local onTouch = nil
-    if gem.t == "doc" then
-        text = "File: " .. gem.file
-        onTouch = touchDocGemMessageBox
-    elseif gem.t == "res" then
-        local res = gem.res
+    if gemGrabbed.t == "doc" then
+        text = "File: " .. gemGrabbed.file
+    elseif gemGrabbed.t == "res" then
+        local res = gemGrabbed.res
         local format
         if res == "o2" then
             format = "%d liters of Oxygen"
@@ -122,14 +133,14 @@ function gems.grabGemIcon( icon )
         else
             return  -- malformed gem
         end
-        text = string.format( format, gem.amount )
+        text = string.format( format, gemGrabbed.amount )
     else
         return  -- not a grabable gem
     end
 
     -- Display message box zooming out from the gem's location
     local x, y = icon:localToContent( 0, 0 )
-    game.messageBox( text, { x = x, y = y, onTouch = onTouch } )
+    game.messageBox( text, { x = x, y = y, onTouch = touchGemMessageBox } )
 
     -- Use and remove the gem
 	game.saveState.usedGems[icon.name] = true

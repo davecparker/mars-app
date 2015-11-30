@@ -16,19 +16,25 @@ local act = game.newAct()
 local widget = require( "widget" )  -- need to make buttons
 -------------------------- Variables ------------------------------------------------------
 --local xyText		-- text display object for touch location =======================================================================
+local wireCutVersion = 1 -- this is the version of wire cut to be used
 local wireImage
 local wire1, wire2, wire3, wire4, wire5, wire6, wire7, wire8, wire9, wire10, wire11  -- wires
 local orTL, orTR, orBL                -- or gates
-local andTop, andBottom              -- and gates
-local ledTop, ledMid, ledBottom      -- LEDs
+local andTop, andBottom               -- and gates
+local ledTop, ledMid, ledBottom       -- LEDs
 local toolbox
 local backButton
 local toolWindow
-local toolIcon                       -- the tool selected icon
+local toolIcon                        -- the tool selected icon
 local tapeSelected = false
 local wireCutterSelected = false
 local manual  
-local manualPage         -- what page of the manual you are on
+local manualPage                      -- what page of the manual you are on
+-- audio
+local cutSFX
+local tapeSFX
+local toolboxSFX
+local panelSFX
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -88,10 +94,15 @@ end
 -- controls what happnes when you touch the manual
 local function manualTouch ( event )
 	if event.phase == "ended" then
-		-- manual image sheet
+		-- manual image sheets to be used, set to 1 for debug mode
+		local param = 1
+		local manualVersion = {"manual.png", "manual2.png", "manual3.png", "manual4.png"}
+		if game.actParam then
+			param = game.actParam
+		end
 		local manualOptions = { width = 440, height = 600, numFrames = 3 }
 		local manualSequence = { name = manual, start = 1, count = 3 }
-		local manualImageSheet = graphics.newImageSheet( "media/circuit/manual.png", manualOptions )
+		local manualImageSheet = graphics.newImageSheet( "media/circuit/" .. manualVersion[param], manualOptions )
 		manual = display.newSprite( act.group, manualImageSheet, manualSequence )
 		manual.x = act.xCenter
 		manual.y = act.yCenter
@@ -133,6 +144,7 @@ end
 -- function for the toolbox touch
 local function toolboxTouch (event) 
 	if event.phase == "began" then
+		game.playSound (toolboxSFX)
 		if toolWindow == nil then
 			if manual then     -- remove the manual if its up
 				manual:removeSelf( )
@@ -172,8 +184,17 @@ end
 
 -- fade out to next part of game
 local function endFade ()
+	--game.playSound(panelSFX)
 	game.panelFixed = true
 	game.gotoAct ( "mainAct", { effect = "fade", time = 100 } )
+end
+
+-- play the sound effect for the panel after a delay
+local function panelSound ()
+	timer.performWithDelay( 900, 
+				function () 
+					game.playSound(panelSFX) 
+				end )
 end
 
 -- end of act function
@@ -187,7 +208,7 @@ local function endAct()
 	toolbox = nil
 	toolIcon:removeSelf( )
 	toolIcon = nil
-	transition.to( panel, { time = 1000, transition = easing.outSine, x = act.xCenter - 3, delay = 500 } )
+	transition.to( panel, { time = 1000, transition = easing.outSine, x = act.xCenter - 3, delay = 500, onStart = panelSound } )
 	transition.scaleBy( act.group, { xScale = -0.5, yScale = -0.5, time = 2000 } )
 	transition.to( act.group, { time = 2002, x = game.xCenter / 2, y = game.yCenter / 2 - 20, onComplete = endFade } )
 end
@@ -242,8 +263,24 @@ local function checkState ()
 		andBottom:setFrame( 1 )
 		ledBottom:setFrame( 1 )
 	end
-	-- vicotory condition
-	if ledTop.frame == 2 and ledMid.frame == 2 and ledBottom.frame == 1 then
+	-- vicotory condition version 1
+	if ledTop.frame == 2 and ledMid.frame == 2 and ledBottom.frame == 1 and game.actParam == 1 then
+		endAct()
+	end
+	-- vicotory condition version 2
+	if ledTop.frame == 1 and ledMid.frame == 2 and ledBottom.frame == 2 and game.actParam == 2 then
+		endAct()
+	end
+	-- vicotory condition version 3
+	if ledTop.frame == 1 and ledMid.frame == 1 and ledBottom.frame == 2 and game.actParam == 3 then
+		endAct()
+	end
+	-- vicotory condition version 4
+	if ledTop.frame == 1 and ledMid.frame == 2 and ledBottom.frame == 1 and game.actParam == 4 then
+		endAct()
+	end
+	-- vicotory condition version debug version
+	if ledTop.frame == 2 and ledMid.frame == 2 and ledBottom.frame == 1 and game.actParam == nil then
 		endAct()
 	end
 end
@@ -255,9 +292,11 @@ local function wireTouch ( event )
 		if w.wire.isCut == false and wireCutterSelected == true then-- ========================================================================================
 			w.wire:setFrame( 2 )
 			w.wire.isCut = true
+			game.playSound (cutSFX)
 		elseif w.wire.isCut == true and tapeSelected == true then
 			w.wire:setFrame( 1 )
 			w.wire.isCut = false
+			game.playSound (tapeSFX)
 		end
 	end
 	checkState ()  -- check the state of the game
@@ -497,6 +536,13 @@ function act:init()
 	toolbox.y = act.yMin + 30
 	toolbox:addEventListener( "touch", toolboxTouch )
 
+	-- load the sounds
+	cutSFX = act:loadSound ("Cut2.wav")
+	tapeSFX = act:loadSound ("Tape7.wav")
+	toolboxSFX = act:loadSound ("ToolboxOpen.wav")
+	panelSFX = act:loadSound ("Panel.wav")
+
+	print(game.actParam)
 
 	-- Touch location text display objects==============================================================================================
 	--local yText = act.yMin + 15   -- relative to actual top of screen

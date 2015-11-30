@@ -17,6 +17,7 @@ local stateStartMoves = 0      -- number of times dot had moved at start of curr
 
 -- Ship state sequence data. Entries are indexed by state number and contain:
 --     delay (optional)  = delay before start of action in seconds
+--     moves (optional)  = number of times user must move on map before start of action
 --     action (required) = function that returns next state, true for next, or nil to stay
 local shipStateData = {
 	{ delay = 3, action =  -- Send awaken messsages
@@ -57,7 +58,7 @@ local shipStateData = {
 					function ()
 	        			game.sendMessage( "fileJ1" )
  						gems.enableShipGem( "jordan1" )
-       				return true
+       					return true
         			end },
 	{ moves = 3, action =  -- Wait for user to enter Shaw's room
 					function ()
@@ -79,7 +80,10 @@ local shipStateData = {
         			end },
 	{ action =  -- Fix panel #1
 					function ()
-						if game.panelFixed then
+						if game.panelFixed and game.currentActName() == "mainAct" then
+							gems.enableShipGem( "panel1", false )
+							game.removeAct( "circuit" )
+							game.removeAct( "wireCut" )
 							return true
 						end
         			end },
@@ -88,7 +92,7 @@ local shipStateData = {
 	 					gems.enableShipGem( "graham1" )
         				game.sendMessages( "antFail", "mcSignal" )
  	 					gems.enableShipGem( "moore" )
-       				return true
+       					return true
         			end },
 	{ delay = 5, action =  -- Notify to tend greenhouse
 					function ()
@@ -108,7 +112,6 @@ local shipStateData = {
         				return true
         			end },
 
---[[
 	{ delay = 2, action =  -- Notify to fix panel #2
 					function ()
 						game.sendMessage( "panel2" )
@@ -118,11 +121,12 @@ local shipStateData = {
         			end },
 	{ action =  -- Fix panel #2
 					function ()
-						if game.panelFixed then
+						if game.panelFixed and game.currentActName() == "mainAct" then
+							gems.enableShipGem( "panel2", false )
+							game.removeAct( "circuit" )
+							game.removeAct( "wireCut" )
 							return true
-						end
-        			end },
---]]
+						end        			end },
 	{ moves = 3, action =  -- Send course correction #2 messages
 					function ()
 	 					gems.enableShipGem( "graham2" )
@@ -151,7 +155,6 @@ local shipStateData = {
 	        			game.sendMessage( "land" )
         				return true
         			end },
---[[
 	{ moves = 3, action =  -- Notify to fix panel #3
 					function ()
 						game.sendMessage( "panel3" )
@@ -161,15 +164,16 @@ local shipStateData = {
         			end },
 	{ action =  -- Fix panel #3
 					function ()
-						if game.panelFixed then
+						if game.panelFixed and game.currentActName() == "mainAct" then
+							gems.enableShipGem( "panel3", false )
+							game.removeAct( "circuit" )
+							game.removeAct( "wireCut" )
 							return true
-						end
-        			end },
---]]
+						end        			end },
 	{ delay = 2, action =  -- Landed
 					function ()
+						game.landShip()
 	        			game.sendMessage( "landed" )
-						ss.onMars = true
 						gems.enableShipGem( "rover" )
         			end },
 } 
