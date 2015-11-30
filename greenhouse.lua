@@ -265,7 +265,6 @@ end
 -- Stop the act
 function act:stop()
 	game.endMessageBox()
-	game.stopAmbientSound()
 	if timerID then
 		timer.cancel( timerID )
 		timerID = nil

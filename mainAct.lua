@@ -463,7 +463,6 @@ end
 
 -- Stop the act
 function act:stop()
-	game.stopAmbientSound()
 	game.endMessageBox()
 end
 

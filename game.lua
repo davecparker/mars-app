@@ -287,8 +287,14 @@ function game.stopSound( channel )
     end
 end
 
--- Play the ambient sound with the given filename, or stop if filename is nil
-function game.playAmbientSound( filename ) 
+-- Play the ambient sound with the given filename, or restart last sound if filename is nil.
+-- In either case, the volume is adjusted to the user's current selected level.
+function game.playAmbientSound( filename )
+	-- Restart previous sound if filename is nil
+	if not filename then
+		filename = ambientSound.name
+	end
+
 	-- Is the requested sound different from the previous one?
 	if filename ~= ambientSound.name then
 		-- Stop and discard previous sound.
@@ -305,10 +311,17 @@ function game.playAmbientSound( filename )
 		ambientSound.name = filename
 	end
 
-	-- Play requested sound if not already playing
-	if ss.soundOn and ambientSound.handle and not ambientSound.channel then
-		ambientSound.channel = audio.play( ambientSound.handle, { loops = -1 } )
-        audio.setVolume( ss.ambientVolume, { channel = ambientSound.channel } ) 
+	-- Play requested sound if not already playing, and adjust volume
+	if ss.soundOn and ambientSound.handle then
+		if not ambientSound.channel then
+			ambientSound.channel = audio.play( ambientSound.handle, { loops = -1 } )
+			if ambientSound.channel <= 0 then 
+				ambientSound.channel = nil   -- failed to play sound
+			end
+		end
+		if ambientSound.channel then
+        	audio.setVolume( ss.ambientVolume, { channel = ambientSound.channel } ) 
+        end
 	end
 end
 

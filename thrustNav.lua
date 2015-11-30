@@ -295,11 +295,6 @@ function act:start()
 	game.playAmbientSound( "Ship Ambience.mp3" )
 end
 
--- Stop the act
-function act:stop()
-	game.stopAmbientSound()
-end
-
 -- Init the act
 function act:init()
 	-- Load sound effects in Init so that if scene gets destroyed later and then restarted

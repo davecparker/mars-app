@@ -22,7 +22,6 @@ local soundSwitch
 local volumeControls   -- display group with volume controls
 local fxSlider
 local bgSlider
-local ambientChannel
 
 ------------------------- Start of Activity --------------------------------
 
@@ -31,10 +30,9 @@ local function enableSound( on )
 	ss.soundOn = on
 	volumeControls.isVisible = on
 	if on then
-		ambientChannel = game.playAmbientSound( "Ship Ambience.mp3" )
+		game.playAmbientSound()
 	else
 		game.stopAmbientSound()
-		ambientChannel = nil
 	end
 end
 
@@ -46,7 +44,7 @@ end
 -- FX volume slider listener
 local function bgSliderListener( event )
     ss.ambientVolume = event.value / 100
-	audio.setVolume( ss.ambientVolume, { channel = ambientChannel } ) 
+	game.playAmbientSound()  -- adjust volume of sound already playing
 end
 
 -- Make a new text label
@@ -121,10 +119,6 @@ function act:prepare()
 	bgSlider:setValue( ss.ambientVolume * 100 )
 end
 
--- Stop the act
-function act:stop()
-	game.stopAmbientSound()
-end
 
 ------------------------- End of Activity --------------------------------
 
