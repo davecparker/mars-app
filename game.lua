@@ -22,8 +22,9 @@ local game = {
     panelFixed = nil,     -- set to true when a circuit panel is successfully fixed
 
     -- Game state tracking
-    stateStartTime = 0,   -- value of system.getTimer() when current game state started
-    moves = 0,            -- number of times dot has moved since game start
+    currentMainAct = nil,   -- name of act currently running on the main tab
+    stateStartTime = 0,     -- value of system.getTimer() when current game state started
+    moves = 0,              -- number of times dot has moved since game start
 
     -- The saveState table is saved to a file between runs
     saveState = {

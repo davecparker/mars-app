@@ -58,16 +58,14 @@ end
 -- Handle touch on a row
 function onRowTouch( event )
 	if event.phase == "tap" or event.phase == "release" then
-		-- Run the selected activity module and remember it for next startup
-		local actName = debugActs[event.target.index]
-		game.selectGameTab( 1 )  -- Debug acts run off the main tab
-		game.gotoAct( actName )  
+		-- Run the selected activity module on the main tab
+		game.gotoAct( debugActs[event.target.index] )  
 	end
 end
 
 -- Handle press of the back button
 local function onBackButton()
-	game.gotoAct( "menu" )
+	game.gotoScene( "menu" )
 end
 
 -- Init the act

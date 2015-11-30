@@ -107,7 +107,7 @@ function act:init()
 		label = "Debug Menu",
 		onRelease = 
 			function ()
-				game.gotoAct( "debugMenu" )
+				game.gotoScene( "debugMenu" )
 			end
 	}
 	act.group:insert( button )
