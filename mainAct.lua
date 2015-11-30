@@ -364,10 +364,21 @@ local function backTapped()
 	return true
 end
 
+-- animates the stars in the background
+local function animateStars ()
+	transition.to( spaceBg.fill, { time = 10000, y = -0.1, delta = true, onComplete = animateStars } )
+end
+
 -- Init the act
 function act:init()
 	-- Background images (one is chosen in act:show)
-	spaceBg = act:newImage( "space.jpg", { height = act.height } )
+	--sets up the stars to animate
+	display.setDefault( "textureWrapY", "repeat" )
+	spaceBg = display.newRect( act.group, act.xCenter, act.yCenter, 700/1.5, 840/1.5 )
+	spaceBg.fill = { type = "image", filename = "media/mainAct/space.jpg" }
+	animateStars()
+
+	-- mars background Image
 	marsBg = act:newImage( "mars.jpg", { height = act.height } )
 	
 	-- Display group for ship elements (centered on ship)
@@ -376,7 +387,7 @@ function act:init()
 	shipGroup.y = act.yCenter
 
 	-- Map background with touch listener
-	local map = act:newImage( "shipPlan.png", { parent = shipGroup, width = act.width, x = 0, y = 0 } )
+	local map = act:newImage( "shipPlan2.png", { parent = shipGroup, width = act.width, x = 0, y = 0 } )
 	map:addEventListener( "touch", touchMap )
 
 	--[[ Display rectangles in the walkable parts of the hallways (testing only)
