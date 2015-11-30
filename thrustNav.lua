@@ -254,38 +254,41 @@ function act:prepare()
 		-- move and resize marsffor orbit entry
 		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
 		print( "playing second round of thrustNav", game.saveState.thrustNav.state )
-		mars.width = mars.width * 8
-   		mars.height = mars.height * 8
+		-- mars.width = mars.width * 8
+   		-- mars.height = mars.height * 8
+   		mars:scale( 8, 8 )
    		totalRocketImpulses = 0
 		xVelocity = 0
-		-- printPositions()
+		printPositions()
+    	-- put a circle around big Mars
+   		local xCenter = mars.x
+		local yCenter = mars.y
+		local c = display.newCircle( spaceGroup, xCenter, yCenter, ( mars.width * 4 ) +  mars.width / 1.6 )
+		print( "xCenter=", xCenter,"  yCenter=", yCenter )
+		print( "mars.width= ", mars.width )
+		print( "xmin=", mars.contentBounds.xMin, " xMax=", mars.contentBounds.xMax, 
+			" yMin=", mars.contentBounds.yMin, " yMax=", mars.contentBounds.yMax )
+		c.strokeWidth = 2
+		c:setStrokeColor( 0, 1, 0 ) 
+		c:setFillColor( 0, 0, 0, 0.2 )
     	if( game.cheatMode ) then		-- move spaceGroup to final position	
 			spaceGroup.x = act.width * ( -0.09375 )  --   -30 works for iphone5
     		spaceGroup.y = act.height * 0.4128 -- 165 works for iphone 5
     		yVelocity = 0
 		else
-    		spaceGroup.x = spaceGroup.x - ( mars.width / 2  ) + 20 
-    		spaceGroup.y = spaceGroup.y - ( mars.height )
+    		spaceGroup.x = spaceGroup.x - ( mars.width * 3 ) 
+    		spaceGroup.y = spaceGroup.y - ( mars.height * 5 )
     		yVelocity = 0.1
 		end
     	-- printPositions()
-    	local xCenter = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2
-    	local yCenter = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2
-		local c = display.newCircle( spaceGroup, xCenter, yCenter, ( mars.width / 2 ) + 20 )
-		-- print( "xCenter=", xCenter,"  yCenter=", yCenter )
-		-- print( "mars.width= ", mars.width )
-		c.strokeWidth = 2
-		c:setStrokeColor( 0, 1, 0 ) 
-		c:setFillColor( 0, 0, 0, 0.2 )
-    	printPositions()
-    	if( game.cheatMode ) then
-    		c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 + 30
-    		c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 - act.height / 3.3
-    	else
-    		c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 - 14
-    		c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 + act.height / 7.4
-    	end
     	print( "xCenter=", xCenter,"  yCenter=", yCenter )
+    	-- if( game.cheatMode ) then
+    	--	c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 + 30
+    	--	c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 - act.height / 3.3
+    	-- else
+    	--	c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 - 14
+    	--	c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 + act.height / 7.4
+    	-- end
 	elseif( game.saveState.thrustNav.state > 2 ) then
     	game.messageBox( "You are Already in orbit!", { onDismiss = goMainAct } )
 		-- game.showHint( "You are Already in orbit!", "Ship Navigation", goMainAct )
