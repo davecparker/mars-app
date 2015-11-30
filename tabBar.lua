@@ -13,8 +13,7 @@ local widget = require( "widget" )
 
 -- The tab bar widget and info
 local tabBar          -- the tab bar widget
-local selectedTab     -- the tab id of the currently selected tab
-local msgPreview
+local msgPreview      -- text message preview window
 
 -- The tab bar buttons
 local buttons = {
@@ -25,31 +24,35 @@ local buttons = {
     { id = "menu",       defaultFile = "media/game/menu.png" },
 }
 
--- Table that keeps track of the currnet act viewed on each tab, indexed by tab id.
--- If an entry is nil, the default (act = id) is used.
-local currentActForTab = {}
-
 
 -- Handle tab bar button events
 local function handleTabBarEvent( event )
-    -- Go to the current (or default) act for this tab
-    selectedTab = event.target._id
-    local act = currentActForTab[selectedTab] or selectedTab  -- tab id is default act
-    local effect = (selectedTab == "mainAct" and "slideRight") or "slideLeft"
-    game.gotoAct( act, { effect = effect, time = 300 } )
+    local scene = event.target._id   -- tab id is the scene name
+    local effect = "slideLeft"
+    if scene == "mainAct" then
+    	-- Restore current act playing on the main tab
+    	scene = game.currentMainAct
+    	effect = "slideRight"
+    elseif scene == "documents" then
+    	-- Open current document in documents view if any (else documents list)
+    	if game.openDoc then
+    		scene = "document"
+    	end
+	end
+	game.gotoScene( scene, { effect = effect, time = 300 } )
 end
 
 -- Handle touch on message preview 
 local function touchMessagePreview( event )
     if event.phase == "began" then
-        game.selectGameTab( 4, true )
-    end
+		game.gotoTab( 4 )   -- messages
+	end
     return true
 end
 
 -- Initialize the app tab bar and message preview on the bottom of the screen
 function initTabBar()
-    -- Assign properties common to all buttons and set the selectedTab
+    -- Assign properties common to all buttons
     local dxyIcon = game.dyTabBar - 10
     for i = 1, #buttons do
         local b = buttons[i]
@@ -57,11 +60,7 @@ function initTabBar()
         b.overFile = b.defaultFile
         b.width = dxyIcon
         b.height = dxyIcon
-        if b.selected then
-            selectedTab = b.id
-        end
     end
-    assert( selectedTab )
 
     -- Make the message preview window (under the tab bar)
     msgPreview = display.newGroup()
@@ -70,7 +69,7 @@ function initTabBar()
     msgPreview.yShow = game.yMax - game.dyTabBar * 1.5 + 2    -- just above tab bar
     msgPreview.y = msgPreview.yHide
     local r = display.newRect( msgPreview, 0, 0, game.width, game.dyTabBar )
-    r:setFillColor( 0.3 ) -- dark gray backgroug
+    r:setFillColor( 0.3 ) -- dark gray background
     r:setStrokeColor( 0 )  -- black frame
     r.strokeWidth = 1
     r:addEventListener( "touch", touchMessagePreview )
@@ -96,6 +95,11 @@ function initTabBar()
     }
 end
 
+-- Go to the given game tab (numbered index: 1 = main, 2 = resources, etc. )
+function game.gotoTab( index )
+	tabBar:setSelected( index, true )
+end
+
 -- Show message preview box with the given text
 function game.showMessagePreview( text )
     msgPreview.text.text = string.gsub( text, "\n", " ")  -- replace newlines with spaces
@@ -108,17 +112,6 @@ end
 function game.hideMessagePreview()
     transition.cancel( msgPreview )
     transition.to( msgPreview, { y = msgPreview.yHide, time = 200 } )
-end
-
--- Set the current act for the currently selected tab to name
-function game.setCurrentTabAct( name )
-    currentActForTab[selectedTab] = name
-end
-
--- Select the given tab (1 = main tab) on the tab bar, and press it if press is true
-function game.selectGameTab( index, press )
-    tabBar:setSelected( index, press )
-    selectedTab = buttons[index].id
 end
 
 -- Create and return a new item indicator badge at the given screen position, initially hidden

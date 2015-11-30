@@ -27,7 +27,7 @@ local textBox
 local function backTapped()
 	-- "Close" the document being viewed, and go back to the documents list view
 	game.openDoc = nil
-	game.gotoAct( "documents", { effect = "slideRight", time = 300 } )
+	game.gotoScene( "documents", { effect = "slideRight", time = 300 } )
 	return true
 end
 
@@ -70,7 +70,7 @@ end
 function act:prepare()
 	-- If we got here with no document to open then go back to Documents view
 	if not game.openDoc then
-		game.gotoAct( "Documents" )
+		game.gotoScene( "documents" )
 		return
 	end
 

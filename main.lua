@@ -42,12 +42,12 @@ game.playAmbientSound( filename )     -- Play background sound/music
 game.stopAmbientSound()               -- Stop background sound/music
 
 -- User-Interface functions in tabBar.lua:
-game.selectGameTab( index, press )    -- Select one of the tab bar tabs
 game.createBadge( x, y )              -- Create a new item indicator badge
 game.showBadge( badge )               -- show an indicator badge
 game.hideBadge( badge )               -- hide an indicator badge
 game.showMessagePreview( text )       -- Show preview of message text
 game.hideMessagePreview()             -- Hide message preview if showing
+game.gotoTab( index )                 -- Go to game tab number
 
 -- Game functions in mainAct.lua:
 game.roomName()                       -- Name of room user is in or nil if none
@@ -62,7 +62,8 @@ game.sendMessages( id1, id2, ... )    -- Add multiple messages to messages view
 game.foundDocument( filename )        -- Add document to user's list of found docs
 
 -- Activity functions in Act.lua
-game.gotoAct( name, options )         -- Run a given activity/view
+game.gotoScene( scene, options )      -- Go directly to a scene (see composer.gotoScene)
+game.gotoAct( name, options )         -- Run a given activity
 game.removeAct( name )                -- Remove an activity from memory
 game.newAct()                         -- Create a new activity
 game.currentActName()                 -- Name of current act 
