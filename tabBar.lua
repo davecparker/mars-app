@@ -18,7 +18,7 @@ local msgPreview      -- text message preview window
 -- The tab bar buttons
 local buttons = {
     { id = "mainAct",    defaultFile = "media/game/mapTab.png", selected = true },
-    { id = "resources",  defaultFile = "media/game/resourseTab.png"  },
+--    { id = "resources",  defaultFile = "media/game/resourseTab.png"  },
     { id = "documents",  defaultFile = "media/game/filesTab.png" },
     { id = "messages",   defaultFile = "media/game/messagesTab.png" },
     { id = "menu",       defaultFile = "media/game/settingsTab.png" },

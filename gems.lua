@@ -14,7 +14,7 @@ local game = globalGame
 -- plus additional data depending on the type of the gem:
 --    Act link: { t = "act", act = actName, param = optionalData }
 --    Document: { t = "doc", file = fileName }
---    Resource: { t = "res", res = "o2"/"h2o"/"kWh"/"food", amount = n }
+--    Resource: { t = "res", res = "h2o"/"kWh"/"food", amount = n }
 
 -- All gems in the game
 local gems = {
@@ -99,9 +99,6 @@ local function touchGemMessageBox( event )
                 -- Open the gem's document 
                 game.openDoc = gemGrabbed.file
                 game.gotoTab( "documents" )
-            elseif gemGrabbed.t == "res" then
-                -- Go to Resources view
-                game.gotoTab( "resources" )
             end
         end
     end
@@ -120,9 +117,7 @@ function gems.grabGemIcon( icon )
     elseif gemGrabbed.t == "res" then
         local res = gemGrabbed.res
         local format
-        if res == "o2" then
-            format = "%d liters of Oxygen"
-        elseif res == "h2o" then
+        if res == "h2o" then
             format = "%d liters of Water"
         elseif res == "kWh" then
             format = "%d kWh of Energy"
