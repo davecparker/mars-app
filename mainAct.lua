@@ -393,7 +393,6 @@ function act:enterFrame()
 		bg.y = bg.y + 0.5
 		if bg.y > act.yMax then
 			bg.y = act.yMin - act.height
-			print("Moved bg " .. i )
 		end
 	end
 end

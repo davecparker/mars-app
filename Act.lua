@@ -136,12 +136,12 @@ function Act:makeTitleBar( title, backListener )
 
     -- Back button if requested
     if backListener then
-        local bb = self:newImage( "back.png", { 
+        local bb = self:newImage( "backArrow.png", { 
             parent = group, 
             folder = "media/game", 
             height = self.dyTitleBar * 0.6 
         } )
-        bb.x = self.xMin + 15
+        bb.x = self.xMin + 17
         bb.y = self.yMin + self.dyTitleBar / 2
         bb:addEventListener( "tap", backListener )
     end
