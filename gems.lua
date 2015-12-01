@@ -22,50 +22,48 @@ local gems = {
 	onShip = {
         -- In Bridge
         fly1 =      { x = 0, y = -230, t = "act", act = "thrustNav", param = 1, enabled = true },
-        sierra =    { x = 26, y = -145, t = "doc", file = "The Sierra", enabled = true },
-        crew =      { x = 38, y = -160, t = "doc", file = "Crew Manifest", enabled = true },
+        sierra =    { x = -27, y = -226, t = "doc", file = "The Sierra", enabled = true },
+        crew =      { x = 25, y = -226, t = "doc", file = "Crew Manifest", enabled = true },
 
         -- In Rover Bay
-        rover =     { x = -125, y = 125, t = "act", act = "rover" },
-        battR1 =    { x = -120, y = 90, t = "res", res = "kWh", amount = 100 },
-        battR2 =    { x = -100, y = 90, t = "res", res = "kWh", amount = 100 },
-        battR3 =    { x = -80,  y = 90, t = "res", res = "kWh", amount = 100 },
+        rover =     { x = -90, y = 140, t = "act", act = "rover" },
+        battR1 =    { x = -120, y = 100, t = "res", res = "kWh", amount = 100 },
+        battR2 =    { x = -100, y = 100, t = "res", res = "kWh", amount = 100 },
+        battR3 =    { x = -80,  y = 100, t = "res", res = "kWh", amount = 100 },
 
         -- In Lab
-        h2oL1 =     { x = 130,  y = 10, t = "res", res = "h2o", amount = 50, enabled = true  },
-        o2L1 =      { x = 130,  y = 30, t = "res", res = "o2", amount = 50, enabled = true  },     
-        foodL1 =    { x = 130,  y = 50, t = "res", res = "food", amount = 50, enabled = true  },     
-        panel2 =    { x = 130, y = 70, t = "act", act = "circuit", param = 2  },
-        msgHist =   { x = 105, y = 70, t = "doc", file = "Message History" },
+        h2oL1 =     { x = 124,  y = 106, t = "res", res = "h2o", amount = 50, enabled = true  },
+        foodL1 =    { x = 124,  y = 123, t = "res", res = "food", amount = 50, enabled = true  },     
+        panel2 =    { x = 124, y = 164, t = "act", act = "circuit", param = 2  },
+        msgHist =   { x = 42, y = 103, t = "doc", file = "Message History" },
 
         -- In Lounge
-        panel3 =    { x = 50, y = -70, t = "act", act = "circuit", param = 3  },
+        panel3 =    { x = 121, y = -103, t = "act", act = "circuit", param = 3  },
 
         -- In Greenhouse
-        h2oG1 =     { x = -95,  y = -172, t = "res", res = "h2o", amount = 20, enabled = true  },
-        h2oG2 =     { x = -100,  y = -90, t = "res", res = "h2o", amount = 20, enabled = true  },
-        h2oG3 =     { x = -99,  y = -143, t = "res", res = "h2o", amount = 20, enabled = true  },
-        plants =    { x = -131,  y = -132, t = "act", act = "greenhouse" },
+        h2oG1 =     { x = -65,  y = -120, t = "res", res = "h2o", amount = 20, enabled = true  },
+        h2oG2 =     { x = -65,  y = -103, t = "res", res = "h2o", amount = 20, enabled = true  },
+        plants =    { x = -87,  y = -141, t = "act", act = "greenhouse" },
  
 		-- In Engineering room 
-		panel1 =	{ x = -10, y = 230, t = "act", act = "circuit", param = 1 },
-		battE1 = 	{ x = -50, y = 170, t = "res", res = "kWh", amount = 150, enabled = true  },
+		panel1 =	{ x = 38, y = 243, t = "act", act = "circuit", param = 1 },
+		battE1 = 	{ x = -53, y = 200, t = "res", res = "kWh", amount = 150, enabled = true  },
 
-        -- In Captain's Quarters
-        jordan1 =   { x = 130, y = -90, t = "doc", file = "Jordan - personal log" },
-        jordan2 =   { x = 110, y = -90, t = "doc", file = "Jordan - personal log 2" },
-        cDevice =   { x = 90, y = -90, t = "doc", file = "Classified - device" },
-        cEnergy =   { x = 70, y = -90, t = "doc", file = "Classified - energy source" },
+        -- In Captain Jordan's Quarters
+        jordan1 =   { x = -69, y = -44, t = "doc", file = "Jordan - personal log" },
+        jordan2 =   { x = -69, y = -31, t = "doc", file = "Jordan - personal log 2" },
+        cDevice =   { x = -32, y = -44, t = "doc", file = "Classified - device" },
+        cEnergy =   { x = -32, y = -31, t = "doc", file = "Classified - energy source" },
 
         -- In Crew Quarters
-        graham1 =   { x = -24, y = -73, t = "doc", file = "Graham - personal log" },
-        graham2 =   { x = -24, y = -60, t = "doc", file = "Graham - personal log 2" },
-        moore =     { x = -64, y = -73, t = "doc", file = "Moore - personal log" },
-        ellis =     { x = -106, y = -73, t = "doc", file = "Ellis - personal log" },
-        shaw1 =     { x = -24, y = 72, t = "doc", file = "Shaw - personal log" },
-        shaw2 =     { x = -24, y = 60, t = "doc", file = "Shaw - personal log 2" },
-        webb =      { x = -64, y = 72, t = "doc", file = "Webb - personal log" },
-        maxwell =   { x = -130, y = -100, t = "doc", file = "Maxwell - personal log" },
+        graham1 =   { x = -128, y = -44, t = "doc", file = "Graham - personal log" },
+        graham2 =   { x = -128, y = -31, t = "doc", file = "Graham - personal log 2" },
+        moore =     { x = 128, y = -44, t = "doc", file = "Moore - personal log" },
+        ellis =     { x = -130, y = 35, t = "doc", file = "Ellis - personal log" },
+        shaw1 =     { x = -68, y = 18, t = "doc", file = "Shaw - personal log" },
+        shaw2 =     { x = -68, y = 35, t = "doc", file = "Shaw - personal log 2" },
+        webb =      { x = 65, y = 35, t = "doc", file = "Webb - personal log" },
+        maxwell =   { x = 67, y = -44, t = "doc", file = "Maxwell - personal log" },
 	},
 
 	-- Gems on Mars
@@ -100,10 +98,10 @@ local function touchGemMessageBox( event )
             if gemGrabbed.t == "doc" then
                 -- Open the gem's document 
                 game.openDoc = gemGrabbed.file
-                game.gotoTab( 3 )
+                game.gotoTab( "documents" )
             elseif gemGrabbed.t == "res" then
                 -- Go to Resources view
-                game.gotoTab( 2 )
+                game.gotoTab( "resources" )
             end
         end
     end
@@ -151,10 +149,10 @@ end
 function gems.newGemIcon( group, name, gem )
     -- Select image based on the icon type
     local image
-    local size = 10
+    local size = 20
     if gem.t == "act" then
         image = "gemStar.png"
-        size = 12
+        size = 24
     elseif gem.t == "doc" then
         image = "gemDoc.png"
     else

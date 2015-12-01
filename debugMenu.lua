@@ -59,6 +59,7 @@ end
 function onRowTouch( event )
 	if event.phase == "tap" or event.phase == "release" then
 		-- Run the selected activity module on the main tab
+		game.gotoTab( "mainAct" )
 		game.gotoAct( debugActs[event.target.index] )  
 	end
 end
