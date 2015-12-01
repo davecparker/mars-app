@@ -246,44 +246,49 @@ function act:prepare()
 			-- move spaceGroup to final position
 			xVelocity = 0
 			yVelocity = 0
-			spaceGroup.x = 110
-    		spaceGroup.y = 165
+			print( "act.width=", act.width, "act.height=", act.height )
+			spaceGroup.x = act.width * 0.34375  -- 110 works for iPhone5
+    		spaceGroup.y = act.height * 0.4128    -- 165 works for iPhone5
     	end
     elseif( game.saveState.thrustNav.state == 1  ) then  -- start of round 2
 		-- move and resize marsffor orbit entry
 		game.saveState.thrustNav.state = game.saveState.thrustNav.state + 1
 		print( "playing second round of thrustNav", game.saveState.thrustNav.state )
-		mars.width = mars.width * 8
-   		mars.height = mars.height * 8
+		-- mars.width = mars.width * 8
+   		-- mars.height = mars.height * 8
+   		mars:scale( 8, 8 )
    		totalRocketImpulses = 0
 		xVelocity = 0
-		yVelocity = 0
-		-- printPositions()
-    	if( game.cheatMode ) then		-- move spaceGroup to final position	
-			spaceGroup.x = -30
-    		spaceGroup.y = 165
-    	else
-    		spaceGroup.x = spaceGroup.x - ( mars.width / 2  ) + 20 
-    		spaceGroup.y = spaceGroup.y - ( mars.height )
-    	end
-    	-- printPositions()
-    	local xCenter = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2
-    	local yCenter = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2
-		local c = display.newCircle( spaceGroup, xCenter, yCenter, ( mars.width / 2 ) + 20 )
-		-- print( "xCenter=", xCenter,"  yCenter=", yCenter )
-		-- print( "mars.width= ", mars.width )
+		printPositions()
+    	-- put a circle around big Mars
+   		local xCenter = mars.x
+		local yCenter = mars.y
+		local c = display.newCircle( spaceGroup, xCenter, yCenter, ( mars.width * 4 ) +  mars.width / 1.6 )
+		print( "xCenter=", xCenter,"  yCenter=", yCenter )
+		print( "mars.width= ", mars.width )
+		print( "xmin=", mars.contentBounds.xMin, " xMax=", mars.contentBounds.xMax, 
+			" yMin=", mars.contentBounds.yMin, " yMax=", mars.contentBounds.yMax )
 		c.strokeWidth = 2
 		c:setStrokeColor( 0, 1, 0 ) 
 		c:setFillColor( 0, 0, 0, 0.2 )
-    	printPositions()
-    	if( game.cheatMode ) then
-    		c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 + 30
-    		c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 - act.height / 3.3
-    	else
-    		c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 - 14
-    		c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 + act.height / 7.4
-    	end
+    	if( game.cheatMode ) then		-- move spaceGroup to final position	
+			spaceGroup.x = act.width * ( -0.09375 )  --   -30 works for iphone5
+    		spaceGroup.y = act.height * 0.4128 -- 165 works for iphone 5
+    		yVelocity = 0
+		else
+    		spaceGroup.x = spaceGroup.x - ( mars.width * 3 ) 
+    		spaceGroup.y = spaceGroup.y - ( mars.height * 5 )
+    		yVelocity = 0.1
+		end
+    	-- printPositions()
     	print( "xCenter=", xCenter,"  yCenter=", yCenter )
+    	-- if( game.cheatMode ) then
+    	--	c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 + 30
+    	--	c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 - act.height / 3.3
+    	-- else
+    	--	c.x = (mars.contentBounds.xMax + mars.contentBounds.xMin) / 2 - 14
+    	--	c.y = (mars.contentBounds.yMax + mars.contentBounds.yMin) / 2 + act.height / 7.4
+    	-- end
 	elseif( game.saveState.thrustNav.state > 2 ) then
     	game.messageBox( "You are Already in orbit!", { onDismiss = goMainAct } )
 		-- game.showHint( "You are Already in orbit!", "Ship Navigation", goMainAct )
@@ -293,11 +298,6 @@ end
 -- Start the act
 function act:start()
 	game.playAmbientSound( "Ship Ambience.mp3" )
-end
-
--- Stop the act
-function act:stop()
-	game.stopAmbientSound()
 end
 
 -- Init the act
@@ -354,8 +354,8 @@ function act:init()
     -- create planets in spaceGroup
     mars = display.newImageRect( spaceGroup, "media/thrustNav/mars.png", 30, 30 )
     print("act.xMin=",act.xMin, " act.yMin=", act.yMin)
-    mars.x = act.xMin + 50
-    mars.y = act.yMin + 100
+    mars.x = act.xMin + act.width * 0.15625
+    mars.y = act.yMin + act.height * 0.08803
     print("Mars anchorX=", mars.anchorX, "anchorY=", mars.anchorY )
     print("Mars is placed at ", mars.x, ",", mars.y , " in spaceGroup before move") 
 

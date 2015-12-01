@@ -11,13 +11,11 @@ display.setStatusBar( display.HiddenStatusBar )
 widget = require( "widget" )
 
 -- Declare access to game and act variables
-
 local game = globalGame
 local act = game.newAct()
 
 
 -- Constant declaration
-
 local W = act.width
 local H = act.height
 local XC = act.xCenter
@@ -26,7 +24,6 @@ local YMIN = act.yMin
 local XMIN = act.xMin
 
 -- Function declaration
-
 local initGame
 local scan
 local scanActivate
@@ -37,14 +34,14 @@ local transitionDrill
 local backButton
 local chooseBg
 local returnTrue
+local infoGroupDismiss
+local roverBack
 
 -- Display group declaration
-
 local textGroup
+local infoGroup
 
 -- Variable declaration
-
-local scanCircle
 local marsSurface
 local infoConsole
 local scanConsole
@@ -64,13 +61,11 @@ local numSpots = 0
 game.drillDiff = 0
 
 -- Array declaration
-
 local waterSpot = {}
 
 function act:init()
 
 	-- Create Martian surface
-
 	marsSurface = chooseBg()
 	marsSurface.x, marsSurface.y = W, 4 * H / 5
 	marsSurface.anchorX = 1
@@ -78,15 +73,14 @@ function act:init()
 
 	if scanDistance < 50 then
 
-		numSpots = 15
+		numSpots = math.random( 3, 15 )
 
 	end
 
 	-- Create the water spots
-
 	for i = 1, numSpots do
 		
-		waterSpot[i] = display.newImage( act.group, "media/drillScan/WaterSpot.png", math.random( XMIN + 10, W - 10 ), math.random( YMIN + 10, ( H - 2 * H / 5 ) - 10 ), true )
+		waterSpot[i] = display.newImage( act.group, "media/drillScan/WaterSpot.png", math.random( XMIN + 10, W - 10 ), math.random( YMIN + 50, ( H - 2 * H / 5 ) - 10 ), true )
 		waterSpot[i].isVisible = false
 		waterSpot[i].contamination = math.random( 0, 100 )
 		waterSpot[i].frigidity = 100 - waterSpot[i].contamination
@@ -100,7 +94,6 @@ function act:init()
 	end
 
 	-- Create the water spots' info bubbles
-
 	for i = 1, #waterSpot do
 
 		waterSpot[i].infoBox = display.newRoundedRect( waterSpot[i].group, 0, 0, 70, 40, 10 )
@@ -112,47 +105,56 @@ function act:init()
 
 	end
 
+	-- Insert the water spots into the act.group
 	for i = 1, #waterSpot do
 
 		act.group:insert( waterSpot[i] )
 
 	end
 
+	-- Put the water spots' subgroup into act.group
 	for i = 1, #waterSpot do
 
 		act.group:insert( waterSpot[i].group )
 
 	end
 
+	-- Create the information console
 	infoConsole = act:newImage( "Steel2.jpg", { width = 1024, height = 768 } )
 	infoConsole.x, infoConsole.y = XC, H - 2 * H / 5
 	infoConsole.anchorX = 0.5
 	infoConsole.anchorY = 0
 
+	-- Group to hold all of the text objects
 	textGroup = display.newGroup( )
 	textGroup.x = XC
 	textGroup.y = H - 1.8 * H / 5
 
-	contamOrigin = 0
+	-- Create the text to tell you how contaminated the water is
+	local contamOrigin = 0
 	contamText = display.newText( textGroup, contamOrigin .. "% Contaminated", -150, 0, native.systemFont, 17 )
 	contamText.fill = { 0 }
 	contamText.anchorX = 0
 
-	freezeOrigin = 0
+	-- Create the text to tell you how frozen the water is
+	local freezeOrigin = 0
 	freezeText = display.newText( textGroup, freezeOrigin .. "% Frozen", -150, 17, native.systemFont, 17 )
 	freezeText.fill = { 0 }
 	freezeText.anchorX = 0
 
-	litersOrigin = 0
+	-- Create the text that tells you how much water you're finding
+	local litersOrigin = 0
 	litersText = display.newText( textGroup, litersOrigin .. " Liters", -150, 34, native.systemFont, 17 )
 	litersText.fill = { 0 }
 	litersText.anchorX = 0
 
-	energyOrigin = 0
+	-- Create the text to tell you how much energy it will cost you to drill the water
+	local energyOrigin = 0
 	energyText = display.newText( textGroup, "Energy Cost:  " .. energyOrigin .. " kWh", -150, 51, native.systemFont, 17 )
 	energyText.fill = { 0 }
 	energyText.anchorX = 0
 
+	-- Create the button to send you to the drill game
 	local options =
 	{
 		width = 80,
@@ -171,8 +173,35 @@ function act:init()
 	drillButton.y = H - 1.5 * H / 5
 	drillButton.isVisible = false
 
+	-- Declare the introductory information group and check for a flag to hide/show it
+	infoGroup = display.newGroup()
+	infoGroup.x, infoGroup.y = XC, YC
+
+	local infoScreen = display.newRect( infoGroup, 0, 0, W, H )
+	infoScreen.fill = { 0, 0, 0, 0.7 }
+
+	local infoText1 = display.newText( infoGroup, "Tap to scan the surface of mars", 0, -60, native.systemFont, 20 )
+	local infoText1 = display.newText( infoGroup, "Tap water spots to select them", 0, -30, native.systemFont, 20 )
+	local infoText1 = display.newText( infoGroup, "Level indicates difficulty from 1-10", 0, 0, native.systemFont, 20 )
+	local infoText1 = display.newText( infoGroup, "Tap drill button to go to Drill activity", 0, 30, native.systemFont, 20 )
+	local infoText1 = display.newText( infoGroup, "Tap this screen to dismiss it", 0, 60, native.systemFont, 20 )
+
+	if game.drillDone then
+
+		infoGroup.isVisible = false
+
+	else
+
+		infoGroup.isVisible = true
+
+	end
+
 	act.group:insert( drillButton )
 	act.group:insert( textGroup )
+
+	act:makeTitleBar( "Water Scanning", roverBack )
+
+	act.group:insert( infoGroup )
 
 end
 
@@ -180,9 +209,11 @@ function act:prepare()
 
 	marsSurface:addEventListener( "touch", scan )
 	infoConsole:addEventListener( "touch", returnTrue )
+	infoGroup:addEventListener( "touch", infoGroupDismiss )
 
 end
 
+-- Generic function to return true
 function returnTrue(event)
 
 	if event.phase == "began" then
@@ -193,6 +224,27 @@ function returnTrue(event)
 
 end
 
+function roverBack()
+
+	game.gotoAct( "rover", { time = 333, effect = "zoomOutInFade" } )
+
+end
+
+-- Dismisses the introduction information and sets a flag so it doesn't show up until the player restarts the application
+function infoGroupDismiss( event )
+
+	if event.phase == "began" then
+
+		infoGroup.isVisible = false
+		game.drillDone = true
+
+	end
+
+	return true
+
+end
+
+-- Randomized pictures of Mars for the background
 function chooseBg()
 
 	local p
@@ -250,6 +302,7 @@ function chooseBg()
 
 end
 
+-- Initial scan function
 function scan( event )
 
 	if event.phase == "began" then
@@ -268,10 +321,10 @@ function scan( event )
 
 end
 
+-- Function allowing the scan to finish
 function finishScan( obj )
 
 	-- Make the scanner reveal the water spots
-
 	for i = 1, #waterSpot do
 
 		if ( obj.x - waterSpot[i].x ) ^ 2 + ( obj.y - waterSpot[i].y ) ^ 2 <= ( 50 + 10 ) ^ 2 then
@@ -298,6 +351,7 @@ function finishScan( obj )
 
 end
 
+-- Function to control the water spots
 function waterSpotStats( event )
 
 	if event.phase == "began" then
@@ -362,20 +416,17 @@ function waterSpotStats( event )
 
 end
 
+-- Generic use function to hide an object
 function hideGroup( obj )
 
 	obj.isVisible = false
 
 end
 
+-- Function sending you to the Drill game, adjusting your water and energy as appropriate
 function transitionDrill()
 
-	-- 
-
 	-- Move game to Water Drilling game automatically. Will need to use Act transition
-
-	game.addWater( game.currentLiters )
-	game.addEnergy( game.currentCost )
 
 	game.gotoAct( "drill", { effect = "zoomInOutFade", time = 333 } )
 

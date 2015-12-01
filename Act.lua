@@ -157,10 +157,15 @@ end
 
 ------------------------- Game Activity Management  --------------------------------
 
--- Go to a given act, with transition options (see composer.gotoScene for parameters)
-function game.gotoAct( name, options )
-    game.setCurrentTabAct( name )
-    composer.gotoScene( name, options )  -- CRASH? If you get 'sceneName' nil here then you
+-- Go to the given scene with transition options (see composer.gotoScene)
+function game.gotoScene( scene, options )
+    composer.gotoScene( scene, options )
+end
+
+-- Go to a given act on the main tab, with transition options (see composer.gotoScene)
+function game.gotoAct( act, options )
+    game.currentMainAct = act    -- Remember the current act running on the main tab
+    composer.gotoScene( act, options )  -- CRASH? If you get 'sceneName' nil here then you
                                          -- forgot to return act.scene from your act file.
 end
 

@@ -8,16 +8,13 @@ display.setStatusBar( display.HiddenStatusBar )
 
 
 -- Declare access to game and act variables
-
 game = globalGame
 act = game.newAct()
 
 -- Require statements
-
 widget = require( "widget" )
 
 -- Declare constants
-
 local W = act.width
 local H = act.height
 local XC = act.xCenter
@@ -35,6 +32,7 @@ local timeLimit
 local start
 local finish
 local reset
+local tap
 
 --Declare file local tables to be used
 local bg -- Background image
@@ -48,7 +46,11 @@ local range -- Text for range user finished in
 local waterText -- Displays how much water the user has earned
 local resetButton -- The button that allows you to restart the game
 local difficulty = {} -- Difficulty of drill game
-local testText
+local costText -- Text to represent the total cost of drilling out the water
+local tapText -- Flashing tap text
+local tapTime = 5 -- Time left until tap stops flashing
+local tapTimerShow -- Timer to keep track of the tap text
+local tapTimerHide -- Timer to keep track of the tap text
 
 function act:init()
 
@@ -81,7 +83,6 @@ function act:init()
 	startTimer.isVisible = false
 
 	-- Create splash screen button
-
 	local options =
 	{
 		width = 80,
@@ -91,9 +92,10 @@ function act:init()
 		sheetContentHeight = 40
 	}
 
+	-- Create the button to take you back to the rover game
 	local buttonSheet = graphics.newImageSheet( "media/drillScan/Button.png", options )
 
-	resetButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Restart", onPress = reset }
+	resetButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Rover", onPress = reset }
 
 	resetButton.x = XC
 	resetButton.y = YC + 140
@@ -128,11 +130,16 @@ function act:init()
 	costText.xScale, costText.yScale = 0.01, 0.01
 	costText.isVisible = false
 
-	--Water Text
+	-- Water Text
 	waterText = display.newText( act.group, "Water: " .. game.currentLiters .. " Liters", XC, YC - 20, native.systemFont, 25 )
 	waterText.fill = { 0, 0.42, 1 }
 	waterText.xScale, waterText.yScale = 0.01, 0.01
 	waterText.isVisible = false
+
+	-- Tap Timer Text
+	tapText = display.newText( act.group, "TAP", XC, YC - 75, native.systemFontBold, 35 )
+	tapText.fill = { 0, 0.42, 1 }
+	tapText.isVisible = false
 
 end
 
@@ -151,6 +158,7 @@ function act:stop()
 
 end
 
+-- Generic new frame function
 function newFrame()
 	
 	droppingBar()
@@ -159,6 +167,7 @@ function newFrame()
 
 end
 
+-- Function to begin all of the level's purposes
 function start()
 
 	if startTimer.count > 0 then
@@ -179,6 +188,8 @@ function start()
 
 		end
 
+		tapTimerShow()
+
 		transition.to( startTimer, { time = 150, xScale = 0.01, yScale = 0.01, onComplete = hideTimer } )
 		costText.isVisible = true
 		transition.to( costText, { time = 150, xScale = 1, yScale = 1 } )
@@ -192,6 +203,31 @@ function start()
 
 end
 
+-- Function to show the tap text
+function tapTimerShow()
+
+	tapText.isVisible = true
+
+	tapTime = tapTime - 0.23
+
+	timer.performWithDelay( 100, tapTimerHide )
+
+end
+
+-- Function to hide the tap text and test for the timer
+function tapTimerHide()
+
+	tapText.isVisible = false
+
+	if tapTime > 0 then
+
+		timer.performWithDelay( 100, tapTimerShow )
+
+	end
+
+end
+
+-- Function to send you back to the mars rover game
 function reset()
 
 	startTimer.count = 5
@@ -202,10 +238,11 @@ function reset()
 	range.isVisible = false
 	waterText.isVisible = false
 	game.removeAct( "drillScan" )
-	game.gotoAct( "drillScan", { effect = "zoomInOutFade", time = 333 } )
+	game.gotoAct( "rover", { effect = "zoomInOutFade", time = 333 } )
 
 end
 
+-- Per frame function to cause the bar to drop
 function droppingBar()
 
 	if bar.height > 0 then
@@ -213,6 +250,7 @@ function droppingBar()
 	end
 end
 
+-- Touch function to cause the bar to rise
 function risingBar( event )
 
 	if event.phase == "began" then
@@ -220,6 +258,7 @@ function risingBar( event )
 	end
 end
 
+-- Function to control what happens when the player finishes drilling
 function timeLimit()
 
 	Runtime:removeEventListener( "enterFrame", newFrame )
@@ -254,7 +293,8 @@ function timeLimit()
 
 	end
 
-	game.addEnergy( energyCost )
+	game.addEnergy( energyCost + game.currentCost )
+	game.addWater( game.currentLiters)
 	timer.performWithDelay( 1500, resetVisible )
 end
 
