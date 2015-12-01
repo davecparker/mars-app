@@ -42,76 +42,77 @@ local ship = {
 	-- Bottom Horizontal hallway
 	bhHall = { left = -133, top = -11, right = 132, bottom = 0 },
 
-	-- Rooms (name, rectangle bounds, position just outside the door, delta to inside)
+	-- Rooms: name, rectangle bounds, zoom factor,
+	--        x, y position just outside the door, delta to inside
 	rooms = {
 		{ 
 			name = "Bridge", 
-			left = -48, top = -248, right = 49, bottom = -168, 
+			left = -48, top = -248, right = 49, bottom = -168, zoom = 3,
 			x = -1, y = -160, dy = -30, 
 		},
-		{ 
-			name = "Lab", 
-			left = 20, top = 86, right = 141, bottom = 183, 
-			x = 15, y = 134, dx = 30, 
+		{
+			name = "Greenhouse",
+			left = -139, top = -190, right = -52, bottom = -83, zoom = 3,
+			x = -44, y = -141, dx = -30, sound = "Light Mood.mp3",
 		},
 		{ 
 			name = "Lounge", 
-			left = 49, top = -188, right = 137, bottom = -85, 
+			left = 49, top = -188, right = 137, bottom = -85, zoom = 3,
 			x = 46, y = -140, dx = 30, 
 		},
 		{
 			name = "Jordan",
-			left = -80, top = -58, right = -21, bottom = -18, 
+			left = -80, top = -58, right = -21, bottom = -18, zoom = 4,
 			x = -51, y = -7, dy = -30, doorCode = "2439",
 		},
 		{
 			name = "Maxwell",
-			left = 20, top = -58, right = 77, bottom = -19, 
+			left = 20, top = -58, right = 77, bottom = -19, zoom = 4,
 			x = 46, y = -7, dy = -30,
 		},
 		{
 			name = "Graham",
-			left = -141, top = -58, right = -82, bottom = -19, 
+			left = -141, top = -58, right = -82, bottom = -19, zoom = 4,
 			x = -111, y = -7, dy = -30, 
 		},
 		{
 			name = "Moore",
-			left = 81, top = -58, right = 138, bottom = -19, 
+			left = 81, top = -58, right = 138, bottom = -19, zoom = 4,
 			x = 110, y = -7, dy = -30, 
 		},
 		{
 			name = "Ellis",
-			left = -141, top = 5, right = -81, bottom = 45, 
+			left = -141, top = 5, right = -81, bottom = 45, zoom = 4,
 			x = -113, y = -7, dy = 30, 
 		},
 		{
 			name = "Shaw",
-			left = -79, top = 6, right = -22, bottom = 45, 
+			left = -79, top = 6, right = -22, bottom = 45, zoom = 4,
 			x = -50, y = -7, dy = 30, 
 		},
 		{
 			name = "Webb",
-			left = 20, top = 5, right = 76, bottom = 45, 
+			left = 20, top = 5, right = 76, bottom = 45, zoom = 4,
 			x = 49, y = -7, dy = 30, 
 		},
 		{
 			name = "Your Quarters",
-			left = 81, top = 5, right = 138, bottom = 45, 
+			left = 81, top = 5, right = 138, bottom = 45, zoom = 4,
 			x = 109, y = -7, dy = 30, 
 		},
 		{
 			name = "Rover Bay",
-			left = -142, top = 88, right = -22, bottom = 184, 
+			left = -142, top = 88, right = -22, bottom = 184, zoom = 2,
 			x = -15, y = 134, dx = -30, 
 		},
-		{
-			name = "Greenhouse",
-			left = -139, top = -190, right = -52, bottom = -83, 
-			x = -44, y = -141, dx = -30, sound = "Light Mood.mp3",
+		{ 
+			name = "Lab", 
+			left = 20, top = 86, right = 141, bottom = 183, zoom = 2,
+			x = 15, y = 134, dx = 30, 
 		},
 		{
 			name = "Engineering",
-			left = -77, top = 187, right = 74, bottom = 257, 
+			left = -77, top = 187, right = 74, bottom = 257, zoom = 2,
 			x = 0, y = 174, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
 		},
 	},
@@ -246,6 +247,8 @@ local function makeIconGroup( room )
 	for name, gem in pairs( gems.onShip ) do
 		if gems.shipGemIsActive( name ) and game.xyInRect( gem.x, gem.y, room ) then
 			local icon = gems.newGemIcon( group, name, gem )
+			icon.xScale = 1 / room.zoom   -- icon size does not zoom
+			icon.yScale = icon.xScale
 			icon:addEventListener( "touch", gemTouched )
 		end
 	end
@@ -268,23 +271,7 @@ local function zoomToRoom( room )
 	room.entered = true
 
 	-- Zoom the map in, centered at the room's center
-	-- different zoom handeling
-	local scale 
-	if room.name == "Jordan" or 
-		room.name == "Maxwell" or 
-		room.name == "Graham" or 
-		room.name == "Moore" or 
-		room.name == "Ellis" or 
-		room.name == "Shaw" or 
-		room.name == "Webb" or 
-		room.name == "Your Quarters" then
-
-			scale = 4
-	elseif room.name == "Greenhouse" or room.name == "Lounge" or room.name == "Bridge" then
-		scale = 3
-	else
-		scale = 2
-	end
+	local scale = room.zoom
 	local x = act.xCenter - scale * (room.left + room.right) / 2
 	local y = act.yCenter - scale * (room.top + room.bottom) / 2
 	transition.to( shipGroup, { x = x, y = y, xScale = scale, yScale = scale, 
