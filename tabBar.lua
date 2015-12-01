@@ -17,11 +17,11 @@ local msgPreview      -- text message preview window
 
 -- The tab bar buttons
 local buttons = {
-    { id = "mainAct",    defaultFile = "media/game/map5.png", selected = true },
+    { id = "mainAct",    defaultFile = "media/game/mapTab.png", selected = true },
     { id = "resources",  defaultFile = "media/game/resourseTab.png"  },
-    { id = "documents",  defaultFile = "media/game/folder.png" },
-    { id = "messages",   defaultFile = "media/game/messages.png" },
-    { id = "menu",       defaultFile = "media/game/menu.png" },
+    { id = "documents",  defaultFile = "media/game/filesTab.png" },
+    { id = "messages",   defaultFile = "media/game/messagesTab.png" },
+    { id = "menu",       defaultFile = "media/game/settingsTab.png" },
 }
 
 
@@ -53,7 +53,7 @@ end
 -- Initialize the app tab bar and message preview on the bottom of the screen
 function initTabBar()
     -- Assign properties common to all buttons
-    local dxyIcon = game.dyTabBar - 10
+    local dxyIcon = game.dyTabBar - 5
     for i = 1, #buttons do
         local b = buttons[i]
         b.onPress = handleTabBarEvent

@@ -42,10 +42,10 @@ local gems = {
         panel3 =    { x = 50, y = -70, t = "act", act = "circuit", param = 3  },
 
         -- In Greenhouse
-        h2oG1 =     { x = 30,  y = 120, t = "res", res = "h2o", amount = 20, enabled = true  },
-        h2oG2 =     { x = 30,  y = 150, t = "res", res = "h2o", amount = 20, enabled = true  },
-        h2oG3 =     { x = 30,  y = 180, t = "res", res = "h2o", amount = 20, enabled = true  },
-        plants =    { x = 80,  y = 130, t = "act", act = "greenhouse" },
+        h2oG1 =     { x = -95,  y = -172, t = "res", res = "h2o", amount = 20, enabled = true  },
+        h2oG2 =     { x = -100,  y = -90, t = "res", res = "h2o", amount = 20, enabled = true  },
+        h2oG3 =     { x = -99,  y = -143, t = "res", res = "h2o", amount = 20, enabled = true  },
+        plants =    { x = -131,  y = -132, t = "act", act = "greenhouse" },
  
 		-- In Engineering room 
 		panel1 =	{ x = -10, y = 230, t = "act", act = "circuit", param = 1 },

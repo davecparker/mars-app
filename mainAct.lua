@@ -34,82 +34,85 @@ local yTitleBar        -- y position of title bar when visible
 -- Main Ship coordinates
 local ship = {
 	-- Vertical hallway
-	vHall = { left = -10, top = -115, right = 12, bottom = 152 },
+	vHall = { left = -10, top = -155, right = 12, bottom = 172 },
 
-	-- Horizontal hallway
-	hHall = { left = -133, top = -11, right = 12, bottom = 14 },
+	-- Top Horizontal hallway
+	thHall = { left = -45, top = -145, right = 45, bottom = -130},
+
+	-- Bottom Horizontal hallway
+	bhHall = { left = -133, top = -11, right = 132, bottom = 0 },
 
 	-- Rooms (name, rectangle bounds, position just outside the door, delta to inside)
 	rooms = {
 		{ 
 			name = "Bridge", 
-			left = -53, top = -244, right = 56, bottom = -126, 
-			x = 1, y = -116, dy = -30, 
+			left = -48, top = -248, right = 49, bottom = -168, 
+			x = -1, y = -160, dy = -30, 
 		},
 		{ 
 			name = "Lab", 
-			left = 23, top = 3, right = 140, bottom = 80, 
-			x = 12, y = 40, dx = 30, 
+			left = 20, top = 86, right = 141, bottom = 183, 
+			x = 15, y = 134, dx = 30, 
 		},
 		{ 
 			name = "Lounge", 
-			left = 23, top = -78, right = 140, bottom = 0, 
-			x = 12, y = -12, dx = 30, 
+			left = 49, top = -188, right = 137, bottom = -85, 
+			x = 46, y = -140, dx = 30, 
 		},
 		{
 			name = "Jordan",
-			left = 23, top = -158, right = 140, bottom = -81, 
-			x = 12, y = -92, dx = 30, doorCode = "2439",
+			left = -80, top = -58, right = -21, bottom = -18, 
+			x = -51, y = -7, dy = -30, doorCode = "2439",
 		},
 		{
 			name = "Maxwell",
-			left = -139, top = -158, right = -20, bottom = -81, 
-			x = -8, y = -92, dx = -30,
+			left = 20, top = -58, right = 77, bottom = -19, 
+			x = 46, y = -7, dy = -30,
 		},
 		{
 			name = "Graham",
-			left = -56, top = -77, right = -20, bottom = -21, 
-			x = -26, y = -8, dy = -30, 
+			left = -141, top = -58, right = -82, bottom = -19, 
+			x = -111, y = -7, dy = -30, 
 		},
 		{
 			name = "Moore",
-			left = -97, top = -77, right = -61, bottom = -21, 
-			x = -68, y = -8, dy = -30, 
+			left = 81, top = -58, right = 138, bottom = -19, 
+			x = 110, y = -7, dy = -30, 
 		},
 		{
 			name = "Ellis",
-			left = -138, top = -77, right = -101, bottom = -21, 
-			x = -109, y = -8, dy = -30, 
+			left = -141, top = 5, right = -81, bottom = 45, 
+			x = -113, y = -7, dy = 30, 
 		},
 		{
 			name = "Shaw",
-			left = -56, top = 23, right = -20, bottom = 80, 
-			x = -26, y = 12, dy = 30, 
+			left = -79, top = 6, right = -22, bottom = 45, 
+			x = -50, y = -7, dy = 30, 
 		},
 		{
 			name = "Webb",
-			left = -97, top = 23, right = -61, bottom = 80, 
-			x = -68, y = 12, dy = 30, 
+			left = 20, top = 5, right = 76, bottom = 45, 
+			x = 49, y = -7, dy = 30, 
 		},
 		{
 			name = "Your Quarters",
-			left = -138, top = 23, right = -101, bottom = 80, 
-			x = -109, y = 12, dy = 30, 
+			left = 81, top = 5, right = 138, bottom = 45, 
+			x = 109, y = -7, dy = 30, 
 		},
 		{
 			name = "Rover Bay",
-			left = -145, top = 84, right = -20, bottom = 161, 
-			x = -8, y = 95, dx = -30, 
+			left = -142, top = 88, right = -22, bottom = 184, 
+			x = -15, y = 134, dx = -30, 
 		},
 		{
 			name = "Greenhouse",
-			left = 23, top = 84, right = 140, bottom = 237, 
-			x = 12, y = 95, dx = 30, sound = "Light Mood.mp3",
+			left = -139, top = -190, right = -52, bottom = -83, 
+			x = -44, y = -141, dx = -30, sound = "Light Mood.mp3",
 		},
 		{
 			name = "Engineering",
-			left = -138, top = 165, right = 19, bottom = 237, 
-			x = 1, y = 154, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
+			left = -77, top = 187, right = 74, bottom = 257, 
+			x = 0, y = 174, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
 		},
 	},
 }
@@ -135,12 +138,13 @@ end
 -- Return the x, y destination constrained to the hallways of the ship,
 -- taking into account the current position of the dot.
 local function constrainToHalls( x, y )
-	-- Test to see if dot is currently in hHall, vHall, or both (intersection)
+	-- Test to see if dot is currently in bhHall, vHall, or both (intersection)
 	local inVHall = game.xyInRect( dot.x, dot.y, ship.vHall )
-	local inHHall = game.xyInRect( dot.x, dot.y, ship.hHall )
+	local inHHall = game.xyInRect( dot.x, dot.y, ship.bhHall )
+	local inTHHall = game.xyInRect( dot.x, dot.y, ship.thHall)
 
-	-- If dot is currently in the intersection of both halls, determine
-	-- which direction is closer to the destination.
+	-- If dot is currently in the intersection of both the vertical and bottom horizontal hall, 
+	-- determine which direction is closer to the destination.
 	if inHHall and inVHall then
 		if math.abs( x - dot.x) > math.abs( y - dot.y ) then
 			inVHall = false   -- will prefer horizontal movement
@@ -149,12 +153,26 @@ local function constrainToHalls( x, y )
 		end
 	end
 
-	-- If dot is currently in the hHall, then prefer horizontal movement,
+	-- If dot is currently in the intersection of both the vertical and top horizontal hall, 
+	-- determine which direction is closer to the destination.	
+	if inTHHall and inVHall then
+		if math.abs( x - dot.x) > math.abs( y - dot.y ) then
+			inVHall = false   -- will prefer horizontal movement
+		else
+			inTHHall = false   -- will prefer vertical movement
+		end
+	end
+
+	-- If dot is currently in the bhHall, then prefer horizontal movement,
 	-- else prefer vertical movement
 	if inHHall then
 		-- Constrain to the horizontal hall
-		x = game.pinValue( x, ship.hHall.left, ship.hHall.right )
-		y = game.pinValue( y, ship.hHall.top, ship.hHall.bottom )
+		x = game.pinValue( x, ship.bhHall.left, ship.bhHall.right )
+		y = game.pinValue( y, ship.bhHall.top, ship.bhHall.bottom )
+	elseif inTHHall then
+		-- Constrain to the top horizontal hall
+		x = game.pinValue( x, ship.thHall.left, ship.thHall.right )
+		y = game.pinValue( y, ship.thHall.top, ship.thHall.bottom )
 	else
 		-- Constrain to the vertical hall
 		x = game.pinValue( x, ship.vHall.left, ship.vHall.right )
@@ -250,7 +268,23 @@ local function zoomToRoom( room )
 	room.entered = true
 
 	-- Zoom the map in, centered at the room's center
-	local scale = 2
+	-- different zoom handeling
+	local scale 
+	if room.name == "Jordan" or 
+		room.name == "Maxwell" or 
+		room.name == "Graham" or 
+		room.name == "Moore" or 
+		room.name == "Ellis" or 
+		room.name == "Shaw" or 
+		room.name == "Webb" or 
+		room.name == "Your Quarters" then
+
+			scale = 4
+	elseif room.name == "Greenhouse" or room.name == "Lounge" or room.name == "Bridge" then
+		scale = 3
+	else
+		scale = 2
+	end
 	local x = act.xCenter - scale * (room.left + room.right) / 2
 	local y = act.yCenter - scale * (room.top + room.bottom) / 2
 	transition.to( shipGroup, { x = x, y = y, xScale = scale, yScale = scale, 
@@ -397,8 +431,14 @@ function act:init()
 	r.anchorY = 0
 	r:setFillColor( 0.5 )
 	r.alpha = 0.5
-	r = display.newRect( shipGroup, ship.hHall.left, ship.hHall.top, 
-					ship.hHall.right - ship.hHall.left, ship.hHall.bottom - ship.hHall.top )
+	r = display.newRect( shipGroup, ship.bhHall.left, ship.bhHall.top, 
+					ship.bhHall.right - ship.bhHall.left, ship.bhHall.bottom - ship.bhHall.top )
+	r.anchorX = 0
+	r.anchorY = 0
+	r:setFillColor( 0.3 )
+	r.alpha = 0.5
+	r = display.newRect( shipGroup, ship.thHall.left, ship.thHall.top, 
+					ship.thHall.right - ship.thHall.left, ship.thHall.bottom - ship.thHall.top )
 	r.anchorX = 0
 	r.anchorY = 0
 	r:setFillColor( 0.3 )
