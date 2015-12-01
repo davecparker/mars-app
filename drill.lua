@@ -293,7 +293,8 @@ function timeLimit()
 
 	end
 
-	game.addEnergy( energyCost )
+	game.addEnergy( energyCost + game.currentCost )
+	game.addWater( game.currentLiters)
 	timer.performWithDelay( 1500, resetVisible )
 end
 
