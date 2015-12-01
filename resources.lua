@@ -15,7 +15,6 @@ local act = game.newAct()
 ------------------------- Start of Activity --------------------------------
 
 -- File local variables
-local o2Label
 local h2oLabel
 local kWhLabel
 local foodLabel
@@ -37,7 +36,6 @@ function act:init()
 	-- Make simple text labels for now
 	local dySpacing = 50
 	local yStart = act.yMin + act.dyTitleBar
-	o2Label = makeLabel( yStart + dySpacing )
 	h2oLabel = makeLabel( yStart + dySpacing * 2 )
 	kWhLabel = makeLabel( yStart + dySpacing * 3 )
 	foodLabel = makeLabel( yStart + dySpacing * 4 )
@@ -45,7 +43,6 @@ end
 
 -- Refresh the labels to read current values
 function act:prepare()
-	o2Label.text = string.format( "Oxygen: %d liters",  game.oxygen() )
 	h2oLabel.text = string.format( "Water: %d liters", game.water() )
 	kWhLabel.text = string.format( "Energy: %d kWh", game.energy() )
 	foodLabel.text = string.format( "Food: %d kg", game.food() )

@@ -17,11 +17,9 @@ game.removeObj( obj )                 -- remove a display object
 game.emptyFunction()                  -- do nothing
 
 -- Resource functions in game.lua:
-game.oxygen()                         -- return current oxygen amount
 game.water()                          -- return current water amount
 game.energy()                         -- return current energy amount
 game.food()                           -- return current food amount
-game.addOxygen( liters )              -- Add or subtract oxygen
 game.addWater( liters )               -- Add or subtract water
 game.addEnergy( kWh )                 -- Add or subtract energy
 game.addFood( kg )                    -- Add or subtract food
