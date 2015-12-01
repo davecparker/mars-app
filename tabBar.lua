@@ -18,8 +18,8 @@ local msgPreview
 
 -- The tab bar buttons
 local buttons = {
-    { id = "mainAct",    defaultFile = "media/game/map.png", selected = true },
-    { id = "resources",  defaultFile = "media/game/gauge.png"  },
+    { id = "mainAct",    defaultFile = "media/game/map5.png", selected = true },
+    { id = "resources",  defaultFile = "media/game/resourseTab.png"  },
     { id = "documents",  defaultFile = "media/game/folder.png" },
     { id = "messages",   defaultFile = "media/game/messages.png" },
     { id = "menu",       defaultFile = "media/game/menu.png" },
