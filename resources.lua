@@ -5,6 +5,9 @@
 -- The resources view for the Mars App.
 -----------------------------------------------------------------------------------------
 
+-- This view is currently unused
+--[[
+
 -- Get local reference to the game globals
 local game = globalGame
 
@@ -54,3 +57,5 @@ end
 
 -- Corona needs the scene object returned from the act file
 return act.scene
+
+--]]

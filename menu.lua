@@ -105,7 +105,7 @@ function act:init()
 		label = "Debug Menu",
 		onRelease = 
 			function ()
-				game.gotoScene( "debugMenu" )
+				game.gotoScene( "debugMenu", { effect = "slideLeft", time = 200 } )
 			end
 	}
 	act.group:insert( button )

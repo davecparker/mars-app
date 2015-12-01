@@ -199,9 +199,10 @@ local function walkTo( x, y, time )
 	-- Count total moves
 	game.moves = game.moves + 1
 	
-	-- Use a little food and water proportional to the walking time
-	game.addWater( -0.001 * time )
-	game.addFood( -0.0002 * time )
+	-- Use a little food and water
+	game.addWater( -0.5 )
+	game.addFood( -0.5 )
+	--print( "Water = " .. game.water() .. ", food = " .. game.food() )
 end
 
 -- Handle touch on a map gem icon

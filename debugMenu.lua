@@ -15,8 +15,6 @@ local widget = require( "widget" )
 local act = game.newAct()
 
 
-------------------------- Debug Data --------------------------------
-
 -- List of activities that can be run directly from the debug menu
 local debugActs = {
 	"mainAct",
@@ -34,10 +32,11 @@ local debugActs = {
 	"sampleAct",
 }
 
-------------------------- Start of Activity --------------------------------
-
--- Act data
-local tableView     -- the tableView widget
+-- File local variables
+local res = game.saveState.resources
+local waterEdit
+local foodEdit
+local energyEdit
 
 
 -- Draw a row in the tableView
@@ -66,7 +65,31 @@ end
 
 -- Handle press of the back button
 local function onBackButton()
-	game.gotoScene( "menu" )
+	game.gotoScene( "menu", { effect = "slideRight", time = 200 } )
+end
+
+-- Create a UI label in the act
+local function newLabel( text, x, y )
+	local label = display.newText( act.group, text, x, y, native.systemFont, 18 )
+	label.anchorX = 0
+	label:setFillColor( 0 )
+	return label
+end
+
+-- Create a new textEdit in the act
+local function newNumberEdit( x, y, listener )
+	local edit = native.newTextField( x, y, 70, 30 )
+	edit.inputType = "number"
+	edit:addEventListener( "userInput", listener )
+	act.group:insert( edit )
+	return edit
+end
+
+-- Create a new on/off switch in the act
+local function newSwitch( x, y, listener )
+	local switch = widget.newSwitch{ x = x, y = y, onRelease = listener }
+	act.group:insert( switch )
+	return switch
 end
 
 -- Init the act
@@ -75,43 +98,54 @@ function act:init()
 	act:grayBackground()
 	act:makeTitleBar( "Debug Menu", onBackButton )
 
+	-- Position for controls and labels
+	local xLabel = act.xCenter
+	local xEdit = act.xMax - 60
+	local y = act.yMin + act.dyTitleBar * 1.5
+	local dy = act.dyTitleBar
+
 	-- Cheat mode switch and label
-	local ySwitch = act.yMin + act.dyTitleBar * 1.5
-	local label = display.newText( act.group, "Cheat", act.xCenter + 60 , ySwitch, 
-						native.systemFont, 18 )
-	label:setFillColor( 0 )
-	local switch = widget.newSwitch{
-		x = act.xMax - 35,
-		y = ySwitch,
-		onRelease = 
-			function ( event )
-				game.cheatMode = event.target.isOn
-			end
-	}
-	act.group:insert( switch )
+	newLabel( "Cheat", xLabel , y )
+	newSwitch( act.xMax - 45, y,
+		function ( event )
+			game.cheatMode = event.target.isOn
+		end )
 
 	-- All Gems mode switch and label
-	local ySwitch = act.yMin + act.dyTitleBar * 1.5
-	local label = display.newText( act.group, "All Gems", act.xMin + 50 , ySwitch, 
-						native.systemFont, 18 )
-	label:setFillColor( 0 )
-	local switch = widget.newSwitch{
-		x = act.xCenter - 40,
-		y = ySwitch,
-		onRelease = 
-			function ( event )
-				game.allGems = event.target.isOn
-			end
-	}
-	act.group:insert( switch )
+	y = y + dy
+	newLabel( "All Gems", xLabel , y )
+	newSwitch( act.xMax - 45, y,
+		function ( event )
+			game.allGems = event.target.isOn
+		end )
+
+	-- Resource edits and labels
+	y = y + dy * 2
+	newLabel( "Water", xLabel , y )
+	waterEdit = newNumberEdit( xEdit, y,
+		function ( event )
+			res.h2o = tonumber( event.target.text ) or 0
+		end )
+	y = y + dy
+	newLabel( "Food", xLabel , y )
+	foodEdit = newNumberEdit( xEdit, y,
+		function ( event )
+			res.food = tonumber( event.target.text ) or 0
+		end )
+	y = y + dy
+	newLabel( "Energy", xLabel , y )
+	energyEdit = newNumberEdit( xEdit, y,
+		function ( event )
+			res.kWh = tonumber( event.target.text ) or 0
+		end )
 
 	-- Create the tableView widget to list the debug activities
 	local tableView = widget.newTableView
 	{
 	    left = act.xMin,
-	    top = act.yMin + act.dyTitleBar * 2,
-	    height = act.height - act.dyTitleBar * 2,
-	    width = act.width,
+	    top = act.yMin + act.dyTitleBar,
+	    height = act.height - act.dyTitleBar,
+	    width = act.width * 0.45,
 	    onRowRender = onRowRender,
 	    onRowTouch = onRowTouch,
 	}
@@ -121,6 +155,13 @@ function act:init()
 	for i = 1, #debugActs do
 	    tableView:insertRow{}
 	end
+end
+
+-- Prepare the act
+function act:prepare()
+	waterEdit.text = tostring( res.h2o )
+	foodEdit.text = tostring( res.food )
+	energyEdit.text = tostring( res.kWh )
 end
 
 

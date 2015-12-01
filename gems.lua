@@ -99,9 +99,6 @@ local function touchGemMessageBox( event )
                 -- Open the gem's document 
                 game.openDoc = gemGrabbed.file
                 game.gotoTab( "documents" )
-            elseif gemGrabbed.t == "res" then
-                -- Go to Resources view
-                game.gotoTab( "resources" )
             end
         end
     end
