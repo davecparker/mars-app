@@ -45,7 +45,7 @@ end
 -- Handle touch on message preview 
 local function touchMessagePreview( event )
     if event.phase == "began" then
-		game.gotoTab( 4 )   -- messages
+		game.gotoTab( "messages" )
 	end
     return true
 end
@@ -95,9 +95,16 @@ function initTabBar()
     }
 end
 
--- Go to the given game tab (numbered index: 1 = main, 2 = resources, etc. )
-function game.gotoTab( index )
-	tabBar:setSelected( index, true )
+-- Go to the given game tab name
+function game.gotoTab( name )
+	-- Find the tab with the given name
+	for i = 1, #buttons do
+		if buttons[i].id == name then
+			tabBar:setSelected( i, true )
+			return
+		end
+	end
+	error( "Invalid tab name", 2 )
 end
 
 -- Show message preview box with the given text
