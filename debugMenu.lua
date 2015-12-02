@@ -37,6 +37,10 @@ local res = game.saveState.resources
 local waterEdit
 local foodEdit
 local energyEdit
+local xLabel = act.xCenter
+local xEdit = act.xMax - 60
+local dyLine = act.dyTitleBar
+local yEditFirst = act.yMin + dyLine * 4.5
 
 
 -- Draw a row in the tableView
@@ -77,9 +81,10 @@ local function newLabel( text, x, y )
 end
 
 -- Create a new textEdit in the act
-local function newNumberEdit( x, y, listener )
+local function newNumberEdit( x, y, value, listener )
 	local edit = native.newTextField( x, y, 70, 30 )
 	edit.inputType = "number"
+	edit.text = tostring( value )
 	edit:addEventListener( "userInput", listener )
 	act.group:insert( edit )
 	return edit
@@ -99,10 +104,7 @@ function act:init()
 	act:makeTitleBar( "Debug Menu", onBackButton )
 
 	-- Position for controls and labels
-	local xLabel = act.xCenter
-	local xEdit = act.xMax - 60
 	local y = act.yMin + act.dyTitleBar * 1.5
-	local dy = act.dyTitleBar
 
 	-- Cheat mode switch and label
 	newLabel( "Cheat", xLabel , y )
@@ -112,32 +114,20 @@ function act:init()
 		end )
 
 	-- All Gems mode switch and label
-	y = y + dy
+	y = y + dyLine
 	newLabel( "All Gems", xLabel , y )
 	newSwitch( act.xMax - 45, y,
 		function ( event )
 			game.allGems = event.target.isOn
 		end )
 
-	-- Resource edits and labels
-	y = y + dy * 2
-	newLabel( "Water", xLabel , y )
-	waterEdit = newNumberEdit( xEdit, y,
-		function ( event )
-			res.h2o = tonumber( event.target.text ) or 0
-		end )
-	y = y + dy
-	newLabel( "Food", xLabel , y )
-	foodEdit = newNumberEdit( xEdit, y,
-		function ( event )
-			res.food = tonumber( event.target.text ) or 0
-		end )
-	y = y + dy
-	newLabel( "Energy", xLabel , y )
-	energyEdit = newNumberEdit( xEdit, y,
-		function ( event )
-			res.kWh = tonumber( event.target.text ) or 0
-		end )
+	-- Resource edit labels
+	y = yEditFirst
+	newLabel( "Water", xLabel, y )
+	y = y + dyLine
+	newLabel( "Food", xLabel, y )
+	y = y + dyLine
+	newLabel( "Energy", xLabel, y )
 
 	-- Create the tableView widget to list the debug activities
 	local tableView = widget.newTableView
@@ -159,11 +149,40 @@ end
 
 -- Prepare the act
 function act:prepare()
-	waterEdit.text = tostring( res.h2o )
-	foodEdit.text = tostring( res.food )
-	energyEdit.text = tostring( res.kWh )
+	-- Create the resource text edits
+	local y = yEditFirst
+	waterEdit = newNumberEdit( xEdit, y, res.h2o,
+		function ( event )
+			res.h2o = tonumber( event.target.text ) or 0
+		end )
+	y = y + dyLine
+	foodEdit = newNumberEdit( xEdit, y, res.food,
+		function ( event )
+			res.food = tonumber( event.target.text ) or 0
+		end )
+	y = y + dyLine
+	energyEdit = newNumberEdit( xEdit, y, res.kWh,
+		function ( event )
+			res.kWh = tonumber( event.target.text ) or 0
+		end )
 end
 
+-- Stop the act
+function act:stop()
+	-- Destroy the resource text edits
+	if waterEdit then
+		waterEdit:removeSelf()
+		waterEdit = nil
+	end
+	if foodEdit then
+		foodEdit:removeSelf()
+		foodEdit = nil
+	end
+	if energyEdit then
+		energyEdit:removeSelf()
+		energyEdit = nil
+	end
+end
 
 ------------------------- End of Activity --------------------------------
 
