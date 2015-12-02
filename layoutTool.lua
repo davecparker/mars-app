@@ -36,7 +36,7 @@ function act:init()
 	shipGroup.y = act.yCenter
 
 	-- Map background with touch listener
-	local map = act:newImage( "shipPlan.png", { folder = "media/mainAct", parent = shipGroup, width = act.width, x = 0, y = 0 } )
+	local map = act:newImage( "shipPlan2.png", { folder = "media/mainAct", parent = shipGroup, width = act.width, x = 0, y = 0 } )
 	map:addEventListener( "touch", touchMap )
 
 	-- Text display for coordinates

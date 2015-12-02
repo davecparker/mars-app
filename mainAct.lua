@@ -22,7 +22,7 @@ local zoomTime = 500   -- time for zoom in/out transition (ms)
 local walkSpeed = 0.1  -- user's walking speed factor
 
 -- Act variables
-local spaceBg          -- space background image
+local spaceBgs         -- space background (array of 2 images)
 local marsBg           -- Mars background image
 local shipGroup        -- display group centered on ship
 local iconGroup        -- display group for map icons, within shipGroup
@@ -34,82 +34,86 @@ local yTitleBar        -- y position of title bar when visible
 -- Main Ship coordinates
 local ship = {
 	-- Vertical hallway
-	vHall = { left = -10, top = -115, right = 12, bottom = 152 },
+	vHall = { left = -10, top = -155, right = 12, bottom = 172 },
 
-	-- Horizontal hallway
-	hHall = { left = -133, top = -11, right = 12, bottom = 14 },
+	-- Top Horizontal hallway
+	thHall = { left = -45, top = -145, right = 45, bottom = -130},
 
-	-- Rooms (name, rectangle bounds, position just outside the door, delta to inside)
+	-- Bottom Horizontal hallway
+	bhHall = { left = -133, top = -11, right = 132, bottom = 0 },
+
+	-- Rooms: name, rectangle bounds, zoom factor,
+	--        x, y position just outside the door, delta to inside
 	rooms = {
 		{ 
 			name = "Bridge", 
-			left = -53, top = -244, right = 56, bottom = -126, 
-			x = 1, y = -116, dy = -30, 
-		},
-		{ 
-			name = "Lab", 
-			left = 23, top = 3, right = 140, bottom = 80, 
-			x = 12, y = 40, dx = 30, 
-		},
-		{ 
-			name = "Lounge", 
-			left = 23, top = -78, right = 140, bottom = 0, 
-			x = 12, y = -12, dx = 30, 
-		},
-		{
-			name = "Jordan",
-			left = 23, top = -158, right = 140, bottom = -81, 
-			x = 12, y = -92, dx = 30, doorCode = "2439",
-		},
-		{
-			name = "Maxwell",
-			left = -139, top = -158, right = -20, bottom = -81, 
-			x = -8, y = -92, dx = -30,
-		},
-		{
-			name = "Graham",
-			left = -56, top = -77, right = -20, bottom = -21, 
-			x = -26, y = -8, dy = -30, 
-		},
-		{
-			name = "Moore",
-			left = -97, top = -77, right = -61, bottom = -21, 
-			x = -68, y = -8, dy = -30, 
-		},
-		{
-			name = "Ellis",
-			left = -138, top = -77, right = -101, bottom = -21, 
-			x = -109, y = -8, dy = -30, 
-		},
-		{
-			name = "Shaw",
-			left = -56, top = 23, right = -20, bottom = 80, 
-			x = -26, y = 12, dy = 30, 
-		},
-		{
-			name = "Webb",
-			left = -97, top = 23, right = -61, bottom = 80, 
-			x = -68, y = 12, dy = 30, 
-		},
-		{
-			name = "Your Quarters",
-			left = -138, top = 23, right = -101, bottom = 80, 
-			x = -109, y = 12, dy = 30, 
-		},
-		{
-			name = "Rover Bay",
-			left = -145, top = 84, right = -20, bottom = 161, 
-			x = -8, y = 95, dx = -30, 
+			left = -48, top = -248, right = 49, bottom = -168, zoom = 3,
+			x = -1, y = -160, dy = -30, 
 		},
 		{
 			name = "Greenhouse",
-			left = 23, top = 84, right = 140, bottom = 237, 
-			x = 12, y = 95, dx = 30, sound = "Light Mood.mp3",
+			left = -139, top = -190, right = -52, bottom = -83, zoom = 3,
+			x = -44, y = -141, dx = -30, sound = "Light Mood.mp3",
+		},
+		{ 
+			name = "Lounge", 
+			left = 49, top = -188, right = 137, bottom = -85, zoom = 3,
+			x = 46, y = -140, dx = 30, 
+		},
+		{
+			name = "Jordan",
+			left = -80, top = -58, right = -21, bottom = -18, zoom = 4,
+			x = -51, y = -7, dy = -30, doorCode = "2439",
+		},
+		{
+			name = "Maxwell",
+			left = 20, top = -58, right = 77, bottom = -19, zoom = 4,
+			x = 46, y = -7, dy = -30,
+		},
+		{
+			name = "Graham",
+			left = -141, top = -58, right = -82, bottom = -19, zoom = 4,
+			x = -111, y = -7, dy = -30, 
+		},
+		{
+			name = "Moore",
+			left = 81, top = -58, right = 138, bottom = -19, zoom = 4,
+			x = 110, y = -7, dy = -30, 
+		},
+		{
+			name = "Ellis",
+			left = -141, top = 5, right = -81, bottom = 45, zoom = 4,
+			x = -113, y = -7, dy = 30, 
+		},
+		{
+			name = "Shaw",
+			left = -79, top = 6, right = -22, bottom = 45, zoom = 4,
+			x = -50, y = -7, dy = 30, 
+		},
+		{
+			name = "Webb",
+			left = 20, top = 5, right = 76, bottom = 45, zoom = 4,
+			x = 49, y = -7, dy = 30, 
+		},
+		{
+			name = "Your Quarters",
+			left = 81, top = 5, right = 138, bottom = 45, zoom = 4,
+			x = 109, y = -7, dy = 30, 
+		},
+		{
+			name = "Rover Bay",
+			left = -142, top = 88, right = -22, bottom = 184, zoom = 2,
+			x = -15, y = 134, dx = -30, 
+		},
+		{ 
+			name = "Lab", 
+			left = 20, top = 86, right = 141, bottom = 183, zoom = 2,
+			x = 15, y = 134, dx = 30, 
 		},
 		{
 			name = "Engineering",
-			left = -138, top = 165, right = 19, bottom = 237, 
-			x = 1, y = 154, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
+			left = -77, top = 187, right = 74, bottom = 257, zoom = 2,
+			x = 0, y = 174, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
 		},
 	},
 }
@@ -135,12 +139,13 @@ end
 -- Return the x, y destination constrained to the hallways of the ship,
 -- taking into account the current position of the dot.
 local function constrainToHalls( x, y )
-	-- Test to see if dot is currently in hHall, vHall, or both (intersection)
+	-- Test to see if dot is currently in bhHall, vHall, or both (intersection)
 	local inVHall = game.xyInRect( dot.x, dot.y, ship.vHall )
-	local inHHall = game.xyInRect( dot.x, dot.y, ship.hHall )
+	local inHHall = game.xyInRect( dot.x, dot.y, ship.bhHall )
+	local inTHHall = game.xyInRect( dot.x, dot.y, ship.thHall)
 
-	-- If dot is currently in the intersection of both halls, determine
-	-- which direction is closer to the destination.
+	-- If dot is currently in the intersection of both the vertical and bottom horizontal hall, 
+	-- determine which direction is closer to the destination.
 	if inHHall and inVHall then
 		if math.abs( x - dot.x) > math.abs( y - dot.y ) then
 			inVHall = false   -- will prefer horizontal movement
@@ -149,12 +154,26 @@ local function constrainToHalls( x, y )
 		end
 	end
 
-	-- If dot is currently in the hHall, then prefer horizontal movement,
+	-- If dot is currently in the intersection of both the vertical and top horizontal hall, 
+	-- determine which direction is closer to the destination.	
+	if inTHHall and inVHall then
+		if math.abs( x - dot.x) > math.abs( y - dot.y ) then
+			inVHall = false   -- will prefer horizontal movement
+		else
+			inTHHall = false   -- will prefer vertical movement
+		end
+	end
+
+	-- If dot is currently in the bhHall, then prefer horizontal movement,
 	-- else prefer vertical movement
 	if inHHall then
 		-- Constrain to the horizontal hall
-		x = game.pinValue( x, ship.hHall.left, ship.hHall.right )
-		y = game.pinValue( y, ship.hHall.top, ship.hHall.bottom )
+		x = game.pinValue( x, ship.bhHall.left, ship.bhHall.right )
+		y = game.pinValue( y, ship.bhHall.top, ship.bhHall.bottom )
+	elseif inTHHall then
+		-- Constrain to the top horizontal hall
+		x = game.pinValue( x, ship.thHall.left, ship.thHall.right )
+		y = game.pinValue( y, ship.thHall.top, ship.thHall.bottom )
 	else
 		-- Constrain to the vertical hall
 		x = game.pinValue( x, ship.vHall.left, ship.vHall.right )
@@ -180,10 +199,10 @@ local function walkTo( x, y, time )
 	-- Count total moves
 	game.moves = game.moves + 1
 	
-	-- Use a little o2, h2o, and food proportional to the walking time
-	game.addOxygen( -0.02 * time )
-	game.addWater( -0.001 * time )
-	game.addFood( -0.0002 * time )
+	-- Use a little food and water
+	game.addWater( -0.5 )
+	game.addFood( -0.5 )
+	--print( "Water = " .. game.water() .. ", food = " .. game.food() )
 end
 
 -- Handle touch on a map gem icon
@@ -228,6 +247,8 @@ local function makeIconGroup( room )
 	for name, gem in pairs( gems.onShip ) do
 		if gems.shipGemIsActive( name ) and game.xyInRect( gem.x, gem.y, room ) then
 			local icon = gems.newGemIcon( group, name, gem )
+			icon.xScale = 1 / room.zoom   -- icon size does not zoom
+			icon.yScale = icon.xScale
 			icon:addEventListener( "touch", gemTouched )
 		end
 	end
@@ -250,7 +271,7 @@ local function zoomToRoom( room )
 	room.entered = true
 
 	-- Zoom the map in, centered at the room's center
-	local scale = 2
+	local scale = room.zoom
 	local x = act.xCenter - scale * (room.left + room.right) / 2
 	local y = act.yCenter - scale * (room.top + room.bottom) / 2
 	transition.to( shipGroup, { x = x, y = y, xScale = scale, yScale = scale, 
@@ -364,10 +385,27 @@ local function backTapped()
 	return true
 end
 
+-- Handle new frame events
+function act:enterFrame()
+	-- Continuous scroll of the endless space background
+	for i = 1, 2 do
+		local bg = spaceBgs[i]
+		bg.y = bg.y + 0.5
+		if bg.y > act.yMax then
+			bg.y = act.yMin - act.height
+		end
+	end
+end
+
 -- Init the act
 function act:init()
-	-- Background images (one is chosen in act:show)
-	spaceBg = act:newImage( "space.jpg", { height = act.height } )
+	-- Space background images (2 for continuous scrolling)
+	spaceBgs = {
+		act:newImage( "space.jpg", { y = act.yMin, anchorY = 0, height = act.height }  ),
+	 	act:newImage( "space.jpg", { y = act.yMin - act.height, anchorY = 0, height = act.height }  ),
+	 }
+
+	-- Mars background image
 	marsBg = act:newImage( "mars.jpg", { height = act.height } )
 	
 	-- Display group for ship elements (centered on ship)
@@ -376,7 +414,7 @@ function act:init()
 	shipGroup.y = act.yCenter
 
 	-- Map background with touch listener
-	local map = act:newImage( "shipPlan.png", { parent = shipGroup, width = act.width, x = 0, y = 0 } )
+	local map = act:newImage( "shipPlan2.png", { parent = shipGroup, width = act.width, x = 0, y = 0 } )
 	map:addEventListener( "touch", touchMap )
 
 	--[[ Display rectangles in the walkable parts of the hallways (testing only)
@@ -386,8 +424,14 @@ function act:init()
 	r.anchorY = 0
 	r:setFillColor( 0.5 )
 	r.alpha = 0.5
-	r = display.newRect( shipGroup, ship.hHall.left, ship.hHall.top, 
-					ship.hHall.right - ship.hHall.left, ship.hHall.bottom - ship.hHall.top )
+	r = display.newRect( shipGroup, ship.bhHall.left, ship.bhHall.top, 
+					ship.bhHall.right - ship.bhHall.left, ship.bhHall.bottom - ship.bhHall.top )
+	r.anchorX = 0
+	r.anchorY = 0
+	r:setFillColor( 0.3 )
+	r.alpha = 0.5
+	r = display.newRect( shipGroup, ship.thHall.left, ship.thHall.top, 
+					ship.thHall.right - ship.thHall.left, ship.thHall.bottom - ship.thHall.top )
 	r.anchorX = 0
 	r.anchorY = 0
 	r:setFillColor( 0.3 )
@@ -423,8 +467,10 @@ end
 
 -- Select the proper background image
 local function selectBackground()
-	spaceBg.isVisible = not game.saveState.onMars
-	marsBg.isVisible = game.saveState.onMars
+	local onMars = game.saveState.onMars
+	spaceBgs[1].isVisible = not onMars
+	spaceBgs[2].isVisible = not onMars
+	marsBg.isVisible = onMars
 end
 
 -- Land the ship and update ship state as necessary
@@ -463,7 +509,6 @@ end
 
 -- Stop the act
 function act:stop()
-	game.stopAmbientSound()
 	game.endMessageBox()
 end
 

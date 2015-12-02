@@ -41,7 +41,7 @@ function game.sendMessage( id )
 
 	-- Create new message badge if necessary, and show it
 	if not badge then
-		badge = game.createBadge( act.xMin + act.width * 0.75, act.yMax + 15 )
+		badge = game.createBadge( act.xMin + act.width * 0.66, act.yMax + 10 )
 	end
 	game.showBadge( badge )
 	game.playSound( textSound )
