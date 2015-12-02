@@ -259,12 +259,14 @@ end
 
 ------------------------------ Sound  --------------------------------------
 
--- Play the sound if game sound is on
+-- Play the sound if game sound is on. See audio.play for options.
+-- Return the channel number used or nil if not played.
 function game.playSound( sound, options )
 	if ss.soundOn then
 		local ch = audio.play( sound, options )
         if ch and ch > 0 then
             audio.setVolume( ss.fxVolume, { channel = ch } ) 
+            return ch
         end
 	end
 	return nil
