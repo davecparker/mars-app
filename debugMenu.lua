@@ -33,15 +33,22 @@ local debugActs = {
 }
 
 -- File local variables
-local res = game.saveState.resources
+local ss = game.saveState
+local res = ss.resources
 local waterEdit
 local foodEdit
 local energyEdit
+local stateEdit
 local xLabel = act.xCenter
 local xEdit = act.xMax - 60
 local dyLine = act.dyTitleBar
-local yEditFirst = act.yMin + dyLine * 4.5
+local yEditFirst = act.yMin + dyLine * 1.5
 
+
+-- Hide the keyboard
+local function hideKeyboard()
+	native.setKeyboardFocus( nil )
+end
 
 -- Draw a row in the tableView
 local function onRowRender( event )
@@ -60,6 +67,7 @@ end
 
 -- Handle touch on a row
 function onRowTouch( event )
+	hideKeyboard()
 	if event.phase == "tap" or event.phase == "release" then
 		-- Run the selected activity module on the main tab
 		game.gotoTab( "mainAct" )
@@ -100,13 +108,46 @@ end
 -- Init the act
 function act:init()
 	-- Background and title bar for the view
-	act:grayBackground()
-	act:makeTitleBar( "Debug Menu", onBackButton )
+	local bg = act:grayBackground()
+	bg:addEventListener( "touch", hideKeyboard )
+	local tb = act:makeTitleBar( "Debug Menu", onBackButton )
+	tb:addEventListener( "touch", hideKeyboard )
 
 	-- Position for controls and labels
 	local y = act.yMin + act.dyTitleBar * 1.5
 
+	-- Resource edit labels
+	y = yEditFirst
+	newLabel( "Water", xLabel, y )
+	y = y + dyLine
+	newLabel( "Food", xLabel, y )
+	y = y + dyLine
+	newLabel( "Energy", xLabel, y )
+
+	-- Ship state edit label
+	y = y + dyLine * 1.5
+	newLabel( "State", xLabel, y )
+
+	-- Land button
+	y = y + dyLine
+	local btn = widget.newButton{
+	    x = act.xMin + act.width * 0.6,
+	    y = y,
+	    width = 50,
+	    height = 30,
+	    shape = "rect",
+		fillColor = { default = { 1, 1, 1 }, over = { 1, 0, 0 } },
+	    label = "Land",
+	    --labelAlign = "left",
+	    onRelease = 
+	    	function ()
+	    		game.landShip()
+	    	end
+	}
+	act.group:insert( btn )
+
 	-- Cheat mode switch and label
+	y = y + dyLine * 1.5
 	newLabel( "Cheat", xLabel , y )
 	newSwitch( act.xMax - 45, y,
 		function ( event )
@@ -120,14 +161,6 @@ function act:init()
 		function ( event )
 			game.allGems = event.target.isOn
 		end )
-
-	-- Resource edit labels
-	y = yEditFirst
-	newLabel( "Water", xLabel, y )
-	y = y + dyLine
-	newLabel( "Food", xLabel, y )
-	y = y + dyLine
-	newLabel( "Energy", xLabel, y )
 
 	-- Create the tableView widget to list the debug activities
 	local tableView = widget.newTableView
@@ -165,11 +198,19 @@ function act:prepare()
 		function ( event )
 			res.kWh = tonumber( event.target.text ) or 0
 		end )
+	y = y + dyLine * 1.5
+	stateEdit = newNumberEdit( xEdit, y, ss.shipState,
+		function ( event )
+			if event.phase == "ended" or event.phase == "submitted" then
+				game.setShipState( tonumber( event.target.text ) or ss.shipState )
+			end
+		end )
 end
 
 -- Stop the act
 function act:stop()
 	-- Destroy the resource text edits
+	hideKeyboard()
 	if waterEdit then
 		waterEdit:removeSelf()
 		waterEdit = nil
@@ -181,6 +222,10 @@ function act:stop()
 	if energyEdit then
 		energyEdit:removeSelf()
 		energyEdit = nil
+	end
+	if stateEdit then
+		stateEdit:removeSelf()
+		stateEdit = nil
 	end
 end
 

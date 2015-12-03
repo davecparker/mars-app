@@ -36,6 +36,7 @@ game.endMessageBox()                  -- Dismiss active message box if any
 -- Sound functions in game.lua:
 game.playSound( sound, options )      -- Play sound effect, returns channel
 game.stopSound( channel )             -- Stop sound effect 
+game.disposeSound( sound )            -- Dispose of loaded sound
 game.playAmbientSound( filename )     -- Play background sound/music
 game.stopAmbientSound()               -- Stop background sound/music
 

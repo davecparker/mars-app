@@ -69,7 +69,8 @@ local function waterPlant( plant )
 	game.addWater( -1 )
 	updateResDisplay()
 
-	-- Animate the drops falling
+	-- Animate the drops falling with sound effect
+	game.playSound( act.wateringSound )
 	transition.to( drops, { y = plant.y - 20, xScale = 2, yScale = 2,
 			time = 500, onComplete = dropsDone } )
 end
@@ -84,6 +85,7 @@ local function touchPlant( event )
 			-- Remove dead plant
 			if not plant.beingRemoved then
 				plant.beingRemoved = true
+				game.playSound( act.plantingSound )
 				transition.to( plant, { xScale = 1, yScale = 1, alpha = 0, 
 						time = 500, onComplete = game.removeObj })
 			end
@@ -91,6 +93,7 @@ local function touchPlant( event )
 			-- Harvest mature plant
 			if not plant.beingHarvested then 
 				plant.beingHarvested = true
+				game.playSound( act.plantingSound )
 				transition.fadeOut( plant, { time = 500, onComplete = game.removeObj } )
 				game.addFood( 10 )
 				updateResDisplay()
@@ -127,6 +130,7 @@ end
 local function touchDirt( event )
 	if event.phase == "began" then
 		makePlant( event.x, event.y )
+		game.playSound( act.plantingSound )
 	end
 	return true
 end
@@ -247,6 +251,10 @@ function act:init()
 	backButton.y = act.yMin + uiHeight / 2
 	backButton:addEventListener( "tap", backButtonPress )
 	backButton:addEventListener( "touch", game.eatTouch )
+
+	-- Load sound effects
+ 	act.plantingSound = act:loadSound( "Planting.wav" )
+ 	act.wateringSound = act:loadSound( "Pour4.wav" )
 end
 
 -- Prepare the act
@@ -269,6 +277,12 @@ function act:stop()
 		timer.cancel( timerID )
 		timerID = nil
 	end
+end
+
+-- Destroy the act
+function act:destroy()
+	game.disposeSound( act.plantingSound )
+	game.disposeSound( act.wateringSound )
 end
 
 
