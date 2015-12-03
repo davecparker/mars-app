@@ -45,6 +45,11 @@ local dyLine = act.dyTitleBar
 local yEditFirst = act.yMin + dyLine * 1.5
 
 
+-- Hide the keyboard
+local function hideKeyboard()
+	native.setKeyboardFocus( nil )
+end
+
 -- Draw a row in the tableView
 local function onRowRender( event )
     -- Get row info
@@ -62,6 +67,7 @@ end
 
 -- Handle touch on a row
 function onRowTouch( event )
+	hideKeyboard()
 	if event.phase == "tap" or event.phase == "release" then
 		-- Run the selected activity module on the main tab
 		game.gotoTab( "mainAct" )
@@ -102,8 +108,10 @@ end
 -- Init the act
 function act:init()
 	-- Background and title bar for the view
-	act:grayBackground()
-	act:makeTitleBar( "Debug Menu", onBackButton )
+	local bg = act:grayBackground()
+	bg:addEventListener( "touch", hideKeyboard )
+	local tb = act:makeTitleBar( "Debug Menu", onBackButton )
+	tb:addEventListener( "touch", hideKeyboard )
 
 	-- Position for controls and labels
 	local y = act.yMin + act.dyTitleBar * 1.5
@@ -197,10 +205,8 @@ end
 
 -- Stop the act
 function act:stop()
-	-- Hide keyboard if showing
-	native.setKeyboardFocus( nil )
-	
 	-- Destroy the resource text edits
+	hideKeyboard()
 	if waterEdit then
 		waterEdit:removeSelf()
 		waterEdit = nil
