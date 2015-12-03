@@ -128,12 +128,16 @@ function act:init()
 	y = y + dyLine * 1.5
 	newLabel( "State", xLabel, y )
 
-	-- Land on Mars button
+	-- Land button
 	y = y + dyLine
 	local btn = widget.newButton{
-	    x = act.xMin + act.width * 0.7,
+	    x = act.xMin + act.width * 0.6,
 	    y = y,
-	    label = "Land on Mars",
+	    width = 50,
+	    height = 30,
+	    shape = "rect",
+		fillColor = { default = { 1, 1, 1 }, over = { 1, 0, 0 } },
+	    label = "Land",
 	    --labelAlign = "left",
 	    onRelease = 
 	    	function ()
