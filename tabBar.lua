@@ -18,7 +18,7 @@ local msgPreview      -- text message preview window
 -- The tab bar buttons
 local buttons = {
     { id = "mainAct",    defaultFile = "media/game/mapTab.png", selected = true },
-    { id = "resources",  defaultFile = "media/game/resourseTab.png"  },
+--    { id = "resources",  defaultFile = "media/game/resourseTab.png"  },
     { id = "documents",  defaultFile = "media/game/filesTab.png" },
     { id = "messages",   defaultFile = "media/game/messagesTab.png" },
     { id = "menu",       defaultFile = "media/game/settingsTab.png" },
@@ -85,10 +85,10 @@ function initTabBar()
         top = game.yMax - game.dyTabBar + 1,
         width = game.width,
         height = game.dyTabBar,
-        backgroundFile = "media/game/redGradient.png",
-        tabSelectedLeftFile = "media/game/darkRed.png",
-        tabSelectedRightFile = "media/game/darkRed.png",
-        tabSelectedMiddleFile = "media/game/darkRed.png",
+        backgroundFile = "media/game/darkRed.png",
+        tabSelectedLeftFile = "media/game/redHighlight.png",
+        tabSelectedRightFile = "media/game/redHighlight.png",
+        tabSelectedMiddleFile = "media/game/redHighlight.png",
         tabSelectedFrameWidth = 10,
         tabSelectedFrameHeight = game.dyTabBar - 10,
         buttons = buttons,

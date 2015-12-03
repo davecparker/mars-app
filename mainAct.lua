@@ -22,7 +22,7 @@ local zoomTime = 500   -- time for zoom in/out transition (ms)
 local walkSpeed = 0.1  -- user's walking speed factor
 
 -- Act variables
-local spaceBg          -- space background image
+local spaceBgs         -- space background (array of 2 images)
 local marsBg           -- Mars background image
 local shipGroup        -- display group centered on ship
 local iconGroup        -- display group for map icons, within shipGroup
@@ -199,10 +199,10 @@ local function walkTo( x, y, time )
 	-- Count total moves
 	game.moves = game.moves + 1
 	
-	-- Use a little o2, h2o, and food proportional to the walking time
-	game.addOxygen( -0.02 * time )
-	game.addWater( -0.001 * time )
-	game.addFood( -0.0002 * time )
+	-- Use a little food and water
+	game.addWater( -0.5 )
+	game.addFood( -0.5 )
+	--print( "Water = " .. game.water() .. ", food = " .. game.food() )
 end
 
 -- Handle touch on a map gem icon
@@ -385,21 +385,27 @@ local function backTapped()
 	return true
 end
 
--- animates the stars in the background
-local function animateStars ()
-	transition.to( spaceBg.fill, { time = 10000, y = -0.1, delta = true, onComplete = animateStars } )
+-- Handle new frame events
+function act:enterFrame()
+	-- Continuous scroll of the endless space background
+	for i = 1, 2 do
+		local bg = spaceBgs[i]
+		bg.y = bg.y + 0.5
+		if bg.y > act.yMax then
+			bg.y = act.yMin - act.height
+		end
+	end
 end
 
 -- Init the act
 function act:init()
-	-- Background images (one is chosen in act:show)
-	--sets up the stars to animate
-	display.setDefault( "textureWrapY", "repeat" )
-	spaceBg = display.newRect( act.group, act.xCenter, act.yCenter, 700/1.5, 840/1.5 )
-	spaceBg.fill = { type = "image", filename = "media/mainAct/space.jpg" }
-	animateStars()
+	-- Space background images (2 for continuous scrolling)
+	spaceBgs = {
+		act:newImage( "space.jpg", { y = act.yMin, anchorY = 0, height = act.height }  ),
+	 	act:newImage( "space.jpg", { y = act.yMin - act.height, anchorY = 0, height = act.height }  ),
+	 }
 
-	-- mars background Image
+	-- Mars background image
 	marsBg = act:newImage( "mars.jpg", { height = act.height } )
 	
 	-- Display group for ship elements (centered on ship)
@@ -461,8 +467,10 @@ end
 
 -- Select the proper background image
 local function selectBackground()
-	spaceBg.isVisible = not game.saveState.onMars
-	marsBg.isVisible = game.saveState.onMars
+	local onMars = game.saveState.onMars
+	spaceBgs[1].isVisible = not onMars
+	spaceBgs[2].isVisible = not onMars
+	marsBg.isVisible = onMars
 end
 
 -- Land the ship and update ship state as necessary
