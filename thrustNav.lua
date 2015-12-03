@@ -304,11 +304,6 @@ function act:start()
 	game.playAmbientSound( "Ship Ambience.mp3" )
 end
 
--- Stop the act
-function act:stop()
-	game.stopAmbientSound()
-end
-
 -- Init the act
 function act:init()
 	-- Load sound effects in Init so that if scene gets destroyed later and then restarted
@@ -392,7 +387,8 @@ function act:init()
 	local dx = 20
 	display.newLine( act.group, act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
 	display.newLine( act.group, act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
-	targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
+	--targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
+	targetRect = act:newImage( "ship.png", {width = 30})
 
 	-- On Target Indicators
 	onTargetX = act:newImage( "targetx.png", { height = act.width/2, width = act.width/2 } )

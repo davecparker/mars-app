@@ -22,8 +22,9 @@ local game = {
     panelFixed = nil,     -- set to true when a circuit panel is successfully fixed
 
     -- Game state tracking
-    stateStartTime = 0,   -- value of system.getTimer() when current game state started
-    moves = 0,            -- number of times dot has moved since game start
+    currentMainAct = nil,   -- name of act currently running on the main tab
+    stateStartTime = 0,     -- value of system.getTimer() when current game state started
+    moves = 0,              -- number of times dot has moved since game start
 
     -- The saveState table is saved to a file between runs
     saveState = {
@@ -41,7 +42,6 @@ local game = {
     
         -- The user's current resource levels (and starting values)
         resources = {
-            o2 = 100,     -- oxygen in liters
             h2o = 100,    -- water in liters
             kWh = 100,    -- energy in kWh
             food = 100,   -- food in kg
@@ -131,18 +131,9 @@ end
 -------------------------- Resource use   ---------------------------------
 
 -- Accessors for resource amounts
-function game.oxygen()  return res.o2    end
 function game.water()   return res.h2o   end
 function game.energy()  return res.kWh   end
 function game.food()    return res.food  end
-
--- Add to or subtract from the oxygen supply by the given amount in liters
-function game.addOxygen( liters )
-    res.o2 = res.o2 + liters
-    if res.o2 < 0 then
-        res.o2 = 0    -- TODO: Initiate emergency statis or something
-    end
-end
 
 -- Add to or subtract from the water supply by the given amount in liters
 function game.addWater( liters )
@@ -268,12 +259,14 @@ end
 
 ------------------------------ Sound  --------------------------------------
 
--- Play the sound if game sound is on
+-- Play the sound if game sound is on. See audio.play for options.
+-- Return the channel number used or nil if not played.
 function game.playSound( sound, options )
 	if ss.soundOn then
 		local ch = audio.play( sound, options )
         if ch and ch > 0 then
             audio.setVolume( ss.fxVolume, { channel = ch } ) 
+            return ch
         end
 	end
 	return nil
@@ -282,12 +275,25 @@ end
 -- Stop the sound effect playing on the given channel
 function game.stopSound( channel )
     if channel and channel > 0 then
-        audio.stop( channel )
+        return audio.stop( channel )
     end
 end
 
--- Play the ambient sound with the given filename, or stop if filename is nil
-function game.playAmbientSound( filename ) 
+-- Dispose of the sound if it is non nil (careful: the sound must not be playing)
+function game.disposeSound( sound )
+    if sound then
+        audio.dispose( sound )
+    end
+end
+
+-- Play the ambient sound with the given filename, or restart last sound if filename is nil.
+-- In either case, the volume is adjusted to the user's current selected level.
+function game.playAmbientSound( filename )
+	-- Restart previous sound if filename is nil
+	if not filename then
+		filename = ambientSound.name
+	end
+
 	-- Is the requested sound different from the previous one?
 	if filename ~= ambientSound.name then
 		-- Stop and discard previous sound.
@@ -304,10 +310,17 @@ function game.playAmbientSound( filename )
 		ambientSound.name = filename
 	end
 
-	-- Play requested sound if not already playing
-	if ss.soundOn and ambientSound.handle and not ambientSound.channel then
-		ambientSound.channel = audio.play( ambientSound.handle, { loops = -1 } )
-        audio.setVolume( ss.ambientVolume, { channel = ambientSound.channel } ) 
+	-- Play requested sound if not already playing, and adjust volume
+	if ss.soundOn and ambientSound.handle then
+		if not ambientSound.channel then
+			ambientSound.channel = audio.play( ambientSound.handle, { loops = -1 } )
+			if ambientSound.channel <= 0 then 
+				ambientSound.channel = nil   -- failed to play sound
+			end
+		end
+		if ambientSound.channel then
+        	audio.setVolume( ss.ambientVolume, { channel = ambientSound.channel } ) 
+        end
 	end
 end
 

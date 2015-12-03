@@ -20,7 +20,7 @@ local stateStartMoves = 0      -- number of times dot had moved at start of curr
 --     moves (optional)  = number of times user must move on map before start of action
 --     action (required) = function that returns next state, true for next, or nil to stay
 local shipStateData = {
-	{ delay = 3, action =  -- Send awaken messsages
+	{ delay = 5, action =  -- Send awaken messsages
 					function ()
 			        	game.sendMessages( "sas1", "stasis1" )
         				return true
@@ -139,6 +139,7 @@ local shipStateData = {
 	{ action =  -- Course correction #2
 					function ()
 						if ss.thrustNav.onTarget then
+							gems.enableShipGem( "fly1", false )
         					return true
         				end
         			end },
@@ -169,13 +170,18 @@ local shipStateData = {
 							game.removeAct( "circuit" )
 							game.removeAct( "wireCut" )
 							return true
-						end        			end },
+						end        			
+					end },
+					---
+					-- TODO: shipLanding act here
+					---
 	{ delay = 2, action =  -- Landed
 					function ()
 						game.landShip()
-	        			game.sendMessage( "landed" )
+	        			game.sendMessages( "landed", "mars1" )
 						gems.enableShipGem( "rover" )
         			end },
+    ----- Ship State Table ends when ship has landed on Mars -----
 } 
 
 -- Update the game state sequence when on the ship. The current state number
@@ -210,20 +216,25 @@ local function updateMarsState()
 	-- TODO
 end
 
+-- Set the ship state to the given state number
+function game.setShipState( state )
+	ss.shipState = state
+	game.stateStartTime = system.getTimer()
+	stateStartMoves = game.moves
+	print( "Ship state " .. state )
+end
+
 -- This function is called every second while the game is running, but it 
 -- can also be called whenever an immediate game state update is desired. 
 function game.updateState()
 	if ss.onMars then
-		-- On Mars
 		updateMarsState()
 	else
 		-- Not on Mars yet. Game state proceeds in a sequence.
 		local newState = updateShipState( ss.shipState )
 		if newState ~= ss.shipState then
-			ss.shipState = newState
-			game.stateStartTime = system.getTimer()
-			stateStartMoves = game.moves
-			print( "Ship state " .. newState )
+			game.setShipState( newState )
 		end
 	end
 end
+

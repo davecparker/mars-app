@@ -15,6 +15,7 @@ local widget = require( "widget" )  -- need to make buttons
 
 ------------------------- Variables ---------------------------------------------------------
 
+local panelDone = false
 local nutsRemoved = 0    -- the number of nuts that have been removed
 local panel
 local largeBG
@@ -271,10 +272,12 @@ local function removePanel ( event )
 			if panel.x > act.xMax then
 				-- move panel off screen and transition to the next part of the game
 				transition.to( panel, { time = 500, x = 500, onComplete = game.gotoAct( "wireCut", "fade" ) } )
+				panelDone = true
 			end
 			if panel.x < act.xMin then
 				-- move panel off screen and transition to the next part of the game
 				transition.to( panel, { time = 500, x = -220, onComplete = game.gotoAct( "wireCut", "fade" ) } )
+				panelDone = true
 			end
 		end
 		return true
@@ -386,6 +389,13 @@ function act:init()
 	largeBG:addEventListener( "touch", removeBG )    -- added a touch event if the player wants to skip the zoom in
 	transition.scaleBy( largeBG, { xScale = 0.5, yScale = 0.5, time = 2000 } )  -- this is the zoom in time controls how long this sequence is (2000 = 2 seconds)
 	timer.performWithDelay( 2500, removeBG )  -- 2500 (2.5 seconds)  is the delay amount. Needs to be equal or greater to the transistion time
+end
+
+-- if this part is done then go to the next part of th game
+function  act:prepare ()
+	if panelDone == true then
+		game.gotoAct( "wireCut" )
+	end
 end
 
 ------------------------- End of Activity ----------------------------------------------------------------------------------------
