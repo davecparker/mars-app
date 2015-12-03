@@ -96,11 +96,15 @@ local function backButtonPress ( event )
 		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
 			( math.abs( yVelocity )  > 0.00001) ) then
 			-- game.showHint( "Still Spinning!", "Navigation", goMainAct )
-			game.messageBox( "Still Spinning!", { onDismiss = goMainAct } )
+			-- game.messageBox( "Still Spinning!", { onDismiss = goMainAct } )
+			game.messageBox( "Still Spinning!" )
+			game.gotoAct ( "mainAct" )
 		elseif ( ( math.abs( yTargetDelta ) >= 3 ) or 
 			( math.abs( xTargetDelta ) >= 3 ) ) then
 			-- game.showHint( "Still Off Target!", "Navigation", goMainAct )
-			game.messageBox( "Still Off Target!", { onDismiss = goMainAct } )
+			-- game.messageBox( "Still Off Target!", { onDismiss = goMainAct } )
+			game.messageBox( "Still Off Target!" )
+			game.gotoAct ( "mainAct" )
 		end
 	end
 	return true
