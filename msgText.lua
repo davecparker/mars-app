@@ -101,6 +101,10 @@ local msgText = {
 	landed = 	"SAS - Landing target achieved. Congratulations Sierra crew, " ..
 				"you've just established the first settlement on Mars!",	
 
+	mars1 = 	"SAS - Resume primary mission objectives: \n" .. 
+				"1. Explore surface and drill for water. \n" ..
+				"2. Manage greenhouse food production. \n" ..
+				"3. Investigate artifacts.",	
 }
 
 return msgText

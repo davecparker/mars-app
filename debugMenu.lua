@@ -33,14 +33,16 @@ local debugActs = {
 }
 
 -- File local variables
-local res = game.saveState.resources
+local ss = game.saveState
+local res = ss.resources
 local waterEdit
 local foodEdit
 local energyEdit
+local stateEdit
 local xLabel = act.xCenter
 local xEdit = act.xMax - 60
 local dyLine = act.dyTitleBar
-local yEditFirst = act.yMin + dyLine * 4.5
+local yEditFirst = act.yMin + dyLine * 1.5
 
 
 -- Draw a row in the tableView
@@ -106,7 +108,34 @@ function act:init()
 	-- Position for controls and labels
 	local y = act.yMin + act.dyTitleBar * 1.5
 
+	-- Resource edit labels
+	y = yEditFirst
+	newLabel( "Water", xLabel, y )
+	y = y + dyLine
+	newLabel( "Food", xLabel, y )
+	y = y + dyLine
+	newLabel( "Energy", xLabel, y )
+
+	-- Ship state edit label
+	y = y + dyLine * 1.5
+	newLabel( "State", xLabel, y )
+
+	-- Land on Mars button
+	y = y + dyLine
+	local btn = widget.newButton{
+	    x = act.xMin + act.width * 0.7,
+	    y = y,
+	    label = "Land on Mars",
+	    --labelAlign = "left",
+	    onRelease = 
+	    	function ()
+	    		game.landShip()
+	    	end
+	}
+	act.group:insert( btn )
+
 	-- Cheat mode switch and label
+	y = y + dyLine * 1.5
 	newLabel( "Cheat", xLabel , y )
 	newSwitch( act.xMax - 45, y,
 		function ( event )
@@ -120,14 +149,6 @@ function act:init()
 		function ( event )
 			game.allGems = event.target.isOn
 		end )
-
-	-- Resource edit labels
-	y = yEditFirst
-	newLabel( "Water", xLabel, y )
-	y = y + dyLine
-	newLabel( "Food", xLabel, y )
-	y = y + dyLine
-	newLabel( "Energy", xLabel, y )
 
 	-- Create the tableView widget to list the debug activities
 	local tableView = widget.newTableView
@@ -165,10 +186,20 @@ function act:prepare()
 		function ( event )
 			res.kWh = tonumber( event.target.text ) or 0
 		end )
+	y = y + dyLine * 1.5
+	stateEdit = newNumberEdit( xEdit, y, ss.shipState,
+		function ( event )
+			if event.phase == "ended" or event.phase == "submitted" then
+				game.setShipState( tonumber( event.target.text ) or ss.shipState )
+			end
+		end )
 end
 
 -- Stop the act
 function act:stop()
+	-- Hide keyboard if showing
+	native.setKeyboardFocus( nil )
+	
 	-- Destroy the resource text edits
 	if waterEdit then
 		waterEdit:removeSelf()
@@ -181,6 +212,10 @@ function act:stop()
 	if energyEdit then
 		energyEdit:removeSelf()
 		energyEdit = nil
+	end
+	if stateEdit then
+		stateEdit:removeSelf()
+		stateEdit = nil
 	end
 end
 
