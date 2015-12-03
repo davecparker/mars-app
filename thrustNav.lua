@@ -383,7 +383,8 @@ function act:init()
 	local dx = 20
 	display.newLine( act.group, act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
 	display.newLine( act.group, act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
-	targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
+	--targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
+	targetRect = act:newImage( "ship.png", {width = 30})
 
 	-- On Target Indicators
 	onTargetX = act:newImage( "targetx.png", { height = act.width/2, width = act.width/2 } )

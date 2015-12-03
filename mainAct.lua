@@ -30,6 +30,8 @@ local dot              -- user's position dot on map
 local roomInside       -- room the user is inside or nil if none
 local titleBar         -- title bar used when map is zoomed
 local yTitleBar        -- y position of title bar when visible
+local shipOutside      -- Outside of ship Image
+local map              -- the map image
 
 -- Main Ship coordinates
 local ship = {
@@ -397,6 +399,16 @@ function act:enterFrame()
 	end
 end
 
+-- Make map background with touch listener and remove ship outside image
+local function  removeShipOutside ()
+	transition.to( shipOutside, { alpha = 0, onComplete = removeImage } )
+	function removeImage ()
+		shipOutside:removeSelf( )
+		shipOutside = nil
+	end
+	map.isVisible = true
+end
+
 -- Init the act
 function act:init()
 	-- Space background images (2 for continuous scrolling)
@@ -413,9 +425,23 @@ function act:init()
 	shipGroup.x = act.xCenter
 	shipGroup.y = act.yCenter
 
+	-- Start outside of the ship and zooms into it
+	shipOutside = act:newImage( "shipOutside.png", {width = act.width - 10 } )
+	local perams = {
+		delay = 1000, 
+		time = 1500, 
+		xScale = 1.9, 
+		yScale = 1.9, 
+		y = 220,
+		transition = easing.inOutSine,
+		onComplete = removeShipOutside
+	}
+	transition.to( shipOutside, perams )
+
 	-- Map background with touch listener
-	local map = act:newImage( "shipPlan2.png", { parent = shipGroup, width = act.width, x = 0, y = 0 } )
+	map = act:newImage( "shipPlan2.png", { parent = shipGroup, width = act.width, x = 0, y = 0 } )
 	map:addEventListener( "touch", touchMap )
+	map.isVisible = false
 
 	--[[ Display rectangles in the walkable parts of the hallways (testing only)
 	local r = display.newRect( shipGroup, ship.vHall.left, ship.vHall.top, 
