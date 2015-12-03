@@ -275,7 +275,14 @@ end
 -- Stop the sound effect playing on the given channel
 function game.stopSound( channel )
     if channel and channel > 0 then
-        audio.stop( channel )
+        return audio.stop( channel )
+    end
+end
+
+-- Dispose of the sound if it is non nil (careful: the sound must not be playing)
+function game.disposeSound( sound )
+    if sound then
+        audio.dispose( sound )
     end
 end
 
