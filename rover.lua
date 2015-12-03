@@ -681,7 +681,7 @@ local function updatePosition()
 		rover.accelerate = false
 		rover.brake = true
 
-		if not audio.isChannelActive( 5 ) then		
+		if not audio.isChannelPlaying( rover.stopSound ) then		
 			decelerate()
 		end
 
@@ -798,17 +798,9 @@ local function decelerate()
 	rover.accelerate = false
 
 	-- Play rover deceleration sound followed by idle engine sound, first halting any other sounds
-	if audio.isChannelActive( 4 ) then
-		audio.stop( 4 )
-	end
-	
-	if audio.isChannelActive( 3 ) then
-		audio.stop( 3 )
-	end
-
-	if audio.isChannelActive( 2 ) then
-		audio.stop( 2 )
-	end
+	game.stopSound( rover.stage2Channel )
+	game.stopSound( rover.stage1Channel )
+	game.stopSound( rover.startChannel )
 
 	local options2 = {
 		channel = 1,
@@ -845,11 +837,8 @@ local function handleAccelButton( event )
 			rover.accelerate = true
 
 			-- Halt engine or stop sounds
-			if audio.isChannelActive( 1 ) then
-				audio.stop( 1 )
-			elseif audio.isChannelActive( 5 ) then
-				audio.stop( 5 )
-			end
+			game.stopSound( rover.engineChannel )
+			game.stopSound( rover.stopChannel )
 
 			local options3 = {
 				channel = 4,
@@ -923,6 +912,7 @@ local function onWaterRelease( event )
 
 	-- leave the game and go to drillScan; allow time for rover to decelerate and sound to complete
 	local function goToDrillScan( event )
+		-- Stop all audio
 		audio.stop()
 		game.gotoAct ( "drillScan", { effect = "zoomInOutFade", time = 1000 } )
 	end
@@ -1093,13 +1083,6 @@ local function testPrint()
 	-- 					"rover.isActive: ", tostring(rover.isActive),
 	-- 					"rover.leftShip: ", tostring(map.rover.leftShip)
 	-- 					))
-	local channel
-	if audio.isChannelActive( 1 ) then channel = 1 end
-	if audio.isChannelActive( 2 ) then channel = 2 end
-	if audio.isChannelActive( 3 ) then channel = 3 end
-	if audio.isChannelActive( 4 ) then channel = 4 end
-	if audio.isChannelActive( 5 ) then channel = 5 end
-	print( channel )
 end 
 
 -- Start the act
