@@ -27,6 +27,7 @@ local debugActs = {
 	"drill",
 	"rover",
 	"shipLanding",
+	"stasis",
 	"blankAct",
 	"layoutTool",
 	"sampleAct",
@@ -70,7 +71,7 @@ function onRowTouch( event )
 	hideKeyboard()
 	if event.phase == "tap" or event.phase == "release" then
 		-- Run the selected activity module on the main tab
-		game.gotoTab( "mainAct" )
+		game.gotoTab( "mainAct", false )
 		game.gotoAct( debugActs[event.target.index] )  
 	end
 end

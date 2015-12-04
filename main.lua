@@ -46,7 +46,7 @@ game.showBadge( badge )               -- show an indicator badge
 game.hideBadge( badge )               -- hide an indicator badge
 game.showMessagePreview( text )       -- Show preview of message text
 game.hideMessagePreview()             -- Hide message preview if showing
-game.gotoTab( name )                  -- Go to game tab name
+game.gotoTab( name, press )           -- Go to game tab name
 
 -- Game functions in mainAct.lua:
 game.roomName()                       -- Name of room user is in or nil if none

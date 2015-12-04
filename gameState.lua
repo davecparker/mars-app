@@ -13,6 +13,7 @@ local ss = game.saveState
 
 -- File local variables
 local stateStartMoves = 0      -- number of times dot had moved at start of current state
+local foodOutSent = false      -- true when out of food message has been sent
 
 
 -- Ship state sequence data. Entries are indexed by state number and contain:
@@ -73,7 +74,7 @@ local shipStateData = {
         			end },
     { delay = 5, action =  -- Notify to fix panel #1 (Engineering)
 					function ()
-						game.sendMessages( "panel1" )
+						game.sendMessage( "panel1" )
 						gems.enableShipGem( "panel1" )
 						game.panelFixed = false
 						return true
@@ -131,7 +132,7 @@ local shipStateData = {
 					function ()
 	 					gems.enableShipGem( "graham2" )
 						gems.enableShipGem( "msgHist" )
-	        			game.sendMessages( "correct2" )
+	        			game.sendMessage( "correct2" )
 	        			ss.thrustNav.onTarget = false
  						gems.enableShipGem( "fly1" )
        					return true
@@ -179,7 +180,6 @@ local shipStateData = {
 					function ()
 						game.landShip()
 	        			game.sendMessages( "landed", "mars1" )
-						gems.enableShipGem( "rover" )
         			end },
     ----- Ship State Table ends when ship has landed on Mars -----
 } 
@@ -213,7 +213,29 @@ end
 
 -- Update the game state when on Mars.
 local function updateMarsState()
-	-- TODO
+	-- If we are awake on the ship (not out in the rover), check the food level
+	if not ss.stasis and game.currentActName() == "mainAct" then
+		-- Need food to take the rover out
+		local hasFood = (game.food() > 0)
+		gems.enableShipGem( "rover", hasFood )
+		if hasFood then
+			foodOutSent = false
+		else
+			-- Out of food. Send messsage if not already sent.
+			if not foodOutSent then
+				game.sendMessage( "foodOut" )
+				foodOutSent = true
+			end
+
+			-- Check water level
+			if game.water() <= 0 then
+				-- Out of both food and water. Emergency stasis.
+				game.sendMessage( "resOut" )
+				gems.enableShipGem( "stasis" )
+				ss.stasis = true
+			end
+		end
+	end
 end
 
 -- Set the ship state to the given state number
