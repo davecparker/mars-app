@@ -17,6 +17,7 @@ local act = game.newAct()
 
 -- List of activities that can be run directly from the debug menu
 local debugActs = {
+	"startScreen",
 	"mainAct",
 	"thrustNav",
 	"doorLock",
