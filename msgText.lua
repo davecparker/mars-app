@@ -104,7 +104,14 @@ local msgText = {
 	mars1 = 	"SAS - Resume primary mission objectives: \n" .. 
 				"1. Explore surface and drill for water. \n" ..
 				"2. Manage greenhouse food production. \n" ..
-				"3. Investigate artifacts.",	
+				"3. Investigate artifacts.",
+
+	foodOut =	"SAS - CRITICAL ALERT: Food supplies exhaused. Replenish immediately.",
+
+	resOut =	"SAS - CRITICAL EMERGENCY: Food and water supplies exhaused. " ..
+				"Report to lab for emergency stasis.",	
+
+	regenerated = "SAS - Stasis terminated. Resource levels very low. Replenish immediately",
 }
 
 return msgText

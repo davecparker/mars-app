@@ -36,6 +36,7 @@ local game = {
         -- Game sequence state
         onMars = false,     -- true when we make it to Mars
         shipState = 1,      -- ship sequence state number
+        stasis = false,     -- true when emergency stasis is needed
 
         -- Gem state
         usedGems = {},  -- set of gem names that have been used

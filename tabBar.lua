@@ -95,12 +95,15 @@ function initTabBar()
     }
 end
 
--- Go to the given game tab name
-function game.gotoTab( name )
+-- Go to the given game tab name, simulate a press if press is true (or omitted)
+function game.gotoTab( name, press )
 	-- Find the tab with the given name
 	for i = 1, #buttons do
 		if buttons[i].id == name then
-			tabBar:setSelected( i, true )
+            if press ~= false then
+                press = true
+            end
+			tabBar:setSelected( i, press )
 			return
 		end
 	end
