@@ -36,6 +36,7 @@ local gems = {
         foodL1 =    { x = 124,  y = 123, t = "res", res = "food", amount = 50, enabled = true  },     
         panel2 =    { x = 124, y = 164, t = "act", act = "circuit", param = 2  },
         msgHist =   { x = 42, y = 103, t = "doc", file = "Message History" },
+        stasis =    { x = 68, y = 167, t = "act", act = "stasis" },
 
         -- In Lounge
         panel3 =    { x = 121, y = -103, t = "act", act = "circuit", param = 3  },

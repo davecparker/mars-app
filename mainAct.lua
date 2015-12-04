@@ -502,6 +502,8 @@ end
 -- Land the ship and update ship state as necessary
 function game.landShip()
 	game.saveState.onMars = true
+	gems.enableShipGem( "rover" )
+	gems.enableShipGem( "plants" )
 	selectBackground()
 end
 
