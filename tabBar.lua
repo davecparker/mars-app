@@ -17,11 +17,11 @@ local msgPreview      -- text message preview window
 
 -- The tab bar buttons
 local buttons = {
-    { id = "mainAct",    defaultFile = "media/game/map.png", selected = true },
-    { id = "resources",  defaultFile = "media/game/gauge.png"  },
-    { id = "documents",  defaultFile = "media/game/folder.png" },
-    { id = "messages",   defaultFile = "media/game/messages.png" },
-    { id = "menu",       defaultFile = "media/game/menu.png" },
+    { id = "mainAct",    defaultFile = "media/game/mapTab.png", selected = true },
+--    { id = "resources",  defaultFile = "media/game/resourseTab.png"  },
+    { id = "documents",  defaultFile = "media/game/filesTab.png" },
+    { id = "messages",   defaultFile = "media/game/messagesTab.png" },
+    { id = "menu",       defaultFile = "media/game/settingsTab.png" },
 }
 
 
@@ -45,7 +45,7 @@ end
 -- Handle touch on message preview 
 local function touchMessagePreview( event )
     if event.phase == "began" then
-		game.gotoTab( 4 )   -- messages
+		game.gotoTab( "messages" )
 	end
     return true
 end
@@ -53,7 +53,7 @@ end
 -- Initialize the app tab bar and message preview on the bottom of the screen
 function initTabBar()
     -- Assign properties common to all buttons
-    local dxyIcon = game.dyTabBar - 10
+    local dxyIcon = game.dyTabBar - 5
     for i = 1, #buttons do
         local b = buttons[i]
         b.onPress = handleTabBarEvent
@@ -85,19 +85,29 @@ function initTabBar()
         top = game.yMax - game.dyTabBar + 1,
         width = game.width,
         height = game.dyTabBar,
-        backgroundFile = "media/game/redGradient.png",
-        tabSelectedLeftFile = "media/game/darkRed.png",
-        tabSelectedRightFile = "media/game/darkRed.png",
-        tabSelectedMiddleFile = "media/game/darkRed.png",
+        backgroundFile = "media/game/darkRed.png",
+        tabSelectedLeftFile = "media/game/redHighlight.png",
+        tabSelectedRightFile = "media/game/redHighlight.png",
+        tabSelectedMiddleFile = "media/game/redHighlight.png",
         tabSelectedFrameWidth = 10,
         tabSelectedFrameHeight = game.dyTabBar - 10,
         buttons = buttons,
     }
 end
 
--- Go to the given game tab (numbered index: 1 = main, 2 = resources, etc. )
-function game.gotoTab( index )
-	tabBar:setSelected( index, true )
+-- Go to the given game tab name, simulate a press if press is true (or omitted)
+function game.gotoTab( name, press )
+	-- Find the tab with the given name
+	for i = 1, #buttons do
+		if buttons[i].id == name then
+            if press ~= false then
+                press = true
+            end
+			tabBar:setSelected( i, press )
+			return
+		end
+	end
+	error( "Invalid tab name", 2 )
 end
 
 -- Show message preview box with the given text
@@ -105,7 +115,7 @@ function game.showMessagePreview( text )
     msgPreview.text.text = string.gsub( text, "\n", " ")  -- replace newlines with spaces
     transition.cancel( msgPreview )
     transition.to( msgPreview, { y = msgPreview.yShow, time = 500 } )
-    transition.to( msgPreview, { y = msgPreview.yHide, delay = 2500, time = 500 } )
+    transition.to( msgPreview, { y = msgPreview.yHide, delay = 3500, time = 500 } )
 end
 
 -- Hide the message preview box if showing

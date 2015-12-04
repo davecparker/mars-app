@@ -20,7 +20,7 @@ local H = act.height
 local XC = act.xCenter
 local YC = act.yCenter
 local YMIN = act.yMin
-YMAX = act.yMax
+local YMAX = act.yMax
 
 
 --Declare file local functions to be used
@@ -293,7 +293,8 @@ function timeLimit()
 
 	end
 
-	game.addEnergy( energyCost )
+	game.addEnergy( energyCost + game.currentCost )
+	game.addWater( game.currentLiters)
 	timer.performWithDelay( 1500, resetVisible )
 end
 

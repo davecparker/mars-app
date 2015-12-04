@@ -658,7 +658,6 @@ local function updatePosition()
 	-- If the rover has returned to the ship, then go to mainAct
 	if distanceFromShip <= 6 and map.rover.leftShip then
 		map.rover.leftShip = false
-		audio.stop()
 		game.gotoAct ( "mainAct" )
 	elseif not map.rover.leftShip and distanceFromShip > 6 then
 		map.rover.leftShip = true
@@ -682,38 +681,8 @@ local function updatePosition()
 		rover.accelerate = false
 		rover.brake = true
 
-		-- Play the rover stop sound followed by engine sound, first halting any other sounds
-		if audio.isChannelPlaying( 4 ) then
-		audio.stop( 4 )
-		end
-		
-		if audio.isChannelPlaying( 3 ) then
-			audio.stop( 3 )
-		end
-
-		if audio.isChannelPlaying( 2 ) then
-			audio.stop( 2 )
-		end
-
-		if not audio.isChannelPlaying( 5 ) 
-			and not audio.isChannelPlaying( 1 ) then
-
-			local options2 = {
-				channel = 1,
-				loops = -1,
-			}
-
-			local options1 = {
-				channel = 5,
-				loops = 0,
-				-- Play engine sound indefinitely upon completion
-				onComplete = function() if not rover.accelerate then 
-											rover.engineChannel = game.playSound(rover.engineSound, options2); 
-										end
-									end
-			}
-
-			rover.stopChannel = game.playSound(rover.stopSound, options1)
+		if not audio.isChannelPlaying( rover.stopSound ) then		
+			decelerate()
 		end
 
 		map.courseLength = 0
@@ -741,15 +710,6 @@ end
 
 -- Adjust and apply rover wheel angular velocity
 local function moveRover()
-
-	if not audio.isChannelPlaying( 1 ) 
-		and not audio.isChannelPlaying( 2 )
-		and not audio.isChannelPlaying( 3 )
-		and not audio.isChannelPlaying( 4 )
-		and not audio.isChannelPlaying( 5 )
-	then
-		rover.engineChannel = game.playSound(rover.engineSound, { channel = 1, loops = -1 } )
-	end
 
 	-- Accelerate, brake, or coast rover
 	if rover.accelerate then
@@ -829,93 +789,112 @@ local function moveTerrain()
 	end
 end
 
--- Acceleration touch event handler
-local function onAccelPress( event )
+-- Decelerate rover
+local function decelerate()
 
-	if rover.isActive then
-		rover.accelerate = true
+	-- Set button image
+	ctrlPanelGrp.accelButton:setFrame( 1 ) 
 
-		-- Halt engine or stop sounds and play start sound, then stage1 sound, then stage2 sound
-		if audio.isChannelPlaying( 1 ) then
-			audio.stop( 1 )
-		elseif audio.isChannelPlaying( 5 ) then
-			audio.stop( 5 )
+	rover.accelerate = false
+
+	-- Play rover deceleration sound followed by idle engine sound, first halting any other sounds
+	game.stopSound( rover.stage2Channel )
+	game.stopSound( rover.stage1Channel )
+	game.stopSound( rover.startChannel )
+
+	local options2 = {
+		channel = 1,
+		loops = -1,
+	}
+
+	local function playEngineSound()
+		if ( not rover.accelerate and game.currentActName() == "rover" ) then 
+			rover.engineChannel = game.playSound(rover.engineSound, options2); 
 		end
-
-		local options3 = {
-			channel = 4,
-			loops = -1,
-		}
-
-		local options2 = {
-			channel = 3,
-			loops = 0,
-			-- Play stage2 sound indefinitely upon completion
-			onComplete = function() if rover.accelerate then 
-										rover.stage2Channel = game.playSound(rover.stage2Sound, options3); 
-									end
-								end
-		}
-
-		local options1 = {
-			channel = 2,
-			loops = 0,
-			-- Play stage1 sound upon completion
-			onComplete = function() if rover.accelerate then 
-										rover.stage1Channel = game.playSound(rover.stage1Sound, options2); 
-									end
-								end
-		}
-		rover.startChannel = game.playSound(rover.startSound, options1)
 	end
+
+	local options1 = {
+		channel = 5,
+		loops = 0,
+		-- Play the rover engine sound indefinitely upon completion
+		onComplete = playEngineSound
+	}
+
+	rover.stopChannel = game.playSound(rover.stopSound, options1)
 end
 
--- Acceleration touch event handler
-local function onAccelRelease( event )
+-- Acceleration button touch event handler
+local function handleAccelButton( event )
 
-	if rover.isActive then
+	if rover.isActive then	
 
-		rover.accelerate = false
+		if ( event.phase == "began" ) then
 
-		-- Play the rover stop sound followed by rover engine sound, first halting any other sounds
-		if audio.isChannelPlaying( 4 ) then
-			audio.stop( 4 )
-		end
-		
-		if audio.isChannelPlaying( 3 ) then
-			audio.stop( 3 )
-		end
+			-- Set button image
+			ctrlPanelGrp.accelButton:setFrame( 2 ) 
 
-		if audio.isChannelPlaying( 2 ) then
-			audio.stop( 2 )
-		end
+			-- Accelerate rover
+			rover.accelerate = true
 
-		if not audio.isChannelPlaying( 5 ) 
-			and not audio.isChannelPlaying( 1 ) then
+			-- Halt engine or stop sounds
+			game.stopSound( rover.engineChannel )
+			game.stopSound( rover.stopChannel )
 
-			local options2 = {
-				channel = 1,
+			local options3 = {
+				channel = 4,
 				loops = -1,
 			}
 
-			local options1 = {
-				channel = 5,
+			-- Play stage2 sound indefinitely if rover is accelerating
+			local function playStage2Sound()
+				if rover.accelerate then 
+					rover.stage2Channel = game.playSound(rover.stage2Sound, options3); 
+				end
+			end
+
+			local options2 = {
+				channel = 3,
 				loops = 0,
-				-- Play the rover engine sound indefinitely upon completion
-				onComplete = function() if not rover.accelerate then 
-											rover.engineChannel = game.playSound(rover.engineSound, options2); 
-										end
-									end
+				onComplete = playStage2Sound
 			}
 
-			rover.stopChannel = game.playSound(rover.stopSound, options1)
-		end
+			-- Play stage1 sound indefinitely if rover is accelerating
+			local function playStage1Sound()
+				if rover.accelerate then 
+					rover.stage1Channel = game.playSound(rover.stage1Sound, options2); 
+				end
+			end
+
+			local options1 = {
+				channel = 2,
+				loops = 0,
+				onComplete = playStage1Sound
+			}
+
+			-- Play start sound, then stage1 sound, then stage2 sound, in order, based on wheel angular velocity
+			if rover.angularV > 3500 then
+				rover.stage2Channel = game.playSound(rover.stage2Sound, options3)
+			elseif rover.angularV > 1750 then
+				rover.stage1Channel = game.playSound(rover.stage1Sound, options2)
+			else
+				rover.startChannel = game.playSound(rover.startSound, options1)
+			end
+
+		elseif ( (event.phase == "ended" or event.phase == "cancelled") and rover.accelerate == true ) then
+
+			-- Decelerate rover. Allow to coast and play deceration sound
+			decelerate()
+		end 
 	end
+
+	return true
 end
 
 -- Brake button event handler
 local function onBrakePress( event )
 	rover.brake = true
+
+	return true
 end
 
 -- Brake button event handler
@@ -933,6 +912,7 @@ local function onWaterRelease( event )
 
 	-- leave the game and go to drillScan; allow time for rover to decelerate and sound to complete
 	local function goToDrillScan( event )
+		-- Stop all audio
 		audio.stop()
 		game.gotoAct ( "drillScan", { effect = "zoomInOutFade", time = 1000 } )
 	end
@@ -942,6 +922,8 @@ local function onWaterRelease( event )
 	else
 		timer.performWithDelay( 5000, goToDrillScan )	
 	end
+
+	return true
 end
 
 -- Reset button event handler
@@ -976,11 +958,26 @@ local function onRecoverPress( event )
 	-- display accelerator, hide recover button
 	ctrlPanelGrp.accelButton.isVisible = true
 	recoverButton.isVisible = false
+
+	return true
 end
 
+-- Handle accelerator button slide-off
+local function handleSlideOff( event )
+
+	if ( event.phase == "moved" and rover.accelerate == true ) then
+
+		-- discontinue acceleration
+		decelerate()
+	end
+
+	return true
+end
+
+-- Create control panel
 local function newControlPanel()
 
-	-- set panel backgroud image
+	-- Set panel backgroud image
 	local ctrlPanelData = { 
 		parent = ctrlPanelGrp, 
 		x = act.xCenter, 
@@ -991,18 +988,33 @@ local function newControlPanel()
 
 	displayPanel = act:newImage( "panel.png", ctrlPanelData )
 
-	-- create the accelerator
-	ctrlPanelGrp.accelButton = widget.newButton
-	{
-		x = act.xCenter + 35,
-		y = act.yMax - 24,
-		width = 40,
-		height = 40,
-		defaultFile = "media/rover/accel_unpressed.png",
-		overFile = "media/rover/accel_pressed.png",
-		onPress = onAccelPress,
-		onRelease = onAccelRelease
+	-- Create invisible circle object as slide-off sensor for the accelerator button
+	local slideOffSensor = display.newCircle( ctrlPanelGrp, act.xCenter + 35, act.yMax - 24, 60 )
+	slideOffSensor.isVisible = false
+	slideOffSensor.isHitTestable = true
+	slideOffSensor:addEventListener( "touch", handleSlideOff )
+
+	-- Create an image sheet for accelerator button
+	local options = {
+		width = 128,
+		height = 128,
+		numFrames = 2
 	}
+
+	local accelButtonSheet = graphics.newImageSheet( 'media/rover/accel_button.png', options )
+
+	-- Create accelerator button sprite
+	local sequenceData = {
+		name = "accelButtoonSequence",
+		start = 1,
+		count = 2,
+	}
+
+	ctrlPanelGrp.accelButton = display.newSprite( ctrlPanelGrp, accelButtonSheet, sequenceData )
+	ctrlPanelGrp.accelButton.x = act.xCenter + 35
+	ctrlPanelGrp.accelButton.y = act.yMax - 24
+	ctrlPanelGrp.accelButton:scale( 40/128, 40/128 )
+	ctrlPanelGrp.accelButton:addEventListener( "touch", handleAccelButton )
 
 	-- create the stop button
 	local brakeButton = widget.newButton
@@ -1042,7 +1054,6 @@ local function newControlPanel()
 	}
 	recoverButton.isVisible = false
 
-	ctrlPanelGrp:insert( ctrlPanelGrp.accelButton )
 	ctrlPanelGrp:insert( brakeButton )
 	ctrlPanelGrp:insert( waterButton )
 	ctrlPanelGrp:insert( recoverButton )
@@ -1063,16 +1074,28 @@ local function updateDisplay()
 end
 
 local function testPrint()
-	print( string.format("%s %.2f %s %.2f %s %.2f %s %.2f %s %.2f %s %s %s %s",
-						"mapZoomGrp.x: ", mapZoomGrp.x,
-						"map.rover.x: ", map.rover.x,
-						"mapZoomGrp.y: ", mapZoomGrp.y,
-						"map.rover.y: ", map.rover.y,
-						"map.courseLength: ", map.courseLength,
-						"rover.isActive: ", tostring(rover.isActive),
-						"rover.leftShip: ", tostring(map.rover.leftShip)
-						))
+	-- print( string.format("%s %.2f %s %.2f %s %.2f %s %.2f %s %.2f %s %s %s %s",
+	-- 					"mapZoomGrp.x: ", mapZoomGrp.x,
+	-- 					"map.rover.x: ", map.rover.x,
+	-- 					"mapZoomGrp.y: ", mapZoomGrp.y,
+	-- 					"map.rover.y: ", map.rover.y,
+	-- 					"map.courseLength: ", map.courseLength,
+	-- 					"rover.isActive: ", tostring(rover.isActive),
+	-- 					"rover.leftShip: ", tostring(map.rover.leftShip)
+	-- 					))
 end 
+
+-- Start the act
+function act:start()
+	-- Start audio
+	rover.engineChannel = game.playSound(rover.engineSound, { channel = 1, loops = -1 } )
+end	
+
+-- Stop the act
+function act:stop()
+	-- Stop all audio
+	audio.stop()
+end
 
 -- Init the act
 function act:init()

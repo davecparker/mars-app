@@ -36,13 +36,13 @@ local game = {
         -- Game sequence state
         onMars = false,     -- true when we make it to Mars
         shipState = 1,      -- ship sequence state number
+        stasis = false,     -- true when emergency stasis is needed
 
         -- Gem state
         usedGems = {},  -- set of gem names that have been used
     
         -- The user's current resource levels (and starting values)
         resources = {
-            o2 = 100,     -- oxygen in liters
             h2o = 100,    -- water in liters
             kWh = 100,    -- energy in kWh
             food = 100,   -- food in kg
@@ -132,24 +132,15 @@ end
 -------------------------- Resource use   ---------------------------------
 
 -- Accessors for resource amounts
-function game.oxygen()  return res.o2    end
 function game.water()   return res.h2o   end
 function game.energy()  return res.kWh   end
 function game.food()    return res.food  end
-
--- Add to or subtract from the oxygen supply by the given amount in liters
-function game.addOxygen( liters )
-    res.o2 = res.o2 + liters
-    if res.o2 < 0 then
-        res.o2 = 0    -- TODO: Initiate emergency statis or something
-    end
-end
 
 -- Add to or subtract from the water supply by the given amount in liters
 function game.addWater( liters )
     res.h2o = res.h2o + liters
     if res.h2o < 0 then
-        res.h2o = 0   -- TODO: Initiate emergency statis or something
+        res.h2o = 0
     end
 end
 
@@ -157,7 +148,7 @@ end
 function game.addEnergy( kWh )
     res.kWh = res.kWh + kWh
     if res.kWh < 0 then
-        res.kWh = 0   -- TODO: Initiate emergency statis or something
+        res.kWh = 0
     end
 end
 
@@ -165,7 +156,7 @@ end
 function game.addFood( kg )
     res.food = res.food + kg
     if res.food < 0 then
-        res.food = 0   -- TODO: Initiate emergency statis or something
+        res.food = 0
     end
 end
 
@@ -269,12 +260,14 @@ end
 
 ------------------------------ Sound  --------------------------------------
 
--- Play the sound if game sound is on
+-- Play the sound if game sound is on. See audio.play for options.
+-- Return the channel number used or nil if not played.
 function game.playSound( sound, options )
 	if ss.soundOn then
 		local ch = audio.play( sound, options )
         if ch and ch > 0 then
             audio.setVolume( ss.fxVolume, { channel = ch } ) 
+            return ch
         end
 	end
 	return nil
@@ -283,7 +276,14 @@ end
 -- Stop the sound effect playing on the given channel
 function game.stopSound( channel )
     if channel and channel > 0 then
-        audio.stop( channel )
+        return audio.stop( channel )
+    end
+end
+
+-- Dispose of the sound if it is non nil (careful: the sound must not be playing)
+function game.disposeSound( sound )
+    if sound then
+        audio.dispose( sound )
     end
 end
 

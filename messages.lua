@@ -35,13 +35,23 @@ local newMarksGroup      -- display group for individual new message indicators
 local textSound = audio.loadSound( "media/game/TextTone.wav" )
 
 
--- Send the message with the given id
-function game.sendMessage( id )
-	newMsgs[#newMsgs + 1] = id  -- append to newMsgs list
+-- Send the message with the given id and optional delay in ms
+function game.sendMessage( id, delay )
+	-- Re-send later if a delay is requested
+	if type(delay) == "number" then
+		timer.performWithDelay( delay, 
+			function ()
+				game.sendMessage( id )
+			end )
+		return
+	end
+
+	-- Append message to newMsgs list
+	newMsgs[#newMsgs + 1] = id
 
 	-- Create new message badge if necessary, and show it
 	if not badge then
-		badge = game.createBadge( act.xMin + act.width * 0.75, act.yMax + 15 )
+		badge = game.createBadge( act.xMin + act.width * 0.66, act.yMax + 10 )
 	end
 	game.showBadge( badge )
 	game.playSound( textSound )

@@ -17,11 +17,9 @@ game.removeObj( obj )                 -- remove a display object
 game.emptyFunction()                  -- do nothing
 
 -- Resource functions in game.lua:
-game.oxygen()                         -- return current oxygen amount
 game.water()                          -- return current water amount
 game.energy()                         -- return current energy amount
 game.food()                           -- return current food amount
-game.addOxygen( liters )              -- Add or subtract oxygen
 game.addWater( liters )               -- Add or subtract water
 game.addEnergy( kWh )                 -- Add or subtract energy
 game.addFood( kg )                    -- Add or subtract food
@@ -38,6 +36,7 @@ game.endMessageBox()                  -- Dismiss active message box if any
 -- Sound functions in game.lua:
 game.playSound( sound, options )      -- Play sound effect, returns channel
 game.stopSound( channel )             -- Stop sound effect 
+game.disposeSound( sound )            -- Dispose of loaded sound
 game.playAmbientSound( filename )     -- Play background sound/music
 game.stopAmbientSound()               -- Stop background sound/music
 
@@ -47,7 +46,7 @@ game.showBadge( badge )               -- show an indicator badge
 game.hideBadge( badge )               -- hide an indicator badge
 game.showMessagePreview( text )       -- Show preview of message text
 game.hideMessagePreview()             -- Hide message preview if showing
-game.gotoTab( index )                 -- Go to game tab number
+game.gotoTab( name, press )           -- Go to game tab name
 
 -- Game functions in mainAct.lua:
 game.roomName()                       -- Name of room user is in or nil if none
