@@ -140,7 +140,7 @@ function game.food()    return res.food  end
 function game.addWater( liters )
     res.h2o = res.h2o + liters
     if res.h2o < 0 then
-        res.h2o = 0   -- TODO: Initiate emergency statis or something
+        res.h2o = 0
     end
 end
 
@@ -148,7 +148,7 @@ end
 function game.addEnergy( kWh )
     res.kWh = res.kWh + kWh
     if res.kWh < 0 then
-        res.kWh = 0   -- TODO: Initiate emergency statis or something
+        res.kWh = 0
     end
 end
 
@@ -156,7 +156,7 @@ end
 function game.addFood( kg )
     res.food = res.food + kg
     if res.food < 0 then
-        res.food = 0   -- TODO: Initiate emergency statis or something
+        res.food = 0
     end
 end
 

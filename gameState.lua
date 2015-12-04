@@ -213,26 +213,34 @@ end
 
 -- Update the game state when on Mars.
 local function updateMarsState()
-	-- If we are awake on the ship (not out in the rover), check the food level
-	if not ss.stasis and game.currentActName() == "mainAct" then
+	-- Is emergency stasis needed?
+	gems.enableShipGem( "stasis", ss.stasis )
+	if ss.stasis then
+		-- Rover disabled when stasis needed
+		gems.enableShipGem( "rover", false )
+	else
 		-- Need food to take the rover out
 		local hasFood = (game.food() > 0)
 		gems.enableShipGem( "rover", hasFood )
-		if hasFood then
-			foodOutSent = false
-		else
-			-- Out of food. Send messsage if not already sent.
-			if not foodOutSent then
-				game.sendMessage( "foodOut" )
-				foodOutSent = true
-			end
 
-			-- Check water level
-			if game.water() <= 0 then
-				-- Out of both food and water. Emergency stasis.
-				game.sendMessage( "resOut" )
-				gems.enableShipGem( "stasis" )
-				ss.stasis = true
+		-- If on the ship (not out in the rover), check notifications
+		if game.currentActName() == "mainAct" then
+			if hasFood then
+				foodOutSent = false  -- ready to notify if food runs out (again)
+			else
+				-- Out of food. Send messsage if not already sent.
+				if not foodOutSent then
+					game.sendMessage( "foodOut" )
+					foodOutSent = true
+				end
+
+				-- Check water level
+				if game.water() <= 0 then
+					-- Out of both food and water. Emergency stasis.
+					game.sendMessage( "resOut" )
+					ss.stasis = true
+					game.updateState()
+				end
 			end
 		end
 	end

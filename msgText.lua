@@ -106,12 +106,14 @@ local msgText = {
 				"2. Manage greenhouse food production. \n" ..
 				"3. Investigate artifacts.",
 
-	foodOut =	"SAS - CRITICAL ALERT: Food supplies exhaused. Replenish immediately.",
+	foodOut =	"SAS - CRITICAL ALERT: Food supplies exhausted. Replenish immediately. \n" ..
+				"Rover use disabled.",
 
-	resOut =	"SAS - CRITICAL EMERGENCY: Food and water supplies exhaused. " ..
+	resOut =	"SAS - CRITICAL EMERGENCY: Food and water supplies exhaused. \n" ..
 				"Report to lab for emergency stasis.",	
 
-	regenerated = "SAS - Stasis terminated. Resource levels very low. Replenish immediately",
+	regenerated = 	"SAS - Stasis terminated. Emergency water supply has been generated. " ..
+					"Food supply exhausted. Replenish immediately",
 }
 
 return msgText

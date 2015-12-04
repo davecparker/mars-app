@@ -12,9 +12,6 @@ local game = globalGame
 -- Load Corona modules
 local widget = require( "widget" )
 
--- Game modules needed
-local gems = require( "gems" )
-
 -- Create the act object
 local act = game.newAct()
 
@@ -58,9 +55,9 @@ function act:enterFrame()
 	-- Automatically exit when we reach the goal
 	if game.water() >= waterGoal then
 		game.saveState.stasis = false
-		gems.enableShipGem( "stasis", false )
-		game.gotoAct( "mainAct", { effect = "slideRight", time = 500 } )
+		game.updateState()
 		game.sendMessage( "regenerated", 2000 )
+		game.gotoAct( "mainAct", { effect = "slideRight", time = 500 } )
 	end
 end
 
