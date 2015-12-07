@@ -114,7 +114,7 @@ end
 function updateEnergy()
 	totalRocketImpulses = totalRocketImpulses + 1
 	-- also update energy to main resources
-	game.saveState.resources.kWh = game.saveState.resources.kWh - 0.1
+	-- game.saveState.resources.kWh = game.saveState.resources.kWh - 0.1
 end
 
 -- Turn left button 
