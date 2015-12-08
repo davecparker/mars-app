@@ -4,6 +4,7 @@
 --
 -- Joe Cracchiolo
 -- Splash screen the player sees when the game is first started
+
 -----------------------------------------------------------------------------------------
 ------ Overhead -------------------------------------------------------------------------
 -- Get local reference to the game globals
