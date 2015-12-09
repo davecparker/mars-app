@@ -22,6 +22,7 @@ local game = {
     panelFixed = nil,     -- set to true when a circuit panel is successfully fixed
 
     -- Game state tracking
+    paused = false,         -- true when the game is paused
     currentMainAct = nil,   -- name of act currently running on the main tab
     stateStartTime = 0,     -- value of system.getTimer() when current game state started
     moves = 0,              -- number of times dot has moved since game start
