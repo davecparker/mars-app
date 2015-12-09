@@ -56,11 +56,11 @@ local game = {
         },
 
         -- array of tables containing crater coordinates and radii
-        crater = {
-            { x = 15, y = -15, r = 5 },
-            { x = 15, y = 15, r = 30 },
-            { x = -15, y = -15, r = 20 },
-            { x = -15, y = 15, r = 10 },
+        craters = {
+            { x = 5, y = -5, r = 3 },
+            { x = 5, y = 5, r = 2 },
+            { x = -5, y = -5, r = 1 },
+            { x = -5, y = 5, r = 4 },
         },
 
         thrustNav = {
