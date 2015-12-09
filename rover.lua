@@ -49,8 +49,8 @@ local act = game.newAct()
 local widget = require "widget" 
 
 -- File local variables
-local staticBgGrp 		-- display group for static background objects
-local staticFgGrp 		-- display group for static foreground objects
+local staticBgGrp 			-- display group for static background objects
+local staticFgGrp 			-- display group for static foreground objects
 local displayPanelGrp 	-- display group for the display panel
 local ctrlPanelGrp		-- display group for the control panel
 local mapGrp 			-- display group for map elements
@@ -60,18 +60,32 @@ local terrain = {} 		-- basic terrain
 local obstacle = {} 	-- terrain obstacles
 local shape = {} 		-- possible terrain obstacles
 local wheelSprite = {} 	-- rover wheels
+local craterHeightMap = {}
+local courseHeightMap = {}
 local rover 			-- the rover
 local map 				-- the map
 local bg 				-- background
+local accelButton
 local recoverButton
+local waterButton
 local zoomInButton
 local zoomOutButton
 local speedText
-local elevation = 100 -- terrain elevation
+local sideToMapScale = 400
+local defaultElevation = 100 -- terrain elevation
 local terrainExcess = 100 -- off display terrain amount
-local terrainOffset = -80 -- terrain offset
+local terrainOffset = -100 -- terrain offset
+local nTerrainRects = 10
+local craterIndex = 1
+local craterEndX = 0
+local craterHeightIndex = 1
+local nextX = act.xMin + terrainOffset
+local nextObstacle = nextX
 local terrainColor = { 0.8, 0.35, 0.25 }
 local obstacleColor = { 0.3, 0.1, 0.1 }
+local drawingCrater = false
+local removalSensorRect
+local floorY
 
 -- Create new background
 local function newBackground()
@@ -91,12 +105,24 @@ end
 
 -- Create new 1-corona unit wide terrain component rectangle 
 -- Accepts x-coord & height, returns rectangle display object
-local function newRectangle( x, h )
-	local rect = display.newRect( dynamicGrp, x, act.yMax, act.width + terrainExcess - terrainOffset, h )
+local function newRectangle( x, y, w, h, isCrater )
+	local rect = display.newRect( dynamicGrp, x, y, w, h )
 	rect:setFillColor( unpack(terrainColor) )
 	rect.anchorX = 0
-	rect.anchorY = 1
+	rect.anchorY = 0
 	physics.addBody( rect, "static", { friction = 1.0 } )
+	rect.isCrater = isCrater
+
+	local function onCollision( self, event )
+		if event.phase == "began" and event.other.isRemover then
+			self:removeSelf()
+			self = nil
+		end
+	end
+
+	rect.collision = onCollision
+	rect:addEventListener( "collision" )
+
 	return rect
 end
 
@@ -106,6 +132,18 @@ local function randCircle( x, y, r )
 	local yDev = math.random( r * 0.7, r * 0.9 ) -- randomly vary y coord w/radius
 	local circle = display.newCircle( dynamicGrp, x, y + yDev, r )
 	physics.addBody( circle, "static", { friction = 1.0, radius = r } )
+
+	local function onCollision( self, event )
+		if event.phase == "began" and event.other.isRemover then
+			self:removeSelf()
+			self = nil
+		end
+		-- newObstacle( rover.x + act.width, rover.x + 2 * act.width )
+	end
+
+	circle.collision = onCollision
+	circle:addEventListener( "collision" )
+
 	return circle
 end
 
@@ -115,6 +153,18 @@ local function randSquare( x, y, s )
 	local square = display.newRect( dynamicGrp, x, y + s/3, s, s )
 	square.rotation = math.random( 30, 60 ) -- random rotation for variation
 	physics.addBody( square, "static", { friction = 1.0 } )
+
+	local function onCollision( self, event )
+		if event.phase == "began" and event.other.isRemover then
+			self:removeSelf()
+			self = nil
+		end
+		-- inewObstacle( rover.x + act.width, rover.x + 2 * act.width )
+	end
+
+	square.collision = onCollision
+	square:addEventListener( "collision" )
+
 	return square
 end
 
@@ -124,6 +174,18 @@ local function randRoundSquare( x, y, s )
 	local square = display.newRoundedRect( dynamicGrp, x, y + s/3, s, s, s/4 )
 	square.rotation = math.random( 30, 60 )
 	physics.addBody( square, "static", { friction = 1.0 } )
+
+	local function onCollision( self, event )
+		if event.phase == "began" and event.other.isRemover then
+			self:removeSelf()
+			self = nil
+		end
+		-- newObstacle( rover.x + act.width, rover.x + 2 * act.width )
+	end
+
+	square.collision = onCollision
+	square:addEventListener( "collision" )
+
 	return square
 end
 
@@ -136,46 +198,86 @@ local function randPoly( x, y, s )
 	local poly = display.newPolygon( dynamicGrp, x, y + 1.5, vertices )
 	poly.rotation = rotation
 	physics.addBody( poly, "static", { friction = 1.0 } )
+
+	local function onCollision( self, event )
+		if event.phase == "began" and event.other.isRemover then
+			self:removeSelf()
+			self = nil
+		end
+		-- newObstacle( rover.x + act.width, rover.x + 2 * act.width )
+	end
+
+	poly.collision = onCollision
+	poly:addEventListener( "collision" )
+
 	return poly
 end
 
--- Create new crater
-local function newCrater( cX, cY, cR )
-	rX = game.saveState.rover.x1
-	rY = game.saveState.rover.y1
-	rD = math.sqrt((rX - cX)*(rX - cX) + (rY - cY)*(rY - cY))
+-- Create a new projectile based upon passed table of parameters
+local function newTerrainElement( params )
+	local rect = display.newRect( params.group, params.x, params.y, params.w, params.h )
+	rect:setFillColor( unpack(terrainColor) )
+	rect.objTable = params.objTable -- table to store rect
+	rect.index = #rect.objTable + 1 -- table index of next available element
+	rect.x = params.x
+	rect.y = params.y
+	rect.anchorX = params.anchorX
+	rect.anchorY = params.anchorY
+	rect.isCrater = isCrater
+	rect.objTable[rect.index] = rect -- save into table
+		
+	return rect
 end
 
--- Create terrain of rectangles and randomly selected, sized, & rotated polygons
-local function newTerrain( nObstacles)
+-- Create terrain of rectangles
+local function newRectTerrain( width, height )
+
+	params = {
+		group = dynamicGrp,
+		objTable = terrain,
+		x = nextX,
+		y = act.yMax - height,
+		w = width,		
+		h = height,
+		anchorX = 0,
+		anchorY = 0,
+		isCrater = false
+	}
+
+	local rect = newTerrainElement( params )
+	physics.addBody( rect, "static", { friction = 1.0 } )
+
+	local function onCollision( self, event )
+		if event.phase == "began" and event.other.isRemover then
+			self:removeSelf()
+			self = nil
+		end
+	end
+
+	rect.collision = onCollision
+	rect:addEventListener( "collision" )
+
+	nextX = nextX + width
+end
+
+-- Create randomly selected, sized, & rotated polygons
+local function newObstacle( xMin, xMax, y )
 	-- fill shape table with terrain obstacle shape functions
 	shape = { randCircle, randSquare, randRoundSquare, randPoly }
 	
 	local terrainExtent = act.width + terrainExcess - terrainOffset
 
 	-- fill obstacle table with shapes randomly distributed along terrain x-axis extent
-	-- obsolete: local zoneLength = math.floor( (act.width + terrainExcess)/nObstacles )
-	for i = 1, nObstacles do
-		-- obsolete: local x = math.random( (i - 1) * zoneLength, i * zoneLength ) + terrainOffset
-		local x = math.random( (i - 1) + terrainOffset, terrainExtent )
-		local y = act.yMax - elevation
-		local size = math.random( 5, 10 )
-		obstacle[i] = shape[math.random(1, 4)]( x, y, size )
-		obstacle[i]:setFillColor( unpack(obstacleColor)  )
-	end
-
-	--for 1, #craters do
-	--	rD = math.sqrt((rX - cX)*(rX - cX) + (rY - cY)*(rY - cY))
-	--end
-
-	-- fill terrain with rectangles to span display width plus terrainExcess
-	for i = 1, 2 do
-		terrain[i] = newRectangle( act.xMin + terrainOffset + (i - 1) * terrainExtent, elevation )
-	end
+	local x = math.random( xMin, xMax )
+	local y = y or act.yMax - defaultElevation
+	local size = math.random( 5, 10 )
+	local obstacle = shape[math.random(1, 4)]( x, y, size )
+	obstacle:setFillColor( unpack(obstacleColor)  )
+	obstacle:toBack()
 end
 
 -- Create the rover
-local function newRover( roverY )
+local function newRover( roverX, roverY )
 
 	-- tables to hold suspension joints
 	local suspension = {}
@@ -185,7 +287,7 @@ local function newRover( roverY )
 	-- create rover
 	local roverData = { 
 		parent = dynamicGrp, 
-		x = act.xMin + 100, 
+		x = roverX, 
 		y = roverY, 
 		width = 65, 
 		height = 50 
@@ -200,6 +302,8 @@ local function newRover( roverY )
 	rover.accelerate = false
 	rover.brake = false
 	rover.isActive = true
+	rover.inCrater = false
+	rover.atHome = true
 
 	-- rover body physics: low density for minimal sway & increased stability
 	physics.addBody( rover, "dynamic", { density = 0.2, friction = 0.3, bounce = 0.2 } )
@@ -269,10 +373,14 @@ local function newMapDot()
 	} 
 
 	map.rover = act:newImage( "tracking_dot.png", dotData )
-	map.rover.x = (game.saveState.rover.x1 - mapGrp.x) * mapZoomGrp.xScale
-	map.rover.y = (game.saveState.rover.y1 - mapGrp.y) * mapZoomGrp.yScale
+	map.rover.x = game.saveState.rover.x1
+	map.rover.y = game.saveState.rover.y1
 	map.rover.leftShip = false
 	map.rover.lastShipDistance = 0
+end
+
+local function calcDistance( x1, y1, x2, y2 )
+	return math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
 end
 
 -- Draw a new rover course on map
@@ -309,20 +417,135 @@ local function calcCourseCoords( x2, y2 )
 		y2 = y2 + map.courseVY
 	end
 
-	game.saveState.rover.x2 = x2 - 2 * map.courseVX + mapGrp.x
-	game.saveState.rover.y2 = y2 - 2 * map.courseVY + mapGrp.y
+	game.saveState.rover.x2 = x2 - 2 * map.courseVX
+	game.saveState.rover.y2 = y2 - 2 * map.courseVY
+end
+
+-- Calculate the y-coordinate along the rover's course for an x-coordinate
+local function calcCoursePtY( x )
+	local m = (game.saveState.rover.y2 - map.rover.y)/(game.saveState.rover.x2 - map.rover.x)
+	local b = map.rover.y - m * map.rover.x
+	return m * x + b
+end
+
+-- Create crater height map; fill craterHeightMap table
+local function newCraterHeightMap( xScale )
+	local yScale = 150
+	local r = game.saveState.craters[craterIndex].r * xScale
+	floorY = defaultElevation - r/100
+	local rimY = defaultElevation + r/100
+	local inSlope = (rimY - floorY) / (0.6 * r - 0.3 * r) / yScale
+	local outSlope = (defaultElevation - rimY) / (0.4 * r) / yScale
+
+	-- Set floor values
+	for d = #craterHeightMap + 1, 0.3 * r do
+		craterHeightMap[d] = floorY
+	end
+
+	-- Set inside slope values
+	for d = #craterHeightMap + 1, 0.6 * r do
+		craterHeightMap[d] = (craterHeightMap[d - 1] + inSlope * d)
+	end
+
+	-- Set inside peak values
+	local nPoints = 0.05 * r
+	local slopeStep = inSlope/nPoints
+	local firstPoint = #craterHeightMap + 1
+	for d = #craterHeightMap + 1, 0.65 * r do
+		craterHeightMap[d] = (craterHeightMap[d - 1] + (inSlope - (d - firstPoint) * slopeStep) * d)
+	end
+
+	-- Set outside peak values
+	firstPoint = #craterHeightMap
+	for d = #craterHeightMap + 1, 0.7 * r do
+		craterHeightMap[d] = (craterHeightMap[firstPoint + (firstPoint + 1 - d)])
+	end
+
+	-- Set outside slope values
+	for d = #craterHeightMap + 1, r do
+		craterHeightMap[d] = (craterHeightMap[d - 1] + outSlope * d)
+	end
+
+	local offset = defaultElevation - craterHeightMap[#craterHeightMap] 
+	for i = 1, #craterHeightMap do
+		craterHeightMap[i] = craterHeightMap[i] + offset
+	end
+end
+
+-- Fill courseHeightMap[] with the height values for each crater intercept point for the current course
+local function newCourseHeightMap( xScale )
+	local craterX = game.saveState.craters[craterIndex].x
+	local craterY = game.saveState.craters[craterIndex].y
+	local craterDistance = calcDistance( map.rover.x, map.rover.y, craterX, craterY ) * xScale
+	local nextX = map.rover.x
+	local nextY = map.rover.y
+	local i = 1
+	-- Get height values for each point along course by indexing the height map with distance from crater center 
+	while craterDistance <= game.saveState.craters[craterIndex].r * xScale do
+		courseHeightMap[i] = craterHeightMap[math.ceil(craterDistance)] -- Round to ceiling to avoid indexing by zero
+		nextX = nextX + nextX/math.abs(nextX)*1/xScale -- Use absolute value to get coordinate sign
+		nextY = calcCoursePtY( nextX )  -- Calculate next y-coordinate
+		craterDistance = calcDistance( nextX, nextY, craterX, craterY ) * xScale  -- Calculate coordinate pair distance
+		i = i + 1
+	end
+end
+
+-- Create crater display object and add to craterTerrain[]
+-- local function newCraterTerrain( objWidth )
+-- 	craterCount = craterCount + 1
+-- 	local x = craterStartX + craterCount * objWidth
+-- 	local y = act.yMax - courseHeightMap[craterCount]
+-- 	local w = 1 * objWidth
+-- 	local h = courseHeightMap[craterCount]
+
+-- 	-- If the next height is of the same height, extend display object width
+-- 	if courseHeightMap[craterCount] == courseHeightMap[craterCount+1] then
+		
+-- 		-- Find number of consecutive elements of the same height and accumulate as object width
+-- 		local i = craterCount
+-- 		local rectW = 1
+-- 		while courseHeightMap[i] == courseHeightMap[i+1] and i < #courseHeightMap do
+-- 			rectW = rectW + 1
+-- 			i = i + 1
+-- 		end
+-- 		craterCount = i
+-- 		craterTerrain[#craterTerrain + 1] = newRectangle( x, y, rectW * objWidth, h, true )
+-- 	else
+-- 		craterTerrain[craterCount] = newRectangle( x, y, w, h, true )
+-- 	end
+
+-- 	if craterCount == #courseHeightMap then
+-- 		drawingCrater = false
+-- 	end
+-- end
+
+-- Check whether the rover has reached a crater
+local function checkCraters()
+	for i = 1, #game.saveState.craters do
+		local craterX = game.saveState.craters[i].x
+		local craterY = game.saveState.craters[i].y
+		local craterDistance = calcDistance( map.rover.x, map.rover.y, craterX, craterY )
+		if craterDistance <= game.saveState.craters[i].r then
+			craterIndex = i
+			newCraterHeightMap( 365 )	-- Create crater height map
+			newCourseHeightMap( 365 )	-- Create course height map based on current course & craterHeightMap	
+			rover.inCrater = true
+			drawingCrater = true
+			break
+		end
+	end
 end
 
 -- Map touch event handler
 local function mapTouched( event )
 	if event.phase == "began" then
-
+		print( event.x,event.y )
 		local x1 = map.rover.x
 		local y1 = map.rover.y
 		local x2 = event.x - mapGrp.x
 		local y2 = event.y - mapGrp.y
 
-		map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
+		map.courseLength = calcDistance( x1, y1, x2, y2 )
 
 		-- if course exists, calculate unit vectors & find map zoomBoundary intersection point
 		if map.courseLength > 0 then
@@ -333,14 +556,54 @@ local function mapTouched( event )
 		end
 
 		-- set global variables to new destination coordinates
-		x2 = game.saveState.rover.x2 - mapGrp.x
-		y2 = game.saveState.rover.y2 - mapGrp.y
+		x2 = game.saveState.rover.x2
+		y2 = game.saveState.rover.y2
 
 		-- calculate new course length
-		map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
+		map.courseLength = calcDistance( x1, y1, x2, y2 )
 
 		-- replace old course with new course
 		drawCourse( x1, y1, x2, y2 )
+
+		-- Check for crater to generate new crater display objects and add them to terrain
+		rover.inCrater = false
+		nextX = rover.x - 100
+		checkCraters()
+
+		if rover.inCrater and drawingCrater then
+
+			local x = rover.x
+			local y = rover.y - 20
+
+			-- remove rover body
+			rover:removeSelf()
+			rover = nil
+
+			-- remove rover wheels
+			for i = 1, #wheelSprite do
+				wheelSprite[i]:removeSelf()
+				wheelSprite[i] = nil
+			end
+
+			-- create new rover
+			newRover( x, y )
+
+			for i = 1, #terrain do
+				if terrain[i] then
+					display.remove(terrain[i])
+					terrain[i] = nil
+				end
+			end
+
+			for i = 1, #courseHeightMap do
+				newRectTerrain( 2, courseHeightMap[i] )
+				craterHeightIndex = i
+			end
+
+			craterEndX = nextX + 200
+			craterHeightIndex = craterHeightIndex + 1
+			drawingCrater = false
+		end
 
 		-- record the current x-axis position of the side scrolling rover
 		rover.distOldX = rover.x
@@ -356,8 +619,8 @@ end
 local function mapZoom( event )
 
 	-- Convert the tracking dot position into zoom point coordinates 
-	local roverX = ((game.saveState.rover.x1 - mapGrp.x) - mapZoomGrp.x/mapZoomGrp.xScale) * map.scale  
-	local roverY = ((game.saveState.rover.y1 - mapGrp.y) - mapZoomGrp.y/mapZoomGrp.yScale) * map.scale  
+	local roverX = (map.rover.x - mapZoomGrp.x / mapZoomGrp.yScale) * map.scale  
+	local roverY = (map.rover.y - mapZoomGrp.y / mapZoomGrp.yScale) * map.scale  
 
 	-- Calculate the boundary coordinates beyond which the map will pan beyond its container
 	local zoomBoundary = (map.width * map.scale - map.width)/2
@@ -387,8 +650,8 @@ local function mapZoom( event )
 		y = roverY,
 		time = 1000,
 		onComplete = function() event.target:setEnabled( true );
-								game.saveState.rover.x1 = map.rover.x/mapZoomGrp.xScale + mapGrp.x; 
-								game.saveState.rover.y1 = map.rover.y/mapZoomGrp.yScale + mapGrp.y;
+								-- game.saveState.rover.x1 = map.rover.x; 
+								-- game.saveState.rover.y1 = map.rover.y;
 						end 
 	}
 	transition.moveTo( map.rover, dotMoveData )
@@ -432,8 +695,8 @@ local function newMap()
 	mapGrp:translate( mapX, mapY )
 
 	-- initialize rover map starting coordinates to map center
-	game.saveState.rover.x1 = mapGrp.x
-	game.saveState.rover.y1 = mapGrp.y
+	game.saveState.rover.x1 = 0
+	game.saveState.rover.y1 = 0
 
 	mapZoomGrp = act:newGroup( mapGrp )
 
@@ -476,15 +739,13 @@ local function newMap()
 	-- Add tracking dot to the map
 	newMapDot()
 	
-	local x1 = (game.saveState.rover.x1 - mapGrp.x) * mapZoomGrp.xScale
-	local y1 = (game.saveState.rover.y1 - mapGrp.y) * mapZoomGrp.yScale
+	local x1 = map.rover.x
+	local y1 = map.rover.y
 	local x2 = math.random(-map.width/2, map.width/2)
 	local y2 = math.random(-map.width/2, map.width/2)
-	game.saveState.rover.x2 = x2 
-	game.saveState.rover.y2 = y2
 
 	-- Calculate new course length
-	map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
+	map.courseLength = calcDistance( x1, y1, x2, y2 )
 
 	-- if course exists, calculate unit vectors & find map zoomBoundary intersection point
 	if map.courseLength > 0 then
@@ -495,17 +756,51 @@ local function newMap()
 	end
 
 	-- set global variables to new destination coordinates
-	x2 = game.saveState.rover.x2 - mapGrp.x
-	y2 = game.saveState.rover.y2 - mapGrp.y
+	x2 = game.saveState.rover.x2
+	y2 = game.saveState.rover.y2
 
 	-- Calculate new course length
-	map.courseLength = math.sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1))
+	map.courseLength = calcDistance( x1, y1, x2, y2 )
 
 	-- Draw the initial course
 	drawCourse( x1, y1, x2, y2 )
 
 	-- Record the current x-axis position of the side scrolling rover
 	rover.distOldX = rover.x
+end
+
+local function newGaugeElement( newX, newY, w, h, xScale )
+
+	-- set sky background
+	local energyData = { 
+		parent = displayPanelGrp, 
+		x = newX, 
+		y = newY, 
+		width = w * xScale, 
+		height = h 
+	} 
+
+	energyGauge = act:newImage( "gauge_element.png", energyData )
+
+-- 	-- create an image sheet for the energy gauge
+-- 	local options = {
+-- 		width = 63,
+-- 		height = 33,
+-- 		numFrames = 8,
+-- 		border = 1
+-- 	}
+
+-- 	local gaugeSheet = graphics.newImageSheet( 'media/rover/gauge_sheet2.png', options )
+
+-- 	local sequenceData = {
+-- 		name = "energySequence",
+-- 		start = 5,
+-- 		count = 5,
+-- 	}
+
+-- 	for i = 1, 50 do
+-- 		gaugeSprite[i] = display.newSprite( displayPanelGrp, gaugeSheet, sequenceData )
+-- 		gaugeSprite[i]:scale( 0.12, 0.12 )
 end
 
 -- Create the speed display text
@@ -587,6 +882,10 @@ local function newDisplayPanel()
 
 	staticFgGrp:insert( zoomInButton )
 	staticFgGrp:insert( zoomOutButton )
+
+	-- for i = 1, 50 do
+	-- 	newGaugeElement( mapGrp.x + 90, mapGrp.y + 90, 20, 3, 1)--, i*i*0.001)
+	-- end
 end
 
 -- Accelerate the rover up to angular velocity of 8000 w/higher initial acceleration
@@ -630,19 +929,51 @@ local function coastRover()
 	end
 end
 
+-- Decelerate rover
+local function decelerate()
+
+	-- Set button image
+	ctrlPanelGrp.accelButton:setFrame( 1 ) 
+
+	rover.accelerate = false
+
+	-- Play rover deceleration sound followed by idle engine sound, first halting any other sounds
+	game.stopSound( rover.stage2Channel )
+	game.stopSound( rover.stage1Channel )
+	game.stopSound( rover.startChannel )
+
+	local options2 = {
+		channel = 1,
+		loops = -1,
+	}
+
+	local function playEngineSound()
+		if ( not rover.accelerate and game.currentActName() == "rover" ) then 
+			rover.engineChannel = game.playSound(rover.engineSound, options2); 
+		end
+	end
+
+	local options1 = {
+		channel = 5,
+		loops = 0,
+		-- Play the rover engine sound indefinitely upon completion
+		onComplete = playEngineSound
+	}
+
+	rover.stopChannel = game.playSound(rover.stopSound, options1)
+end
+
 local function updatePosition()
 
 	-- Calculate distance rover has moved in the scrolling view
-	local distMoved = ( rover.x - rover.distOldX )/400
+	local distMoved = ( rover.x - rover.distOldX )/sideToMapScale
 	rover.distOldX = rover.x
 
-	-- Update the unscaled rover coordinates
-	game.saveState.rover.x1 = map.rover.x/mapZoomGrp.xScale + mapGrp.x + distMoved * map.courseVX; 
-	game.saveState.rover.y1 = map.rover.y/mapZoomGrp.yScale + mapGrp.y + distMoved * map.courseVY;
-
-	-- Update the scaled rover coordinates
-	map.rover.x = (game.saveState.rover.x1 - mapGrp.x) * mapZoomGrp.xScale
-	map.rover.y = (game.saveState.rover.y1 - mapGrp.y) * mapZoomGrp.yScale
+	-- Update rover coordinates
+	map.rover.x = map.rover.x/mapZoomGrp.xScale + (distMoved * map.courseVX) * mapZoomGrp.xScale
+	map.rover.y = map.rover.y/mapZoomGrp.yScale + (distMoved * map.courseVY) * mapZoomGrp.yScale
+	game.saveState.rover.x1 = map.rover.x
+	game.saveState.rover.y1 = map.rover.y
 
 	local x1 = map.rover.x 
 	local y1 = map.rover.y 
@@ -650,16 +981,21 @@ local function updatePosition()
 	local y2 = mapZoomGrp.y/map.yScale
 
 	-- Calculate the rover's distance from the ship
-	local distanceFromShip = math.sqrt((x1*x1) + (y1*y1)) + math.sqrt((x2*x2) + (y2*y2)) 
+	local distanceFromShip = calcDistance( x1, y1, x2, y2 )
 
-	x2 = game.saveState.rover.x2 - mapGrp.x
-	y2 = game.saveState.rover.y2 - mapGrp.y
+	x2 = game.saveState.rover.x2
+	y2 = game.saveState.rover.y2
+
+	-- Determine whether rover has reached a crater and add to terrain if so
+	if not rover.inCrater then
+		checkCraters()	
+	end
 
 	-- If the rover has returned to the ship, then go to mainAct
-	if distanceFromShip <= 6 and map.rover.leftShip then
+	if distanceFromShip <= 6 * map.xScale and map.rover.leftShip then
 		map.rover.leftShip = false
 		game.gotoAct ( "mainAct" )
-	elseif not map.rover.leftShip and distanceFromShip > 6 then
+	elseif not map.rover.leftShip and distanceFromShip > 6 * map.xScale then
 		map.rover.leftShip = true
 	end
 
@@ -681,7 +1017,7 @@ local function updatePosition()
 		rover.accelerate = false
 		rover.brake = true
 
-		if not audio.isChannelPlaying( rover.stopSound ) then		
+		if not audio.isChannelPlaying( 5 ) then		
 			decelerate()
 		end
 
@@ -692,15 +1028,13 @@ local function updatePosition()
 			map.rover.x = math.abs(map.rover.x) / map.rover.x * map.width/2 * 0.99
 		end
 
-		if math.abs(map.rover.y) > map.width/2 then
+		if math.abs(game.saveState.rover.y1) > map.width/2 then
 			map.rover.y = math.abs(map.rover.y) / map.rover.y * map.width/2 * 0.99
 		end
 		
 		-- Update saveState coordinates
-		game.saveState.rover.x1 = map.rover.x / mapZoomGrp.xScale + mapGrp.x
-		game.saveState.rover.y1 = map.rover.y / mapZoomGrp.yScale + mapGrp.y
-		game.saveState.rover.x2 = map.rover.x + mapGrp.x
-		game.saveState.rover.y2 = map.rover.y + mapGrp.y
+		game.saveState.rover.x2 = map.rover.y
+		game.saveState.rover.y2 = map.rover.y
 
 		-- Remove map course objects
 		display.remove( map.course )
@@ -714,6 +1048,7 @@ local function moveRover()
 	-- Accelerate, brake, or coast rover
 	if rover.accelerate then
 		accelRover()
+		ctrlPanelGrp.waterButton.isVisible = false
 	elseif rover.brake then
 		brakeRover()
 	else
@@ -748,79 +1083,70 @@ local function moveRover()
 	end
 
 	-- If rover is upturned, then reveal the reset button
-	if (rover.rotation % 360 > 90 and rover.rotation % 360 < 270) and rover.kph == 0 then
+	if (rover.rotation % 360 > 80 and rover.rotation % 360 < 270) and rover.kph == 0 then
+
+		ctrlPanelGrp.waterButton.isVisible = false
 
 		function displayRecoverButton()
-			if (rover.rotation % 360 > 80 and rover.rotation % 360 < 280) and rover.kph == 0 then
-				recoverButton.isVisible = true
+			if (rover.rotation % 360 > 80 and rover.rotation % 360 < 270) and rover.kph == 0 then
+				ctrlPanelGrp.recoverButton.isVisible = true
 				ctrlPanelGrp.accelButton.isVisible = false
+				ctrlPanelGrp.waterButton.isVisible = false
 				rover.accelerate = false
 			end
 		end
 
 		timer.performWithDelay( 2000, displayRecoverButton() )
+	elseif rover.kph < 0 then
+		ctrlPanelGrp.waterButton.isVisible = true
 	end
 end
 
 -- Scroll the terrain to the left
 local function moveTerrain()
-	local terrainExtent = act.width + terrainExcess - terrainOffset
-
-	-- recycle terrain rectangle if sufficiently offscreen
-    for i = 1, #terrain do
-		if terrain[i].contentBounds.xMax < act.xMin + terrainOffset then
-			terrain[i].x = terrain[i].x + 2 * terrainExtent
+	
+	-- Create new obstacle
+	if nextObstacle < rover.x + act.width then
+		if rover.inCrater then
+			newObstacle( nextObstacle, nextObstacle + 20, act.yMax - floorY*0.73 )
+		else
+			newObstacle( nextObstacle, nextObstacle + 20)
 		end
+		nextObstacle = nextObstacle + 20
 	end
 
-	-- remove obstacle if sufficiently offscreen x left
-	-- create new random obstacle of random size at random offscreen x right
-	for i = 1, #obstacle do
-		if obstacle[i].contentBounds.xMax < act.xMin + terrainOffset then
-			local x = math.random( 
-				obstacle[i].x + terrainExtent, obstacle[i].x + 2 * terrainExtent )
-			local size = math.random( 5, 10 )
-			display.remove( obstacle[i] )
-			obstacle[i] = shape[math.random(1, 4)]( x, act.yMax - elevation, size )
-			obstacle[i]:setFillColor( unpack(obstacleColor)  )
-			obstacle[i]:toBack()
-			physics.addBody( obstacle[i], "static", { friction = 1.0 } )
+	-- If new terrain needed
+	if nextX + dynamicGrp.x <= act.xMax then
+		newRectTerrain( (act.width - terrainOffset)/nTerrainRects, defaultElevation )
+
+		-- If crater has been reached but not created, then create crater display objects
+		if drawingCrater then
+			for i = 1, #courseHeightMap do
+				newRectTerrain( 2, courseHeightMap[i] )
+				craterHeightIndex = i
+			end
+			craterEndX = nextX + 200
+			craterHeightIndex = craterHeightIndex + 1
+			drawingCrater = false
+
+		-- If crater has been past
+		elseif rover.inCrater then
+			if craterHeightIndex > #courseHeightMap and craterEndX + dynamicGrp.x + act.width <= act.xMin + terrainOffset then
+				rover.inCrater = false
+				craterIndex = 1
+				craterHeightIndex = 1
+
+				-- Empty craterHeightMap[] and courseHeightMap[] tables
+				for i = #craterHeightMap, 1, -1 do
+						craterHeightMap[i] = nil
+				end
+
+				for i = #courseHeightMap, 1, -1 do
+						courseHeightMap[i] = nil
+				end
+			end
 		end
 	end
-end
-
--- Decelerate rover
-local function decelerate()
-
-	-- Set button image
-	ctrlPanelGrp.accelButton:setFrame( 1 ) 
-
-	rover.accelerate = false
-
-	-- Play rover deceleration sound followed by idle engine sound, first halting any other sounds
-	game.stopSound( rover.stage2Channel )
-	game.stopSound( rover.stage1Channel )
-	game.stopSound( rover.startChannel )
-
-	local options2 = {
-		channel = 1,
-		loops = -1,
-	}
-
-	local function playEngineSound()
-		if ( not rover.accelerate and game.currentActName() == "rover" ) then 
-			rover.engineChannel = game.playSound(rover.engineSound, options2); 
-		end
-	end
-
-	local options1 = {
-		channel = 5,
-		loops = 0,
-		-- Play the rover engine sound indefinitely upon completion
-		onComplete = playEngineSound
-	}
-
-	rover.stopChannel = game.playSound(rover.stopSound, options1)
 end
 
 -- Acceleration button touch event handler
@@ -892,36 +1218,25 @@ end
 
 -- Brake button event handler
 local function onBrakePress( event )
+	rover.accelerate = false
 	rover.brake = true
-
 	return true
 end
 
 -- Brake button event handler
 local function onBrakeRelease( event )
-	if rover.isActive then
-		rover.brake = false
-	end
+	rover.brake = false
+
 end
 
 -- Water scan button event handler
 local function onWaterRelease( event )
-	-- Cease acceleration and initiate braking
-	rover.accelerate = false
+	-- Initiate braking
 	rover.brake = true
 
-	-- leave the game and go to drillScan; allow time for rover to decelerate and sound to complete
-	local function goToDrillScan( event )
-		-- Stop all audio
-		audio.stop()
-		game.gotoAct ( "drillScan", { effect = "zoomInOutFade", time = 1000 } )
-	end
-
-	if rover.kph < 20 then
-		timer.performWithDelay( 3500, goToDrillScan )	
-	else
-		timer.performWithDelay( 5000, goToDrillScan )	
-	end
+	-- Stop all audio
+	audio.stop()
+	game.gotoAct ( "drillScan", { effect = "zoomInOutFade", time = 1000 } )
 
 	return true
 end
@@ -929,14 +1244,17 @@ end
 -- Reset button event handler
 local function onRecoverPress( event )
 	-- reposition terrain
-	for i = 1, #terrain do
-		terrain[i].x = terrain[i].x - rover.x + 100
-	end
+	-- for i = 1, #terrain do
+	-- 	terrain[i].x = terrain[i].x - rover.x + 100
+	-- end
 
-	-- reposition obstacles
-	for i = 1, #obstacle do
-		obstacle[i].x = obstacle[i].x - rover.x + 100
-	end
+	-- -- reposition obstacles
+	-- for i = 1, #obstacle do
+	-- 	obstacle[i].x = obstacle[i].x - rover.x + 100
+	-- end
+
+	local x = rover.x
+	local y = rover.y
 
 	-- remove rover body
 	rover:removeSelf()
@@ -949,7 +1267,7 @@ local function onRecoverPress( event )
 	end
 
 	-- create new rover
-	newRover( act.yMax - 111 )
+	newRover( x, y )
 
 	-- reset speed display
 	rover.speedOldX = rover.x
@@ -957,7 +1275,8 @@ local function onRecoverPress( event )
 
 	-- display accelerator, hide recover button
 	ctrlPanelGrp.accelButton.isVisible = true
-	recoverButton.isVisible = false
+	ctrlPanelGrp.waterButton.isVisible = true
+	ctrlPanelGrp.recoverButton.isVisible = false
 
 	return true
 end
@@ -1030,7 +1349,7 @@ local function newControlPanel()
 	}
 
 	-- create the water scan button
-	local waterButton = widget.newButton
+	ctrlPanelGrp.waterButton = widget.newButton
 	{
 		x = act.xMax - 28,
 		y = act.yMax - 24,
@@ -1042,7 +1361,7 @@ local function newControlPanel()
 	}
 
 	-- create the reset button
-	recoverButton = widget.newButton
+	ctrlPanelGrp.recoverButton = widget.newButton
 	{
 		x = act.xCenter + 35,
 		y = act.yMax - 23.5,
@@ -1052,11 +1371,11 @@ local function newControlPanel()
 		overFile = "media/rover/reset_pressed.png",
 		onPress = onRecoverPress
 	}
-	recoverButton.isVisible = false
+	ctrlPanelGrp.recoverButton.isVisible = false
 
 	ctrlPanelGrp:insert( brakeButton )
-	ctrlPanelGrp:insert( waterButton )
-	ctrlPanelGrp:insert( recoverButton )
+	ctrlPanelGrp:insert( ctrlPanelGrp.waterButton )
+	ctrlPanelGrp:insert( ctrlPanelGrp.recoverButton )
 end
 
 -- Update the speed display
@@ -1064,7 +1383,7 @@ local function updateDisplay()
 	local kmPerCoronaUnit = 0.00006838462 -- based on estimated rover length
 	local elapsedTimePerHr = 7200 -- every 0.5 seconds
 	rover.kph = ( rover.x - rover.speedOldX ) * kmPerCoronaUnit * elapsedTimePerHr
-
+		
 	if rover.kph < 0 then 
 		rover.kph = 0 
 	end
@@ -1083,6 +1402,8 @@ local function testPrint()
 	-- 					"rover.isActive: ", tostring(rover.isActive),
 	-- 					"rover.leftShip: ", tostring(map.rover.leftShip)
 	-- 					))
+	print(rover.inCrater, craterIndex, nextX + dynamicGrp.x, craterEndX+dynamicGrp.x,#courseHeightMap, 
+		calcDistance( map.rover.x, map.rover.y, game.saveState.craters[craterIndex].x, game.saveState.craters[craterIndex].y ))
 end 
 
 -- Start the act
@@ -1106,7 +1427,7 @@ function act:init()
 	physics.start()
 	physics.setGravity( 0, 3.3 )
 	physics.setContinuous( true )
-	--physics.setDrawMode( "hybrid" )
+	-- physics.setDrawMode( "hybrid" )
 
 	-- seed math.random()
 	math.randomseed( os.time() )
@@ -1118,12 +1439,32 @@ function act:init()
 	ctrlPanelGrp = act:newGroup( staticFgGrp )
 	displayPanelGrp = act:newGroup( staticFgGrp )
 
+	-- Create sensor body for object removal
+	local width = 20
+	local x = act.xMin + terrainOffset - width
+	removalSensorRect = display.newRect( dynamicGrp, x, act.yCenter, width, act.height )
+	removalSensorRect.isVisible = true
+	removalSensorRect.isHitTestable = true
+	-- removalSensorRect.type = "removalSensor"
+	removalSensorRect.isRemover = true
+	physics.addBody( removalSensorRect, "dynamic", { isSensor = true } )
+	removalSensorRect.gravityScale = 0
+
 	-- create background
 	newBackground()
 
+	while nextX < act.xMax do
+		newRectTerrain( (act.width - terrainOffset)/nTerrainRects, defaultElevation )
+	end
+
+	newRover( act.xMin + 100, act.yMax - 112 )
+
 	-- create the terrain and the rover
-	newTerrain( 20 )
-	newRover( act.yMax - 112 )
+	for i = 1, 20 do
+		newObstacle( act.xMin, act.xMax )
+	end
+
+	nextObstacle = rover.x + act.width
 
 	-- create rover display panel and control panel
 	newDisplayPanel()
@@ -1140,6 +1481,7 @@ function act:enterFrame( event )
 
 	-- move dynamicGrp along the x-axis the distance the rover has moved
 	dynamicGrp.x = act.xMin + 100 - rover.x
+	removalSensorRect.x = rover.x - 200
 
 	-- recycle and generate the terrain
 	moveTerrain()
