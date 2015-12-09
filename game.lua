@@ -22,6 +22,7 @@ local game = {
     panelFixed = nil,     -- set to true when a circuit panel is successfully fixed
 
     -- Game state tracking
+    paused = false,         -- true when the game is paused
     currentMainAct = nil,   -- name of act currently running on the main tab
     stateStartTime = 0,     -- value of system.getTimer() when current game state started
     moves = 0,              -- number of times dot has moved since game start
@@ -57,11 +58,11 @@ local game = {
         },
 
         -- array of tables containing crater coordinates and radii
-        crater = {
-            { x = 15, y = -15, r = 5 },
-            { x = 15, y = 15, r = 30 },
-            { x = -15, y = -15, r = 20 },
-            { x = -15, y = 15, r = 10 },
+        craters = {
+            { x = 5, y = -5, r = 3 },
+            { x = 5, y = 5, r = 2 },
+            { x = -5, y = -5, r = 1 },
+            { x = -5, y = 5, r = 4 },
         },
 
         thrustNav = {

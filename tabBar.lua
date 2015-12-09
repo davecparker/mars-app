@@ -25,9 +25,19 @@ local buttons = {
 }
 
 
+-- Automatically pause or unpause the game as appropriate for going to the given tab name
+local function autoPauseGame( tabName )
+    local pause = (tabName == "menu")
+    if pause ~= game.paused then
+        game.paused = pause
+        print( "game.paused = ", game.paused )
+    end
+end
+
 -- Handle tab bar button events
 local function handleTabBarEvent( event )
     local scene = event.target._id   -- tab id is the scene name
+    autoPauseGame( scene )
     local effect = "slideLeft"
     if scene == "mainAct" then
     	-- Restore current act playing on the main tab
@@ -98,6 +108,7 @@ end
 -- Go to the given game tab name, simulate a press if press is true (or omitted)
 function game.gotoTab( name, press )
 	-- Find the tab with the given name
+    autoPauseGame( name )
 	for i = 1, #buttons do
 		if buttons[i].id == name then
             if press ~= false then

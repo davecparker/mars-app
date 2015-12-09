@@ -23,8 +23,12 @@ local waterGoal = 20    -- goal for water generation (liters)
 
 -- Init the act
 function act:init()
-	-- White background
-	act:whiteBackground()
+	-- background image
+	local bg = act:newImage( "background.jpg", { width = act.width } )
+
+	-- make a white box around progress bar to make it easier to see
+	local progressBox = display.newRect( act.group, act.xCenter, act.yMax - 110, 250, 40 )
+	progressBox.alpha = 0.7
 
 	-- The progress bar
 	progressBar = widget.newProgressView{
