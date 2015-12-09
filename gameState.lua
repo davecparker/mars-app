@@ -257,6 +257,12 @@ end
 -- This function is called every second while the game is running, but it 
 -- can also be called whenever an immediate game state update is desired. 
 function game.updateState()
+	-- If game is paused then just reset timer and do nothing
+	if game.paused then
+		game.stateStartTime = system.getTimer()
+	end
+
+	-- Are we on Mars yet?
 	if ss.onMars then
 		updateMarsState()
 	else
