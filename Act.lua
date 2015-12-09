@@ -104,11 +104,11 @@ function Act:whiteBackground()
     return bg
 end    
 
--- Make and return a light gray background for the act.
-function Act:grayBackground()
+-- Make and return a background with the given grayscale shade (0-1, default 0.7) for the act.
+function Act:grayBackground( gray )
     -- Background for the whole view
     local bg = display.newRect( self.group, self.xCenter, self.yCenter, self.width, self.height )
-    bg:setFillColor( 0.7 )  -- light gray
+    bg:setFillColor( gray or 0.7 )
     return bg
 end    
 

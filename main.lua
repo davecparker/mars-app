@@ -84,7 +84,7 @@ act.name     -- act module name
 act:newImage( filename, options )        -- make a new imageRect display object
 act:newGroup( parent )                   -- make a new display (sub-)group
 act:whiteBackground()                    -- make a solid white background
-act:grayBackground()                     -- make a solid gray background
+act:grayBackground( gray )               -- make a solid grayscale background
 act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
 act:loadSound( filename, folder )        -- load sound file (folder defaults to act media)
 

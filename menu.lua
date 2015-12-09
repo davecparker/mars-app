@@ -51,22 +51,22 @@ end
 local function newLabel( group, text, x, y )
 	local label = display.newText( group, text, x, y, native.systemFont, 18 )
 	label.anchorX = 0
-	label:setFillColor( 0 )
+	label:setFillColor( 1 )
 	return label
 end
 
 -- Init the act
 function act:init()
 	-- Background and title bar for the view
-	act:whiteBackground()
+	act:grayBackground( 0.2 )
 	act:makeTitleBar( "Settings" )
 
 	-- Sound on/off switch and label
-	local ySwitch = act.yMin + act.dyTitleBar * 2
-	newLabel( act.group, "Sound", act.xMin + 60, ySwitch )
+	local y = act.yMin + act.dyTitleBar * 2
+	newLabel( act.group, "Sound", act.xMin + 60, y )
 	soundSwitch = widget.newSwitch{
 		x = act.xMin + 30,
-		y = ySwitch,
+		y = y,
 		style = "checkbox",
 		onRelease = 
 			function ( event )
@@ -76,12 +76,13 @@ function act:init()
 	act.group:insert( soundSwitch )
 
 	-- Sound effect slider
+	y = y + act.dyTitleBar
 	volumeControls = act:newGroup()
 	local xSlider = act.xCenter + act.width / 4
 	local dxSlider = act.width * 0.4
 	fxSlider = widget.newSlider{ 
 		x = xSlider,
-		y = act.yMin + act.dyTitleBar * 3,
+		y = y,
 		width = dxSlider,
 		listener = fxSliderListener, 
 	}
@@ -89,26 +90,45 @@ function act:init()
 	newLabel( volumeControls, "Effects", act.xMin + 30, fxSlider.y ) 
 	
 	-- Background volume slider
+	y = y + act.dyTitleBar
 	bgSlider = widget.newSlider{ 
 		x = xSlider,
-		y = act.yMin + act.dyTitleBar * 4,
+		y = y,
 		width = dxSlider, 
 		listener = bgSliderListener, 
 	}
 	volumeControls:insert( bgSlider )
 	newLabel( volumeControls, "Background", act.xMin + 30, bgSlider.y )
 
-	-- Debug menu button
+	-- About button
 	local button = widget.newButton{
 		x = act.xCenter,
 		y = act.yMax - 100,
-		label = "Debug Menu",
+		width = 100,
+	    height = 40,
+	    shape = "roundedRect",
+	    cornerRadius = 10,
+		labelColor = { default = { 1, 1, 1 } },
+		fillColor = { default = { 0.5, 0, 0 }, over = { 0.65, 0, 0 } },
+		label = "About",
 		onRelease = 
 			function ()
-				game.gotoScene( "debugMenu", { effect = "slideLeft", time = 200 } )
+				game.gotoScene( "about", { effect = "slideLeft", time = 200 } )
 			end
 	}
 	act.group:insert( button )
+
+	-- Debug menu button
+	local dbText = display.newText( act.group, "Debug", act.xMax - 50, button.y,
+						native.systemFont, 16 )
+	dbText.isVisible = true   -- TODO: make false
+	dbText.isHitTestable = true
+	dbText:addEventListener( "tap",
+			function (event)
+				if event.numTaps == 1 then    -- TODO: Make 2
+					game.gotoScene( "debugMenu", { effect = "slideLeft", time = 200 } )
+				end
+			end )
 end
 
 -- Prepare the act

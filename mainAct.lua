@@ -532,6 +532,7 @@ end
 
 -- Start the act
 function act:start()
+	game.paused = false
 	updateAmbientSound()
 end
 

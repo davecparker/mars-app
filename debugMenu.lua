@@ -32,6 +32,7 @@ local debugActs = {
 	"blankAct",
 	"layoutTool",
 	"sampleAct",
+	"about",
 }
 
 -- File local variables
