@@ -147,10 +147,7 @@ end
 
 -- Add to or subtract from the energy supply by the given amount in kWh
 function game.addEnergy( kWh )
-    res.kWh = res.kWh + kWh
-    if res.kWh < 0 then
-        res.kWh = 0
-    end
+    res.kWh = game.pinValue( res.kWh + kWh, 0, 100 )
 end
 
 -- Add to or subtract from the food supply by the given amount in kg

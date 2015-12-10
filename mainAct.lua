@@ -30,16 +30,15 @@ local dot              -- user's position dot on map
 local roomInside       -- room the user is inside or nil if none
 local titleBar         -- title bar used when map is zoomed
 local yTitleBar        -- y position of title bar when visible
-local shipOutside      -- Outside of ship Image
 local map              -- the map image
 
 -- Main Ship coordinates
 local ship = {
 	-- Vertical hallway
-	vHall = { left = -10, top = -155, right = 12, bottom = 172 },
+	vHall = { left = -12, top = -160, right = 12, bottom = 180 },
 
 	-- Top Horizontal hallway
-	thHall = { left = -45, top = -145, right = 45, bottom = -130},
+	thHall = { left = -43, top = -146, right = 43, bottom = -130},
 
 	-- Bottom Horizontal hallway
 	bhHall = { left = -133, top = -11, right = 132, bottom = 0 },
@@ -50,72 +49,72 @@ local ship = {
 		{ 
 			name = "Bridge", 
 			left = -48, top = -248, right = 49, bottom = -168, zoom = 3,
-			x = -1, y = -160, dy = -30, 
+			x = 0, y = -160, dy = -30, 
 		},
 		{
 			name = "Greenhouse",
 			left = -139, top = -190, right = -52, bottom = -83, zoom = 3,
-			x = -44, y = -141, dx = -30, sound = "Light Mood.mp3",
+			x = -43, y = -138, dx = -30, sound = "Light Mood.mp3",
 		},
 		{ 
 			name = "Lounge", 
 			left = 49, top = -188, right = 137, bottom = -85, zoom = 3,
-			x = 46, y = -140, dx = 30, 
+			x = 43, y = -138, dx = 30, 
 		},
 		{
 			name = "Jordan",
 			left = -80, top = -58, right = -21, bottom = -18, zoom = 4,
-			x = -51, y = -7, dy = -30, doorCode = "2439",
+			x = -50, y = -11, dy = -30, doorCode = "2439",
 		},
 		{
 			name = "Maxwell",
 			left = 20, top = -58, right = 77, bottom = -19, zoom = 4,
-			x = 46, y = -7, dy = -30,
+			x = 49, y = -11, dy = -30,
 		},
 		{
 			name = "Graham",
 			left = -141, top = -58, right = -82, bottom = -19, zoom = 4,
-			x = -111, y = -7, dy = -30, 
+			x = -111, y = -11, dy = -30, 
 		},
 		{
 			name = "Moore",
 			left = 81, top = -58, right = 138, bottom = -19, zoom = 4,
-			x = 110, y = -7, dy = -30, 
+			x = 110, y = -11, dy = -30, 
 		},
 		{
 			name = "Ellis",
 			left = -141, top = 5, right = -81, bottom = 45, zoom = 4,
-			x = -113, y = -7, dy = 30, 
+			x = -111, y = 0, dy = 30, 
 		},
 		{
 			name = "Shaw",
 			left = -79, top = 6, right = -22, bottom = 45, zoom = 4,
-			x = -50, y = -7, dy = 30, 
+			x = -50, y = 0, dy = 30, 
 		},
 		{
 			name = "Webb",
 			left = 20, top = 5, right = 76, bottom = 45, zoom = 4,
-			x = 49, y = -7, dy = 30, 
+			x = 49, y = 0, dy = 30, 
 		},
 		{
 			name = "Your Quarters",
 			left = 81, top = 5, right = 138, bottom = 45, zoom = 4,
-			x = 109, y = -7, dy = 30, 
+			x = 110, y = 0, dy = 30, 
 		},
 		{
 			name = "Rover Bay",
 			left = -142, top = 88, right = -22, bottom = 184, zoom = 2,
-			x = -15, y = 134, dx = -30, 
+			x = -12, y = 138, dx = -30, 
 		},
 		{ 
 			name = "Lab", 
 			left = 20, top = 86, right = 141, bottom = 183, zoom = 2,
-			x = 15, y = 134, dx = 30, 
+			x = 12, y = 138, dx = 30, 
 		},
 		{
 			name = "Engineering",
 			left = -77, top = 187, right = 74, bottom = 257, zoom = 2,
-			x = 0, y = 174, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
+			x = 0, y = 180, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
 		},
 	},
 }
@@ -141,18 +140,18 @@ end
 -- Return the x, y destination constrained to the hallways of the ship,
 -- taking into account the current position of the dot.
 local function constrainToHalls( x, y )
-	-- Test to see if dot is currently in bhHall, vHall, or both (intersection)
+	-- Test to see which hall(s) the dot is in
 	local inVHall = game.xyInRect( dot.x, dot.y, ship.vHall )
-	local inHHall = game.xyInRect( dot.x, dot.y, ship.bhHall )
+	local inBHHall = game.xyInRect( dot.x, dot.y, ship.bhHall )
 	local inTHHall = game.xyInRect( dot.x, dot.y, ship.thHall)
 
 	-- If dot is currently in the intersection of both the vertical and bottom horizontal hall, 
 	-- determine which direction is closer to the destination.
-	if inHHall and inVHall then
+	if inBHHall and inVHall then
 		if math.abs( x - dot.x) > math.abs( y - dot.y ) then
 			inVHall = false   -- will prefer horizontal movement
 		else
-			inHHall = false   -- will prefer vertical movement
+			inBHHall = false   -- will prefer vertical movement
 		end
 	end
 
@@ -166,9 +165,9 @@ local function constrainToHalls( x, y )
 		end
 	end
 
-	-- If dot is currently in the bhHall, then prefer horizontal movement,
+	-- If dot is currently in a horizontal hall, then prefer horizontal movement,
 	-- else prefer vertical movement
-	if inHHall then
+	if inBHHall then
 		-- Constrain to the horizontal hall
 		x = game.pinValue( x, ship.bhHall.left, ship.bhHall.right )
 		y = game.pinValue( y, ship.bhHall.top, ship.bhHall.bottom )
@@ -223,9 +222,12 @@ local function gemTouched( event )
 			gems.grabGemIcon( icon )
 		elseif gem.t == "res" then
 			-- Add the resource
-			local r = game.saveState.resources
-			if r[gem.res] then
-				r[gem.res] = r[gem.res] + gem.amount
+			if gem.res == "h2o" then
+				game.addWater( gem.amount )
+			elseif gem.res == "food" then
+				game.addFood( gem.amount )
+			elseif gem.res == "kWh" then
+				game.addEnergy( gem.amount )
 			end
 			gems.grabGemIcon( icon )
 		end
@@ -399,13 +401,9 @@ function act:enterFrame()
 	end
 end
 
--- Make map background with touch listener and remove ship outside image
-local function  removeShipOutside ()
-	transition.to( shipOutside, { alpha = 0, onComplete = removeImage } )
-	function removeImage ()
-		shipOutside:removeSelf( )
-		shipOutside = nil
-	end
+-- Make map background visible and remove ship outside image
+local function removeShipOutside( shipOutside )
+	transition.fadeOut( shipOutside, { time = 1000, onComplete = game.removeObj } )
 	map.isVisible = true
 end
 
@@ -426,17 +424,17 @@ function act:init()
 	shipGroup.y = act.yCenter
 
 	-- Start outside of the ship and zooms into it
-	shipOutside = act:newImage( "shipOutside.png", {width = act.width - 10 } )
-	local perams = {
+	local shipOutside = act:newImage( "shipOutside.png", {width = act.width - 10 } )
+	local params = {
 		delay = 1000, 
-		time = 1500, 
+		time = 1500,
 		xScale = 1.9, 
 		yScale = 1.9, 
 		y = 220,
 		transition = easing.inOutSine,
 		onComplete = removeShipOutside
 	}
-	transition.to( shipOutside, perams )
+	transition.to( shipOutside, params )
 
 	-- Map background with touch listener
 	map = act:newImage( "shipPlan2.png", { parent = shipGroup, width = act.width, x = 0, y = 0 } )
@@ -503,6 +501,7 @@ end
 function game.landShip()
 	game.saveState.onMars = true
 	gems.enableShipGem( "rover" )
+	gems.enableShipGem( "recharge" )
 	gems.enableShipGem( "plants" )
 	selectBackground()
 end
