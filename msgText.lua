@@ -53,8 +53,8 @@ local msgText = {
 -- Insert trigger
 -- SAS - Partial file retrieval. Document on Moore's terminal. (Moore - personal log)
 
-	green1 = 	"SAS -  Critical irrigation failure. Food supply inadequate. " ..
-				"Restore food level to 150 kg. Report to Greenhouse immediately.",
+	green1 = 	"SAS - Automated irrigation failure. Food supply inadequate. " ..
+				"Restore food level to at least 150 kg. Report to Greenhouse immediately.",
 
 -- Insert triggers
 -- greenhouse panel game 
