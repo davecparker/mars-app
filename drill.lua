@@ -147,13 +147,24 @@ function act:prepare()
 
 	resetButton.isVisible = false
 	game.playAmbientSound( "Engine.wav" )
-	start()
+
+	if game.drillDone then
+
+		infoGroup.isVisible = false
+		start()
+
+	else
+
+		infoGroup.isVisible = true
+
+	end
 
 end
 
 function act:stop()
 
 	game.stopAmbientSound()
+	game.stopSound( drillSound )
 	game.removeAct( "drill" )
 
 end
@@ -164,6 +175,21 @@ function newFrame()
 	droppingBar()
 	bar.difference = H / 2 - bar.height
 	costText.text = "Cost: " .. -game.currentCost + math.abs( math.floor( bar.difference / 10 ) ) .. " KWH"
+
+end
+
+-- Dismisses the introduction information and sets a flag so it doesn't show up until the player restarts the application
+function infoGroupDismiss( event )
+
+	if event.phase == "began" then
+
+		infoGroup.isVisible = false
+		game.drillDone = true
+		start()
+
+	end
+
+	return true
 
 end
 
@@ -295,6 +321,9 @@ function timeLimit()
 
 	game.addEnergy( energyCost + game.currentCost )
 	game.addWater( game.currentLiters)
+	game.currentLiters = 0
+	game.currentCost = 0
+	game.drillDiff = 20.0
 	timer.performWithDelay( 1500, resetVisible )
 end
 

@@ -186,7 +186,7 @@ function act:init()
 	local infoText1 = display.newText( infoGroup, "Tap drill button to go to Drill activity", 0, 30, native.systemFont, 20 )
 	local infoText1 = display.newText( infoGroup, "Tap this screen to dismiss it", 0, 60, native.systemFont, 20 )
 
-	if game.drillDone then
+	if game.drillScanDone then
 
 		infoGroup.isVisible = false
 
@@ -226,7 +226,7 @@ end
 
 function roverBack()
 
-	game.gotoAct( "rover", { time = 333, effect = "zoomOutInFade" } )
+	game.gotoAct( "rover", { time = 333, effect = "fade" } )
 
 end
 
@@ -236,7 +236,7 @@ function infoGroupDismiss( event )
 	if event.phase == "began" then
 
 		infoGroup.isVisible = false
-		game.drillDone = true
+		game.drillScanDone = true
 
 	end
 
