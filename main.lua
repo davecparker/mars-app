@@ -17,11 +17,9 @@ game.removeObj( obj )                 -- remove a display object
 game.emptyFunction()                  -- do nothing
 
 -- Resource functions in game.lua:
-game.oxygen()                         -- return current oxygen amount
 game.water()                          -- return current water amount
 game.energy()                         -- return current energy amount
 game.food()                           -- return current food amount
-game.addOxygen( liters )              -- Add or subtract oxygen
 game.addWater( liters )               -- Add or subtract water
 game.addEnergy( kWh )                 -- Add or subtract energy
 game.addFood( kg )                    -- Add or subtract food
@@ -38,16 +36,17 @@ game.endMessageBox()                  -- Dismiss active message box if any
 -- Sound functions in game.lua:
 game.playSound( sound, options )      -- Play sound effect, returns channel
 game.stopSound( channel )             -- Stop sound effect 
+game.disposeSound( sound )            -- Dispose of loaded sound
 game.playAmbientSound( filename )     -- Play background sound/music
 game.stopAmbientSound()               -- Stop background sound/music
 
 -- User-Interface functions in tabBar.lua:
-game.selectGameTab( index, press )    -- Select one of the tab bar tabs
 game.createBadge( x, y )              -- Create a new item indicator badge
 game.showBadge( badge )               -- show an indicator badge
 game.hideBadge( badge )               -- hide an indicator badge
 game.showMessagePreview( text )       -- Show preview of message text
 game.hideMessagePreview()             -- Hide message preview if showing
+game.gotoTab( name, press )           -- Go to game tab name
 
 -- Game functions in mainAct.lua:
 game.roomName()                       -- Name of room user is in or nil if none
@@ -62,7 +61,8 @@ game.sendMessages( id1, id2, ... )    -- Add multiple messages to messages view
 game.foundDocument( filename )        -- Add document to user's list of found docs
 
 -- Activity functions in Act.lua
-game.gotoAct( name, options )         -- Run a given activity/view
+game.gotoScene( scene, options )      -- Go directly to a scene (see composer.gotoScene)
+game.gotoAct( name, options )         -- Run a given activity
 game.removeAct( name )                -- Remove an activity from memory
 game.newAct()                         -- Create a new activity
 game.currentActName()                 -- Name of current act 
@@ -84,7 +84,7 @@ act.name     -- act module name
 act:newImage( filename, options )        -- make a new imageRect display object
 act:newGroup( parent )                   -- make a new display (sub-)group
 act:whiteBackground()                    -- make a solid white background
-act:grayBackground()                     -- make a solid gray background
+act:grayBackground( gray )               -- make a solid grayscale background
 act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
 act:loadSound( filename, folder )        -- load sound file (folder defaults to act media)
 

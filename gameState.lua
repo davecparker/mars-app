@@ -13,6 +13,7 @@ local ss = game.saveState
 
 -- File local variables
 local stateStartMoves = 0      -- number of times dot had moved at start of current state
+local foodOutSent = false      -- true when out of food message has been sent
 
 
 -- Ship state sequence data. Entries are indexed by state number and contain:
@@ -20,7 +21,7 @@ local stateStartMoves = 0      -- number of times dot had moved at start of curr
 --     moves (optional)  = number of times user must move on map before start of action
 --     action (required) = function that returns next state, true for next, or nil to stay
 local shipStateData = {
-	{ delay = 3, action =  -- Send awaken messsages
+	{ delay = 5, action =  -- Send awaken messsages
 					function ()
 			        	game.sendMessages( "sas1", "stasis1" )
         				return true
@@ -73,7 +74,7 @@ local shipStateData = {
         			end },
     { delay = 5, action =  -- Notify to fix panel #1 (Engineering)
 					function ()
-						game.sendMessages( "panel1" )
+						game.sendMessage( "panel1" )
 						gems.enableShipGem( "panel1" )
 						game.panelFixed = false
 						return true
@@ -102,7 +103,8 @@ local shipStateData = {
         			end },
 	{ action =  -- Greenhouse to get more food
 					function ()
-						if game.food() > 150 then
+						if game.food() >= 150 then
+							game.messageBox( "Food level restored!" )
 							return true
 						end
         			end },
@@ -131,7 +133,7 @@ local shipStateData = {
 					function ()
 	 					gems.enableShipGem( "graham2" )
 						gems.enableShipGem( "msgHist" )
-	        			game.sendMessages( "correct2" )
+	        			game.sendMessage( "correct2" )
 	        			ss.thrustNav.onTarget = false
  						gems.enableShipGem( "fly1" )
        					return true
@@ -139,6 +141,7 @@ local shipStateData = {
 	{ action =  -- Course correction #2
 					function ()
 						if ss.thrustNav.onTarget then
+							gems.enableShipGem( "fly1", false )
         					return true
         				end
         			end },
@@ -169,13 +172,17 @@ local shipStateData = {
 							game.removeAct( "circuit" )
 							game.removeAct( "wireCut" )
 							return true
-						end        			end },
+						end        			
+					end },
+					---
+					-- TODO: shipLanding act here
+					---
 	{ delay = 2, action =  -- Landed
 					function ()
 						game.landShip()
-	        			game.sendMessage( "landed" )
-						gems.enableShipGem( "rover" )
+	        			game.sendMessages( "landed", "mars1" )
         			end },
+    ----- Ship State Table ends when ship has landed on Mars -----
 } 
 
 -- Update the game state sequence when on the ship. The current state number
@@ -207,23 +214,68 @@ end
 
 -- Update the game state when on Mars.
 local function updateMarsState()
-	-- TODO
+	-- Is emergency stasis needed?
+	gems.enableShipGem( "stasis", ss.stasis )
+	if ss.stasis then
+		-- Rover disabled when stasis needed
+		gems.enableShipGem( "rover", false )
+	else
+		-- Use a little food and water over time
+		game.addFood( -0.5 )
+		game.addWater( -0.25 )
+
+		-- Need food to take the rover out
+		local hasFood = (game.food() > 0)
+		gems.enableShipGem( "rover", hasFood )
+
+		-- If on the ship (not out in the rover), check notifications
+		if game.currentActName() == "mainAct" then
+			if hasFood then
+				foodOutSent = false  -- ready to notify if food runs out (again)
+			else
+				-- Out of food. Send messsage if not already sent.
+				if not foodOutSent then
+					game.sendMessage( "foodOut" )
+					foodOutSent = true
+				end
+
+				-- Check water level
+				if game.water() <= 0 then
+					-- Out of both food and water. Emergency stasis.
+					game.sendMessage( "resOut" )
+					ss.stasis = true
+					game.updateState()
+				end
+			end
+		end
+	end
+end
+
+-- Set the ship state to the given state number
+function game.setShipState( state )
+	ss.shipState = state
+	game.stateStartTime = system.getTimer()
+	stateStartMoves = game.moves
+	print( "Ship state " .. state )
 end
 
 -- This function is called every second while the game is running, but it 
 -- can also be called whenever an immediate game state update is desired. 
 function game.updateState()
+	-- If game is paused then just reset timer and do nothing
+	if game.paused then
+		game.stateStartTime = system.getTimer()
+	end
+
+	-- Are we on Mars yet?
 	if ss.onMars then
-		-- On Mars
 		updateMarsState()
 	else
 		-- Not on Mars yet. Game state proceeds in a sequence.
 		local newState = updateShipState( ss.shipState )
 		if newState ~= ss.shipState then
-			ss.shipState = newState
-			game.stateStartTime = system.getTimer()
-			stateStartMoves = game.moves
-			print( "Ship state " .. newState )
+			game.setShipState( newState )
 		end
 	end
 end
+

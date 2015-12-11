@@ -13,55 +13,64 @@ local widget = require( "widget" )
 
 -- The tab bar widget and info
 local tabBar          -- the tab bar widget
-local selectedTab     -- the tab id of the currently selected tab
-local msgPreview
+local msgPreview      -- text message preview window
 
 -- The tab bar buttons
 local buttons = {
-    { id = "mainAct",    defaultFile = "media/game/map.png", selected = true },
-    { id = "resources",  defaultFile = "media/game/gauge.png"  },
-    { id = "documents",  defaultFile = "media/game/folder.png" },
-    { id = "messages",   defaultFile = "media/game/messages.png" },
-    { id = "menu",       defaultFile = "media/game/menu.png" },
+    { id = "mainAct",    defaultFile = "media/game/mapTab.png", selected = true },
+--    { id = "resources",  defaultFile = "media/game/resourseTab.png"  },
+    { id = "documents",  defaultFile = "media/game/filesTab.png" },
+    { id = "messages",   defaultFile = "media/game/messagesTab.png" },
+    { id = "menu",       defaultFile = "media/game/settingsTab.png" },
 }
 
--- Table that keeps track of the currnet act viewed on each tab, indexed by tab id.
--- If an entry is nil, the default (act = id) is used.
-local currentActForTab = {}
 
+-- Automatically pause or unpause the game as appropriate for going to the given tab name
+local function autoPauseGame( tabName )
+    local pause = (tabName == "menu")
+    if pause ~= game.paused then
+        game.paused = pause
+        print( "game.paused = ", game.paused )
+    end
+end
 
 -- Handle tab bar button events
 local function handleTabBarEvent( event )
-    -- Go to the current (or default) act for this tab
-    selectedTab = event.target._id
-    local act = currentActForTab[selectedTab] or selectedTab  -- tab id is default act
-    local effect = (selectedTab == "mainAct" and "slideRight") or "slideLeft"
-    game.gotoAct( act, { effect = effect, time = 300 } )
+    local scene = event.target._id   -- tab id is the scene name
+    autoPauseGame( scene )
+    local effect = "slideLeft"
+    if scene == "mainAct" then
+    	-- Restore current act playing on the main tab
+    	scene = game.currentMainAct
+    	effect = "slideRight"
+    elseif scene == "documents" then
+    	-- Open current document in documents view if any (else documents list)
+    	if game.openDoc then
+    		scene = "document"
+    	end
+	end
+	game.gotoScene( scene, { effect = effect, time = 300 } )
 end
 
 -- Handle touch on message preview 
 local function touchMessagePreview( event )
     if event.phase == "began" then
-        game.selectGameTab( 4, true )
-    end
+		game.gotoTab( "messages" )
+	end
     return true
 end
 
 -- Initialize the app tab bar and message preview on the bottom of the screen
 function initTabBar()
-    -- Assign properties common to all buttons and set the selectedTab
-    local dxyIcon = game.dyTabBar - 10
+    -- Assign properties common to all buttons
+    local dxyIcon = game.dyTabBar - 5
     for i = 1, #buttons do
         local b = buttons[i]
         b.onPress = handleTabBarEvent
         b.overFile = b.defaultFile
         b.width = dxyIcon
         b.height = dxyIcon
-        if b.selected then
-            selectedTab = b.id
-        end
     end
-    assert( selectedTab )
 
     -- Make the message preview window (under the tab bar)
     msgPreview = display.newGroup()
@@ -70,7 +79,7 @@ function initTabBar()
     msgPreview.yShow = game.yMax - game.dyTabBar * 1.5 + 2    -- just above tab bar
     msgPreview.y = msgPreview.yHide
     local r = display.newRect( msgPreview, 0, 0, game.width, game.dyTabBar )
-    r:setFillColor( 0.3 ) -- dark gray backgroug
+    r:setFillColor( 0.3 ) -- dark gray background
     r:setStrokeColor( 0 )  -- black frame
     r.strokeWidth = 1
     r:addEventListener( "touch", touchMessagePreview )
@@ -86,14 +95,30 @@ function initTabBar()
         top = game.yMax - game.dyTabBar + 1,
         width = game.width,
         height = game.dyTabBar,
-        backgroundFile = "media/game/redGradient.png",
-        tabSelectedLeftFile = "media/game/darkRed.png",
-        tabSelectedRightFile = "media/game/darkRed.png",
-        tabSelectedMiddleFile = "media/game/darkRed.png",
+        backgroundFile = "media/game/darkRed.png",
+        tabSelectedLeftFile = "media/game/redHighlight.png",
+        tabSelectedRightFile = "media/game/redHighlight.png",
+        tabSelectedMiddleFile = "media/game/redHighlight.png",
         tabSelectedFrameWidth = 10,
         tabSelectedFrameHeight = game.dyTabBar - 10,
         buttons = buttons,
     }
+end
+
+-- Go to the given game tab name, simulate a press if press is true (or omitted)
+function game.gotoTab( name, press )
+	-- Find the tab with the given name
+    autoPauseGame( name )
+	for i = 1, #buttons do
+		if buttons[i].id == name then
+            if press ~= false then
+                press = true
+            end
+			tabBar:setSelected( i, press )
+			return
+		end
+	end
+	error( "Invalid tab name", 2 )
 end
 
 -- Show message preview box with the given text
@@ -101,24 +126,13 @@ function game.showMessagePreview( text )
     msgPreview.text.text = string.gsub( text, "\n", " ")  -- replace newlines with spaces
     transition.cancel( msgPreview )
     transition.to( msgPreview, { y = msgPreview.yShow, time = 500 } )
-    transition.to( msgPreview, { y = msgPreview.yHide, delay = 2500, time = 500 } )
+    transition.to( msgPreview, { y = msgPreview.yHide, delay = 3500, time = 500 } )
 end
 
 -- Hide the message preview box if showing
 function game.hideMessagePreview()
     transition.cancel( msgPreview )
     transition.to( msgPreview, { y = msgPreview.yHide, time = 200 } )
-end
-
--- Set the current act for the currently selected tab to name
-function game.setCurrentTabAct( name )
-    currentActForTab[selectedTab] = name
-end
-
--- Select the given tab (1 = main tab) on the tab bar, and press it if press is true
-function game.selectGameTab( index, press )
-    tabBar:setSelected( index, press )
-    selectedTab = buttons[index].id
 end
 
 -- Create and return a new item indicator badge at the given screen position, initially hidden
