@@ -103,7 +103,8 @@ local shipStateData = {
         			end },
 	{ action =  -- Greenhouse to get more food
 					function ()
-						if game.food() > 150 then
+						if game.food() >= 150 then
+							game.messageBox( "Food level restored!" )
 							return true
 						end
         			end },
@@ -219,6 +220,10 @@ local function updateMarsState()
 		-- Rover disabled when stasis needed
 		gems.enableShipGem( "rover", false )
 	else
+		-- Use a little food and water over time
+		game.addFood( -0.5 )
+		game.addWater( -0.25 )
+
 		-- Need food to take the rover out
 		local hasFood = (game.food() > 0)
 		gems.enableShipGem( "rover", hasFood )
