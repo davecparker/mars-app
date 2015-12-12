@@ -454,7 +454,7 @@ function act:init()
 	map:addEventListener( "touch", touchMap )
 	map.isVisible = false
 
-	---[[ Display rectangles in the walkable parts of the hallways (testing only)
+	--[[ Display rectangles in the walkable parts of the hallways (testing only)
 	local r = display.newRect( shipGroup, ship.vHall.left, ship.vHall.top, 
 					ship.vHall.right - ship.vHall.left, ship.vHall.bottom - ship.vHall.top )
 	r.anchorX = 0
@@ -475,7 +475,7 @@ function act:init()
 	r.alpha = 0.5
 	--]]
 
-	---[[ Display room bounds and door locations (testing only)
+	--[[ Display room bounds and door locations (testing only)
 	for _, room in pairs(ship.rooms) do 
 		local r = display.newRect( shipGroup, room.left, room.top, 
 						room.right - room.left, room.bottom - room.top )
