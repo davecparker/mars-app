@@ -49,79 +49,79 @@ local ship = {
 		{ 
 			name = "Bridge", 
 			left = -48, top = -248, right = 49, bottom = -168, zoom = 3,
-			x = -1, y = -160, dx = 1, dy = -25,
+			x = 0, y = -160, dx = 1, dy = -25,
 
 		},
 		{
 			name = "Greenhouse",
 			left = -139, top = -190, right = -52, bottom = -83, zoom = 3,
-			x = -44, y = -141, dx = -20, dy = 3, sound = "Light Mood.mp3",
+			x = -43, y = -138, dx = -20, dy = 3, sound = "Light Mood.mp3",
 
 		},
 		{ 
 			name = "Lounge", 
 			left = 49, top = -188, right = 137, bottom = -85, zoom = 3,
-			x = 46, y = -140, dx = 20, dy = 3, 
+			x = 43, y = -138, dx = 20, dy = 3, 
 
 		},
 		{
 			name = "Jordan",
 			left = -80, top = -58, right = -21, bottom = -18, zoom = 4,
-			x = -51, y = -7, dx = -4, dy = -30, doorCode = "2439",
+			x = -50, y = -11, dx = -4, dy = -30, doorCode = "2439",
 
 		},
 		{
 			name = "Maxwell",
 			left = 20, top = -58, right = 77, bottom = -19, zoom = 4,
-			x = 46, y = -7, dx = 10, dy = -30,
+			x = 49, y = -11, dx = 10, dy = -30,
 
 		},
 		{
 			name = "Graham",
 			left = -141, top = -58, right = -82, bottom = -19, zoom = 4,
-			x = -111, y = -7, dx = -4, dy = -30, 
+			x = -111, y = -11, dx = -4, dy = -30, 
 
 		},
 		{
 			name = "Moore",
 			left = 81, top = -58, right = 138, bottom = -19, zoom = 4,
-			x = 110, y = -7, dx = 5, dy = -30, 
+			x = 110, y = -11, dx = 5, dy = -30, 
 
 		},
 		{
 			name = "Ellis",
-			left = -141, top = 5, right = -81, bottom = 45, zoom = 4,
-			x = -113, y = -7, dx = -3, dy = 30, 
+			left = -141, top = 9, right = -81, bottom = 48, zoom = 4,
+			x = -111, y = 0, dx = -3, dy = 30, 
 
 		},
 		{
 			name = "Shaw",
-			left = -79, top = 6, right = -22, bottom = 45, zoom = 4,
-			x = -50, y = -7, dx = -4, dy = 30, 
+			left = -79, top = 9, right = -22, bottom = 48, zoom = 4,
+			x = -50, y = 0, dx = -4, dy = 30, 
 
 		},
 		{
 			name = "Webb",
-			left = 20, top = 5, right = 76, bottom = 45, zoom = 4,
-			x = 49, y = -7, dx = 6, dy = 30, 
+			left = 20, top = 9, right = 76, bottom = 48, zoom = 4,
+			x = 49, y = 0, dx = 6, dy = 30, 
 
 		},
 		{
 			name = "Your Quarters",
-			left = 81, top = 5, right = 138, bottom = 45, zoom = 4,
-			x = 109, y = -7, dx = 7, dy = 30, 
+			left = 81, top = 9, right = 138, bottom = 48, zoom = 4,
+			x = 110, y = 0, dx = 7, dy = 30, 
 
 		},
 		{
 			name = "Rover Bay",
 			left = -142, top = 88, right = -22, bottom = 184, zoom = 2,
-			x = -15, y = 134, dx = -20, dy = 4, 
+			x = -12, y = 138, dx = -20, dy = 4, 
 
 		},
 		{ 
 			name = "Lab", 
 			left = 20, top = 86, right = 141, bottom = 183, zoom = 2,
-			x = 15, y = 134, dx = 30, dy = 3, 
+			x = 12, y = 138, dx = 30, dy = 3, 
 
 		},
 		{
@@ -454,7 +454,7 @@ function act:init()
 	map:addEventListener( "touch", touchMap )
 	map.isVisible = false
 
-	--[[ Display rectangles in the walkable parts of the hallways (testing only)
+	---[[ Display rectangles in the walkable parts of the hallways (testing only)
 	local r = display.newRect( shipGroup, ship.vHall.left, ship.vHall.top, 
 					ship.vHall.right - ship.vHall.left, ship.vHall.bottom - ship.vHall.top )
 	r.anchorX = 0
@@ -475,7 +475,7 @@ function act:init()
 	r.alpha = 0.5
 	--]]
 
-	--[[ Display room bounds and door locations (testing only)
+	---[[ Display room bounds and door locations (testing only)
 	for _, room in pairs(ship.rooms) do 
 		local r = display.newRect( shipGroup, room.left, room.top, 
 						room.right - room.left, room.bottom - room.top )
