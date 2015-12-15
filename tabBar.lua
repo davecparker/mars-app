@@ -103,6 +103,11 @@ function initTabBar()
         tabSelectedFrameHeight = game.dyTabBar - 10,
         buttons = buttons,
     }
+
+    -- Put the side bars on top, if any
+    if game.sideBars then
+        game.sideBars:toFront()
+    end
 end
 
 -- Go to the given game tab name, simulate a press if press is true (or omitted)

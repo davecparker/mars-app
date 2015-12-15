@@ -10,6 +10,9 @@
 
 -- The game object where game global data and functions are stored
 local game = {
+    -- Misc constants
+    themeColor = { r = 0.58, g = 0, b = 0 },   -- dark red
+
     -- Data for the current act to use
     cheatMode = false,    -- true if cheat mode is on (debug)
     allGems = false,      -- true to always show all gems (debug)
@@ -340,15 +343,33 @@ local function initGameObject()
     -- Hide device status bar
     display.setStatusBar( display.HiddenStatusBar )
 
-    -- Get overall device screen metrics
-    game.width = display.actualContentWidth
+    -- Get overall device screen metrics and then use width 320 if wider (e.g. iPad)
+    local dxBar = (display.actualContentWidth - 320) / 2
+    if dxBar > 0 then
+        game.width = 320
+        game.xMin = 0
+    else
+        game.width = display.actualContentWidth
+        game.xMin = display.screenOriginX
+    end
     game.height = display.actualContentHeight
-    game.xMin = display.screenOriginX
     game.yMin = display.screenOriginY
     game.xMax = game.xMin + game.width
     game.yMax = game.yMin + game.height
     game.xCenter = (game.xMin + game.xMax) / 2
     game.yCenter = (game.yMin + game.yMax) / 2
+
+    -- Add side bars to cover any extra width
+    if dxBar > 0 then
+        print(dxBar)
+        game.sideBars = display.newGroup()
+        local bar = display.newRect( game.sideBars, game.xMin - dxBar / 2, game.yCenter, 
+                        dxBar + 1, game.height )
+        bar:setFillColor( game.themeColor.r, game.themeColor.g, game.themeColor.b )
+        bar = display.newRect( game.sideBars, game.xMax + dxBar / 2, game.yCenter,
+                        dxBar + 1, game.height )
+        bar:setFillColor( game.themeColor.r, game.themeColor.g, game.themeColor.b )
+    end
 
     -- Set game UI element metrics
     game.dyTabBar = 40     -- Height of UI tab bar on all screens
