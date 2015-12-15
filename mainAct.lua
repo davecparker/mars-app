@@ -511,11 +511,23 @@ end
 
 -- Land the ship and update ship state as necessary
 function game.landShip()
+	-- Update state variables and visuals
 	game.saveState.onMars = true
+	selectBackground()
+
+	-- Remove and disable ship acts no longer needed
+	game.removeAct( "thrustNav" )
+	gems.enableShipGem( "fly1", false )
+	game.removeAct( "circuit" )
+	game.removeAct( "wireCut" )
+	gems.enableShipGem( "panel1", false )
+	gems.enableShipGem( "panel2", false )
+	gems.enableShipGem( "panel3", false )
+
+	-- Enable Mars acts
 	gems.enableShipGem( "rover" )
 	gems.enableShipGem( "recharge" )
 	gems.enableShipGem( "plants" )
-	selectBackground()
 end
 
 -- Prepare the view before it shows
