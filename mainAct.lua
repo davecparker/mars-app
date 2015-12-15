@@ -437,13 +437,13 @@ function act:init()
 	shipGroup.y = act.yCenter
 
 	-- Start outside of the ship and zooms into it
-	local shipOutside = act:newImage( "shipOutside.png", {width = act.width - 10 } )
+	local shipOutside = act:newImage( "shipOutside.png", { width = act.width - 10 } )
 	local params = {
 		delay = 1000, 
 		time = 1500,
 		xScale = 1.9, 
 		yScale = 1.9, 
-		y = 220,
+		y = act.yCenter + 80,
 		transition = easing.inOutSine,
 		onComplete = removeShipOutside
 	}
