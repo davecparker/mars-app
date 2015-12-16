@@ -123,7 +123,7 @@ function Act:makeTitleBar( title, backListener )
     local bar = display.newRect( group, self.xMin, self.yMin, self.width, self.dyTitleBar )
     bar.anchorX = 0
     bar.anchorY = 0
-    bar:setFillColor( 0.5, 0, 0 )   -- dark red
+    bar:setFillColor( game.themeColor.r, game.themeColor.g, game.themeColor.b )
     bar:addEventListener( "touch", game.eatTouch )  -- eat touches on title bar
     bar:addEventListener( "tap", game.eatTouch )    -- and taps too
 

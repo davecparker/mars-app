@@ -3,10 +3,9 @@ application =
 
 	content =
 	{
-		-- Make sure our width is always 320 (for compatibility with coord constants),
-		-- and we will use the actual device height.
+		-- Make sure our usable coordinate space is at least 320 x 480 (iPhone 4 size)
 		width = 320,
-		height = 320,
+		height = 480,
 		scale = "letterBox",
 		fps = 30,
 		audioPlayFrequency = 22050,
