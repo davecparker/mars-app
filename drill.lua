@@ -51,6 +51,7 @@ local tapText -- Flashing tap text
 local tapTime = 5 -- Time left until tap stops flashing
 local tapTimerShow -- Timer to keep track of the tap text
 local tapTimerHide -- Timer to keep track of the tap text
+local drillSound = {} -- Sound container for drill sound
 
 function act:init()
 
@@ -141,6 +142,21 @@ function act:init()
 	tapText.fill = { 0, 0.42, 1 }
 	tapText.isVisible = false
 
+	-- Declare the introductory information group and check for a flag to hide/show it
+	infoGroup = display.newGroup()
+	infoGroup.x, infoGroup.y = XC, YC
+
+	local infoScreen = display.newRect( infoGroup, 0, 0, W, H )
+	infoScreen.fill = { 0, 0, 0, 0.7 }
+
+	local infoText1 = display.newText( infoGroup, "Rapidly tap the screen", 0, -30, native.systemFontBold, 20 )
+	local infoText1 = display.newText( infoGroup, "Aim to be in the blue range", 0, 0, native.systemFontBold, 20 )
+	local infoText1 = display.newText( infoGroup, "Return to the rover to continue", 0, 30, native.systemFontBold, 20 )
+
+	infoScreen:addEventListener( "touch", infoGroupDismiss )
+
+	act.group:insert( infoGroup )
+
 end
 
 function act:prepare()
@@ -163,8 +179,8 @@ end
 
 function act:stop()
 
+	game.stopSound( drillSound.channel )
 	game.stopAmbientSound()
-	game.stopSound( drillSound )
 	game.removeAct( "drill" )
 
 end
@@ -205,8 +221,8 @@ function start()
 
 	elseif startTimer.count == 0 then
 
-		drillSound = act:loadSound( "Drill.wav" )
-		game.playSound( drillSound )
+		drillSound.sound = act:loadSound( "Drill.wav" )
+		drillSound.channel = game.playSound( drillSound )
 
 		local function hideTimer()
 
