@@ -4,8 +4,6 @@
 --
 -----------------------------------------------------------------------------------------
 
-display.setStatusBar( display.HiddenStatusBar )
-
 -- Require statements
 
 widget = require( "widget" )
@@ -16,8 +14,8 @@ local act = game.newAct()
 
 
 -- Constant declaration
-local W = act.width
-local H = act.height
+local W = act.xMax
+local H = act.yMax
 local XC = act.xCenter
 local YC = act.yCenter
 local YMIN = act.yMin
@@ -80,7 +78,7 @@ function act:init()
 	-- Create the water spots
 	for i = 1, numSpots do
 		
-		waterSpot[i] = display.newImage( act.group, "media/drillScan/WaterSpot.png", math.random( XMIN + 10, W - 10 ), math.random( YMIN + 50, ( H - 2 * H / 5 ) - 10 ), true )
+		waterSpot[i] = display.newImage( act.group, "media/drillScan/WaterSpot.png", math.random( XMIN + 10, W - 10 ), math.random( YMIN + 50, ( H - 1 * H / 5 ) - 10 ), true )
 		waterSpot[i].isVisible = false
 		waterSpot[i].contamination = math.random( 0, 100 )
 		waterSpot[i].frigidity = 100 - waterSpot[i].contamination
@@ -121,14 +119,15 @@ function act:init()
 
 	-- Create the information console
 	infoConsole = act:newImage( "Steel2.jpg", { width = 1024, height = 768 } )
-	infoConsole.x, infoConsole.y = XC, H - 2 * H / 5
+	infoConsole.x, infoConsole.y = XC, H - 1 * H / 5
 	infoConsole.anchorX = 0.5
 	infoConsole.anchorY = 0
+
 
 	-- Group to hold all of the text objects
 	textGroup = display.newGroup( )
 	textGroup.x = XC
-	textGroup.y = H - 1.8 * H / 5
+	textGroup.y = H - .8 * H / 5
 
 	-- Create the text to tell you how contaminated the water is
 	local contamOrigin = 0
@@ -170,7 +169,7 @@ function act:init()
 
 	drillButton.anchorX = 1
 	drillButton.x = W - 10
-	drillButton.y = H - 1.5 * H / 5
+	drillButton.y = H - .5 * H / 5
 	drillButton.isVisible = false
 
 	-- Declare the introductory information group and check for a flag to hide/show it

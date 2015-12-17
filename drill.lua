@@ -4,9 +4,6 @@
 --
 -----------------------------------------------------------------------------------------
 
-display.setStatusBar( display.HiddenStatusBar )
-
-
 -- Declare access to game and act variables
 game = globalGame
 act = game.newAct()
