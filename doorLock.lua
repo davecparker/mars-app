@@ -11,6 +11,7 @@ local game = globalGame
 -- Create the act object
 local act = game.newAct()
 
+-- Act Requisites
 local widget = require( "widget" )
 
 ------------------------- Start of Activity --------------------------------
