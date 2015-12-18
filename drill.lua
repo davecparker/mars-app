@@ -116,15 +116,15 @@ function act:init()
 	-- Intro screen
 	game.drillPlayed = false
 
-	if game.currentCost == nil and game.currentLiters == nil then
+	if game.currentDrillCost == nil and game.currentLiters == nil then
 
-		game.currentCost = 11
+		game.currentDrillCost = 11
 		game.currentLiters = 50
 
 	end
 
 	-- Cost text
-	costText = display.newText( act.group, "Cost: " ..  -game.currentCost + math.abs( math.floor( bar.difference / 10 ) ) .. " KWH", XC, YC, native.systemFont, 25 )
+	costText = display.newText( act.group, "Cost: " ..  -game.currentDrillCost + math.abs( math.floor( bar.difference / 10 ) ) .. "%", XC, YC, native.systemFont, 25 )
 	costText.fill = { 0, 0.42, 1 }
 	costText.xScale, costText.yScale = 0.01, 0.01
 	costText.isVisible = false
@@ -188,6 +188,7 @@ function act:stop()
 	game.stopSound( drillSound.channel )
 	game.stopAmbientSound()
 	game.drillStopped = true
+	game.removeAct( "drillScan" )
 	game.removeAct( "drill" )
 
 end
@@ -197,7 +198,7 @@ function newFrame()
 	
 	droppingBar()
 	bar.difference = H / 2 - bar.height
-	costText.text = "Cost: " .. -game.currentCost + math.abs( math.floor( bar.difference / 10 ) ) .. " KWH"
+	costText.text = "Cost: " .. -game.currentDrillCost + math.abs( math.floor( bar.difference / 20 ) ) .. "%"
 
 end
 
@@ -344,10 +345,18 @@ function timeLimit()
 
 	end
 
-	game.addEnergy( energyCost + game.currentCost )
+	if game.energy() > ( -energyCost - game.currentDrillCost ) then
+
+		game.addEnergy( energyCost + game.currentDrillCost )
+
+	else
+
+		game.addEnergy( -game.energy() )
+
+	end
 	game.addWater( game.currentLiters)
 	game.currentLiters = 0
-	game.currentCost = 0
+	game.currentDrillCost = 0
 	game.drillDiff = 20.0
 	timer.performWithDelay( 1500, resetVisible )
 

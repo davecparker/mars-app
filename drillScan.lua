@@ -40,23 +40,19 @@ local textGroup
 local infoGroup
 
 -- Variable declaration
-local marsSurface
-local infoConsole
-local scanConsole
-local contText
-local freezeText
-local sizeText
-local costText
-local contamText
-local freezeText
-local litersText
-local energyText
-local drillButton
-local currentLiters = 0
-local currentCost = 0
-local scanDistance = 0
-local numSpots = 0
-game.drillDiff = 0
+local marsSurface -- Holder for current martian background
+local infoConsole -- Lower console area containing drill button and informative text
+local contamText -- Text telling player how contaminated the given point is
+local freezeText -- Text telling player how frozen the given point is
+local litersText -- Text telling player how much water they will receive from the given point
+local energyText -- Text telling player how much it costs to drill the given point
+local drillButton -- Button to transfer player to drill game
+local lackEnergy -- Text for if the player doesn't have enough energy to start drilling
+local currentLiters = 0 -- Numerical holder for current liters
+local currentCost = 0 -- Numerical holder for current cost
+local scanDistance = 0 -- Numerical holder for the distance from nearest water point. Currently unused
+local numSpots = 0 -- Numerical holder for how many spots spawn on screen
+game.drillDiff = 0 -- Global numerical holder for difficulty to pass to drill
 
 -- Array declaration
 local waterSpot = {}
@@ -149,7 +145,7 @@ function act:init()
 
 	-- Create the text to tell you how much energy it will cost you to drill the water
 	local energyOrigin = 0
-	energyText = display.newText( textGroup, "Energy Cost:  " .. energyOrigin .. " kWh", -150, 51, native.systemFont, 17 )
+	energyText = display.newText( textGroup, "Energy Cost:  " .. energyOrigin .. "%", -150, 51, native.systemFont, 17 )
 	energyText.fill = { 0 }
 	energyText.anchorX = 0
 
@@ -169,8 +165,15 @@ function act:init()
 
 	drillButton.anchorX = 1
 	drillButton.x = W - 10
-	drillButton.y = H - .5 * H / 5
+	drillButton.y = H - 0.5 * H / 5
 	drillButton.isVisible = false
+
+	-- Create text to inform user if they don't have sufficient energy
+
+	lackEnergy = display.newText( act.group, "Insufficient Energy", W - 10, H - 0.5 * H / 5, native.systemFontBold, 12 )
+	lackEnergy:setFillColor( 0, 0, 0 )
+	lackEnergy.anchorX = 1
+	lackEnergy.isVisible = false
 
 	-- Declare the introductory information group and check for a flag to hide/show it
 	infoGroup = display.newGroup()
@@ -225,6 +228,7 @@ end
 
 function roverBack()
 
+	game.removeAct( drillScan )
 	game.gotoAct( "rover", { time = 333, effect = "fade" } )
 
 end
@@ -384,12 +388,20 @@ function waterSpotStats( event )
 			contamText.text = t.contamination .. "% Contaminated"
 			freezeText.text = t.frigidity .. "% Frozen"
 			litersText.text = t.liters .. " Liters"
-			energyText.text = "Energy Cost: " .. string.format( "%2.0f", math.floor( -t.energyCost ) ) .. " kWh"
+			energyText.text = "Energy Cost: " .. string.format( "%2.0f", math.floor( -t.energyCost ) ) .. "%"
 
-			drillButton.isVisible = true
+			if game.energy() > -t.energyCost then
+
+				drillButton.isVisible = true
+
+			else
+
+				lackEnergy.isVisible = true
+
+			end
 
 			game.currentLiters = math.floor( t.liters )
-			game.currentCost = math.floor( t.energyCost )
+			game.currentDrillCost = math.floor( t.energyCost )
 			game.drillDiff = t.difficulty
 
 		elseif t.group.isVisible == true then
@@ -399,12 +411,13 @@ function waterSpotStats( event )
 			contamText.text = "0% Contaminated"
 			freezeText.text = "0% Frozen"
 			litersText.text = "0 Liters"
-			energyText.text = "Energy Cost: 0 kWh"
+			energyText.text = "Energy Cost: 0%"
 
 			drillButton.isVisible = false
+			lackEnergy.isVisible = false
 
 			game.currentLiters = 0
-			game.currentCost = 0
+			game.currentDrillCost = 0
 			game.drillDiff = 0
 
 		end
