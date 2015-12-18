@@ -33,6 +33,8 @@ local msgText = {
 -- Insert trigger
 	fileJ1 = "SAS - Partial file retrieval. Document on Jordan's terminal.",
 
+-- Please ADD one of the many logs that are released just prior to landing ***
+
 	codes= 	"SAS - Security update: restricted \n" ..
 			"Protocol trigger: command change \n" ..
 			"Authorized personnel: ranking officer \n" ..
@@ -51,7 +53,7 @@ local msgText = {
 
 
 -- Insert trigger
--- SAS - Partial file retrieval. Document on Moore's terminal. (Moore - personal log)
+-- SAS - Partial file retrieval. Document on Moore's terminal. (Moore - personal log) ***please add***
 
 	green1 = 	"SAS -  Critical irrigation failure. Food supply inadequate. " ..
 				"Restore food level to 150 kg. Report to Greenhouse immediately.",
@@ -70,19 +72,21 @@ local msgText = {
 				"Pod 7, Webb, damaged, occupant deceased \n" ..
 				"Pod 8, Moore, empty",
 
+-- Please ADD one of the many logs that are released just prior to landing ***
+
 	panel2 = "SAS - Water recirculator failure. Panel 57C reconfiguration required. Report to Lab.",
 
 -- Insert triggers
 -- Lab panel game
--- SAS - Partial file retrieval. Document on Graham's terminal. (Graham - personal log 2)
--- SAS - Partial file retrieval. Document on Lounge terminal. (Message History)
+-- SAS - Partial file retrieval. Document on Graham's terminal. (Graham - personal log 2)   ***Please add***
+-- SAS - Partial file retrieval. Document on Lounge terminal. (Message History)   *** Please add ***
 
 	correct2 = 	"SAS - Approaching Mars. Manual piloting required. Insert into Mars orbit. " ..
 				"Report to Bridge immediately.",
 
 -- Insert triggers
 -- Trajectory 2/Orbit game 
--- SAS - Partial file retrieval. Document on Jordan's terminal. (Jordan - personal log 2)
+-- SAS - Partial file retrieval. Document on Jordan's terminal. (Jordan - personal log 2)  *** Please add ***
 
 	panel3 = "SAS - Failure in Kitchen unit 2. Report to Lounge.",
 
