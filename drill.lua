@@ -12,7 +12,7 @@ act = game.newAct()
 widget = require( "widget" )
 
 -- Declare constants
-local W = act.width
+local W = act.xMax
 local H = act.height
 local XC = act.xCenter
 local YC = act.yCenter
@@ -49,6 +49,7 @@ local tapTime = 5 -- Time left until tap stops flashing
 local tapTimerShow -- Timer to keep track of the tap text
 local tapTimerHide -- Timer to keep track of the tap text
 local drillSound = {} -- Sound container for drill sound
+local endTimer -- Timer used when the player finishes the drill
 
 function act:init()
 
@@ -154,6 +155,8 @@ function act:init()
 
 	act.group:insert( infoGroup )
 
+	game.drillStopped = false
+
 end
 
 function act:prepare()
@@ -176,8 +179,15 @@ end
 
 function act:stop()
 
+	if endTimer then
+
+		timer.cancel( endTimer )
+
+	end
+
 	game.stopSound( drillSound.channel )
 	game.stopAmbientSound()
+	game.drillStopped = true
 	game.removeAct( "drill" )
 
 end
@@ -209,7 +219,7 @@ end
 -- Function to begin all of the level's purposes
 function start()
 
-	if startTimer.count > 0 then
+	if startTimer.count > 0 and game.drillStopped == false then
 
 		startTimer.isVisible = true
 		startTimer.text = "Beginning in: " .. startTimer.count
@@ -219,7 +229,7 @@ function start()
 	elseif startTimer.count == 0 then
 
 		drillSound.sound = act:loadSound( "Drill.wav" )
-		drillSound.channel = game.playSound( drillSound )
+		drillSound.channel = game.playSound( drillSound.sound )
 
 		local function hideTimer()
 
@@ -236,7 +246,7 @@ function start()
 		Runtime:addEventListener( "enterFrame", newFrame )
 
 		-- Time limit
-		timer.performWithDelay( 5000, timeLimit )
+		endTimer = timer.performWithDelay( 5000, timeLimit )
 
 	end
 
@@ -300,6 +310,8 @@ end
 -- Function to control what happens when the player finishes drilling
 function timeLimit()
 
+	endTimer = nil
+
 	Runtime:removeEventListener( "enterFrame", newFrame )
 	Runtime:removeEventListener( "touch", risingBar )
 
@@ -338,6 +350,7 @@ function timeLimit()
 	game.currentCost = 0
 	game.drillDiff = 20.0
 	timer.performWithDelay( 1500, resetVisible )
+
 end
 
 return act.scene
