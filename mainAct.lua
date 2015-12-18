@@ -55,7 +55,7 @@ local ship = {
 		{
 			name = "Greenhouse",
 			left = -139, top = -190, right = -52, bottom = -83, zoom = 3,
-			x = -43, y = -138, dx = -20, dy = 3, sound = "Light Mood.mp3",
+			x = -43, y = -138, dx = -20, dy = 3, sound = "HarpPiano.mp3",
 
 		},
 		{ 
