@@ -22,6 +22,7 @@ local gems = {
 	onShip = {
         -- In Bridge
         fly1 =      { x = 0, y = -230, t = "act", act = "thrustNav", param = 1, enabled = true },
+        landing =   { x = 0, y = -230, t = "act", act = "shipLanding" },
         sierra =    { x = -27, y = -226, t = "doc", file = "The Sierra", enabled = true },
         crew =      { x = 25, y = -226, t = "doc", file = "Crew Manifest", enabled = true },
 

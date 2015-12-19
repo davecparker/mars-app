@@ -501,33 +501,34 @@ function act:init()
 	titleBar.isVisible = false
 end
 
--- Select the proper background image
-local function selectBackground()
-	local onMars = game.saveState.onMars
-	spaceBgs[1].isVisible = not onMars
-	spaceBgs[2].isVisible = not onMars
-	marsBg.isVisible = onMars
-end
-
 -- Land the ship and update ship state as necessary
 function game.landShip()
-	-- Update state variables and visuals
+	-- Update state variable
 	game.saveState.onMars = true
-	selectBackground()
 
 	-- Remove and disable ship acts no longer needed
-	game.removeAct( "thrustNav" )
 	gems.enableShipGem( "fly1", false )
-	game.removeAct( "circuit" )
-	game.removeAct( "wireCut" )
 	gems.enableShipGem( "panel1", false )
 	gems.enableShipGem( "panel2", false )
 	gems.enableShipGem( "panel3", false )
+	gems.enableShipGem( "landing", false )
+	game.removeAct( "thrustNav" )
+	game.removeAct( "circuit" )
+	game.removeAct( "wireCut" )
+	game.removeAct( "shipLanding" )
 
 	-- Enable Mars acts
 	gems.enableShipGem( "rover" )
 	gems.enableShipGem( "recharge" )
 	gems.enableShipGem( "plants" )
+end
+
+-- Select the proper background image
+local function selectBackground()
+	local onMars = game.saveState.onMars or game.shipLanded
+	spaceBgs[1].isVisible = not onMars
+	spaceBgs[2].isVisible = not onMars
+	marsBg.isVisible = onMars
 end
 
 -- Prepare the view before it shows
