@@ -46,7 +46,7 @@ game.showBadge( badge )               -- show an indicator badge
 game.hideBadge( badge )               -- hide an indicator badge
 game.showMessagePreview( text )       -- Show preview of message text
 game.hideMessagePreview()             -- Hide message preview if showing
-game.gotoTab( name )                  -- Go to game tab name
+game.gotoTab( name, press )           -- Go to game tab name
 
 -- Game functions in mainAct.lua:
 game.roomName()                       -- Name of room user is in or nil if none
@@ -84,7 +84,7 @@ act.name     -- act module name
 act:newImage( filename, options )        -- make a new imageRect display object
 act:newGroup( parent )                   -- make a new display (sub-)group
 act:whiteBackground()                    -- make a solid white background
-act:grayBackground()                     -- make a solid gray background
+act:grayBackground( gray )               -- make a solid grayscale background
 act:makeTitleBar( title, backListener )  -- make standard title bar with optional back
 act:loadSound( filename, folder )        -- load sound file (folder defaults to act media)
 

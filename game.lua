@@ -10,6 +10,9 @@
 
 -- The game object where game global data and functions are stored
 local game = {
+    -- Misc constants
+    themeColor = { r = 0.58, g = 0, b = 0 },   -- dark red
+
     -- Data for the current act to use
     cheatMode = false,    -- true if cheat mode is on (debug)
     allGems = false,      -- true to always show all gems (debug)
@@ -22,6 +25,7 @@ local game = {
     panelFixed = nil,     -- set to true when a circuit panel is successfully fixed
 
     -- Game state tracking
+    paused = false,         -- true when the game is paused
     currentMainAct = nil,   -- name of act currently running on the main tab
     stateStartTime = 0,     -- value of system.getTimer() when current game state started
     moves = 0,              -- number of times dot has moved since game start
@@ -36,6 +40,7 @@ local game = {
         -- Game sequence state
         onMars = false,     -- true when we make it to Mars
         shipState = 1,      -- ship sequence state number
+        stasis = false,     -- true when emergency stasis is needed
 
         -- Gem state
         usedGems = {},  -- set of gem names that have been used
@@ -56,11 +61,11 @@ local game = {
         },
 
         -- array of tables containing crater coordinates and radii
-        crater = {
-            { x = 15, y = -15, r = 5 },
-            { x = 15, y = 15, r = 30 },
-            { x = -15, y = -15, r = 20 },
-            { x = -15, y = 15, r = 10 },
+        craters = {
+            { x = 5, y = -5, r = 3 },
+            { x = 5, y = 5, r = 2 },
+            { x = -5, y = -5, r = 1 },
+            { x = -5, y = 5, r = 4 },
         },
 
         thrustNav = {
@@ -139,23 +144,20 @@ function game.food()    return res.food  end
 function game.addWater( liters )
     res.h2o = res.h2o + liters
     if res.h2o < 0 then
-        res.h2o = 0   -- TODO: Initiate emergency statis or something
+        res.h2o = 0
     end
 end
 
 -- Add to or subtract from the energy supply by the given amount in kWh
 function game.addEnergy( kWh )
-    res.kWh = res.kWh + kWh
-    if res.kWh < 0 then
-        res.kWh = 0   -- TODO: Initiate emergency statis or something
-    end
+    res.kWh = game.pinValue( res.kWh + kWh, 0, 100 )
 end
 
 -- Add to or subtract from the food supply by the given amount in kg
 function game.addFood( kg )
     res.food = res.food + kg
     if res.food < 0 then
-        res.food = 0   -- TODO: Initiate emergency statis or something
+        res.food = 0
     end
 end
 
@@ -341,15 +343,33 @@ local function initGameObject()
     -- Hide device status bar
     display.setStatusBar( display.HiddenStatusBar )
 
-    -- Get overall device screen metrics
-    game.width = display.actualContentWidth
+    -- Get overall device screen metrics and then use width 320 if wider (e.g. iPad)
+    local dxBar = (display.actualContentWidth - 320) / 2
+    if dxBar > 0 then
+        game.width = 320
+        game.xMin = 0
+    else
+        game.width = display.actualContentWidth
+        game.xMin = display.screenOriginX
+    end
     game.height = display.actualContentHeight
-    game.xMin = display.screenOriginX
     game.yMin = display.screenOriginY
     game.xMax = game.xMin + game.width
     game.yMax = game.yMin + game.height
     game.xCenter = (game.xMin + game.xMax) / 2
     game.yCenter = (game.yMin + game.yMax) / 2
+
+    -- Add side bars to cover any extra width
+    if dxBar > 0 then
+        print(dxBar)
+        game.sideBars = display.newGroup()
+        local bar = display.newRect( game.sideBars, game.xMin - dxBar / 2, game.yCenter, 
+                        dxBar + 1, game.height )
+        bar:setFillColor( game.themeColor.r, game.themeColor.g, game.themeColor.b )
+        bar = display.newRect( game.sideBars, game.xMax + dxBar / 2, game.yCenter,
+                        dxBar + 1, game.height )
+        bar:setFillColor( game.themeColor.r, game.themeColor.g, game.themeColor.b )
+    end
 
     -- Set game UI element metrics
     game.dyTabBar = 40     -- Height of UI tab bar on all screens

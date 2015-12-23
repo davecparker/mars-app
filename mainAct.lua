@@ -30,19 +30,18 @@ local dot              -- user's position dot on map
 local roomInside       -- room the user is inside or nil if none
 local titleBar         -- title bar used when map is zoomed
 local yTitleBar        -- y position of title bar when visible
-local shipOutside      -- Outside of ship Image
 local map              -- the map image
 
 -- Main Ship coordinates
 local ship = {
 	-- Vertical hallway
-	vHall = { left = -10, top = -155, right = 12, bottom = 172 },
+	vHall = { left = -12, top = -160, right = 12, bottom = 180 },
 
 	-- Top Horizontal hallway
-	thHall = { left = -45, top = -145, right = 45, bottom = -130},
+	thHall = { left = -43, top = -146, right = 43, bottom = -130},
 
 	-- Bottom Horizontal hallway
-	bhHall = { left = -133, top = -11, right = 132, bottom = 0 },
+	bhHall = { left = -133, top = -10, right = 132, bottom = 1 },
 
 	-- Rooms: name, rectangle bounds, zoom factor,
 	--        x, y position just outside the door, delta to inside
@@ -50,72 +49,85 @@ local ship = {
 		{ 
 			name = "Bridge", 
 			left = -48, top = -248, right = 49, bottom = -168, zoom = 3,
-			x = -1, y = -160, dy = -30, 
+			x = 0, y = -160, dx = 1, dy = -25,
+
 		},
 		{
 			name = "Greenhouse",
 			left = -139, top = -190, right = -52, bottom = -83, zoom = 3,
-			x = -44, y = -141, dx = -30, sound = "Light Mood.mp3",
+			x = -43, y = -138, dx = -20, dy = 3, sound = "HarpPiano.mp3",
+
 		},
 		{ 
 			name = "Lounge", 
 			left = 49, top = -188, right = 137, bottom = -85, zoom = 3,
-			x = 46, y = -140, dx = 30, 
+			x = 43, y = -138, dx = 20, dy = 3, 
+
 		},
 		{
 			name = "Jordan",
 			left = -80, top = -58, right = -21, bottom = -18, zoom = 4,
-			x = -51, y = -7, dy = -30, doorCode = "2439",
+			x = -50, y = -10, dx = -4, dy = -30, doorCode = "2439",
+
 		},
 		{
 			name = "Maxwell",
 			left = 20, top = -58, right = 77, bottom = -19, zoom = 4,
-			x = 46, y = -7, dy = -30,
+			x = 49, y = -10, dx = 10, dy = -30,
+
 		},
 		{
 			name = "Graham",
 			left = -141, top = -58, right = -82, bottom = -19, zoom = 4,
-			x = -111, y = -7, dy = -30, 
+			x = -111, y = -10, dx = -4, dy = -30, 
+
 		},
 		{
 			name = "Moore",
 			left = 81, top = -58, right = 138, bottom = -19, zoom = 4,
-			x = 110, y = -7, dy = -30, 
+			x = 110, y = -10, dx = 5, dy = -30, 
+
 		},
 		{
 			name = "Ellis",
-			left = -141, top = 5, right = -81, bottom = 45, zoom = 4,
-			x = -113, y = -7, dy = 30, 
+			left = -141, top = 9, right = -81, bottom = 48, zoom = 4,
+			x = -111, y = 1, dx = -3, dy = 30, 
+
 		},
 		{
 			name = "Shaw",
-			left = -79, top = 6, right = -22, bottom = 45, zoom = 4,
-			x = -50, y = -7, dy = 30, 
+			left = -79, top = 9, right = -22, bottom = 48, zoom = 4,
+			x = -50, y = 1, dx = -4, dy = 30, 
+
 		},
 		{
 			name = "Webb",
-			left = 20, top = 5, right = 76, bottom = 45, zoom = 4,
-			x = 49, y = -7, dy = 30, 
+			left = 20, top = 9, right = 76, bottom = 48, zoom = 4,
+			x = 49, y = 1, dx = 6, dy = 30, 
+
 		},
 		{
 			name = "Your Quarters",
-			left = 81, top = 5, right = 138, bottom = 45, zoom = 4,
-			x = 109, y = -7, dy = 30, 
+			left = 81, top = 9, right = 138, bottom = 48, zoom = 4,
+			x = 110, y = 1, dx = 7, dy = 30, 
+
 		},
 		{
 			name = "Rover Bay",
 			left = -142, top = 88, right = -22, bottom = 184, zoom = 2,
-			x = -15, y = 134, dx = -30, 
+			x = -12, y = 138, dx = -20, dy = 4, 
+
 		},
 		{ 
 			name = "Lab", 
 			left = 20, top = 86, right = 141, bottom = 183, zoom = 2,
-			x = 15, y = 134, dx = 30, 
+			x = 12, y = 138, dx = 30, dy = 3, 
+
 		},
 		{
 			name = "Engineering",
 			left = -77, top = 187, right = 74, bottom = 257, zoom = 2,
-			x = 0, y = 174, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
+			x = 0, y = 180, dy = 30, doorCode = "1010", sound = "Engine Hum.mp3",
 		},
 	},
 }
@@ -141,18 +153,18 @@ end
 -- Return the x, y destination constrained to the hallways of the ship,
 -- taking into account the current position of the dot.
 local function constrainToHalls( x, y )
-	-- Test to see if dot is currently in bhHall, vHall, or both (intersection)
+	-- Test to see which hall(s) the dot is in
 	local inVHall = game.xyInRect( dot.x, dot.y, ship.vHall )
-	local inHHall = game.xyInRect( dot.x, dot.y, ship.bhHall )
+	local inBHHall = game.xyInRect( dot.x, dot.y, ship.bhHall )
 	local inTHHall = game.xyInRect( dot.x, dot.y, ship.thHall)
 
 	-- If dot is currently in the intersection of both the vertical and bottom horizontal hall, 
 	-- determine which direction is closer to the destination.
-	if inHHall and inVHall then
+	if inBHHall and inVHall then
 		if math.abs( x - dot.x) > math.abs( y - dot.y ) then
 			inVHall = false   -- will prefer horizontal movement
 		else
-			inHHall = false   -- will prefer vertical movement
+			inBHHall = false   -- will prefer vertical movement
 		end
 	end
 
@@ -166,9 +178,9 @@ local function constrainToHalls( x, y )
 		end
 	end
 
-	-- If dot is currently in the bhHall, then prefer horizontal movement,
+	-- If dot is currently in a horizontal hall, then prefer horizontal movement,
 	-- else prefer vertical movement
-	if inHHall then
+	if inBHHall then
 		-- Constrain to the horizontal hall
 		x = game.pinValue( x, ship.bhHall.left, ship.bhHall.right )
 		y = game.pinValue( y, ship.bhHall.top, ship.bhHall.bottom )
@@ -223,9 +235,12 @@ local function gemTouched( event )
 			gems.grabGemIcon( icon )
 		elseif gem.t == "res" then
 			-- Add the resource
-			local r = game.saveState.resources
-			if r[gem.res] then
-				r[gem.res] = r[gem.res] + gem.amount
+			if gem.res == "h2o" then
+				game.addWater( gem.amount )
+			elseif gem.res == "food" then
+				game.addFood( gem.amount )
+			elseif gem.res == "kWh" then
+				game.addEnergy( gem.amount )
 			end
 			gems.grabGemIcon( icon )
 		end
@@ -399,13 +414,9 @@ function act:enterFrame()
 	end
 end
 
--- Make map background with touch listener and remove ship outside image
-local function  removeShipOutside ()
-	transition.to( shipOutside, { alpha = 0, onComplete = removeImage } )
-	function removeImage ()
-		shipOutside:removeSelf( )
-		shipOutside = nil
-	end
+-- Make map background visible and remove ship outside image
+local function removeShipOutside( shipOutside )
+	transition.fadeOut( shipOutside, { time = 1000, onComplete = game.removeObj } )
 	map.isVisible = true
 end
 
@@ -426,17 +437,17 @@ function act:init()
 	shipGroup.y = act.yCenter
 
 	-- Start outside of the ship and zooms into it
-	shipOutside = act:newImage( "shipOutside.png", {width = act.width - 10 } )
-	local perams = {
+	local shipOutside = act:newImage( "shipOutside.png", { width = act.width - 10 } )
+	local params = {
 		delay = 1000, 
-		time = 1500, 
+		time = 1500,
 		xScale = 1.9, 
 		yScale = 1.9, 
-		y = 220,
+		y = act.yCenter + 80,
 		transition = easing.inOutSine,
 		onComplete = removeShipOutside
 	}
-	transition.to( shipOutside, perams )
+	transition.to( shipOutside, params )
 
 	-- Map background with touch listener
 	map = act:newImage( "shipPlan2.png", { parent = shipGroup, width = act.width, x = 0, y = 0 } )
@@ -481,8 +492,7 @@ function act:init()
 	-- Blue position dot, starting just outside the lab
 	dot = act:newImage( "blueDot.png", { parent = shipGroup } )
 	local lab = ship.rooms[1]
-	dot.x = 10   -- outside the Lab
-	dot.y = 40
+	dot.x, dot.y = 9, 138   -- outside the Lab
 
 	-- Title bar to use when map is zoomed, invisible and off screen when unzoomed
 	titleBar = act:makeTitleBar( "", backTapped )
@@ -491,18 +501,34 @@ function act:init()
 	titleBar.isVisible = false
 end
 
+-- Land the ship and update ship state as necessary
+function game.landShip()
+	-- Update state variable
+	game.saveState.onMars = true
+
+	-- Remove and disable ship acts no longer needed
+	gems.enableShipGem( "fly1", false )
+	gems.enableShipGem( "panel1", false )
+	gems.enableShipGem( "panel2", false )
+	gems.enableShipGem( "panel3", false )
+	gems.enableShipGem( "landing", false )
+	game.removeAct( "thrustNav" )
+	game.removeAct( "circuit" )
+	game.removeAct( "wireCut" )
+	game.removeAct( "shipLanding" )
+
+	-- Enable Mars acts
+	gems.enableShipGem( "rover" )
+	gems.enableShipGem( "recharge" )
+	gems.enableShipGem( "plants" )
+end
+
 -- Select the proper background image
 local function selectBackground()
-	local onMars = game.saveState.onMars
+	local onMars = game.saveState.onMars or game.shipLanded
 	spaceBgs[1].isVisible = not onMars
 	spaceBgs[2].isVisible = not onMars
 	marsBg.isVisible = onMars
-end
-
--- Land the ship and update ship state as necessary
-function game.landShip()
-	game.saveState.onMars = true
-	selectBackground()
 end
 
 -- Prepare the view before it shows
@@ -530,6 +556,7 @@ end
 
 -- Start the act
 function act:start()
+	game.paused = false
 	updateAmbientSound()
 end
 

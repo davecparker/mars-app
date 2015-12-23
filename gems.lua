@@ -22,20 +22,20 @@ local gems = {
 	onShip = {
         -- In Bridge
         fly1 =      { x = 0, y = -230, t = "act", act = "thrustNav", param = 1, enabled = true },
+        landing =   { x = 0, y = -230, t = "act", act = "shipLanding" },
         sierra =    { x = -27, y = -226, t = "doc", file = "The Sierra", enabled = true },
         crew =      { x = 25, y = -226, t = "doc", file = "Crew Manifest", enabled = true },
 
         -- In Rover Bay
-        rover =     { x = -90, y = 140, t = "act", act = "rover" },
-        battR1 =    { x = -120, y = 100, t = "res", res = "kWh", amount = 100 },
-        battR2 =    { x = -100, y = 100, t = "res", res = "kWh", amount = 100 },
-        battR3 =    { x = -80,  y = 100, t = "res", res = "kWh", amount = 100 },
+        rover =     { x = -104, y = 140, t = "act", act = "rover" },
+        recharge =  { x = -58, y = 101, t = "res", res = "kWh", amount = 100, recurring = true },
 
         -- In Lab
         h2oL1 =     { x = 124,  y = 106, t = "res", res = "h2o", amount = 50, enabled = true  },
         foodL1 =    { x = 124,  y = 123, t = "res", res = "food", amount = 50, enabled = true  },     
         panel2 =    { x = 124, y = 164, t = "act", act = "circuit", param = 2  },
         msgHist =   { x = 42, y = 103, t = "doc", file = "Message History" },
+        stasis =    { x = 68, y = 167, t = "act", act = "stasis" },
 
         -- In Lounge
         panel3 =    { x = 121, y = -103, t = "act", act = "circuit", param = 3  },
@@ -47,7 +47,6 @@ local gems = {
  
 		-- In Engineering room 
 		panel1 =	{ x = 38, y = 243, t = "act", act = "circuit", param = 1 },
-		battE1 = 	{ x = -53, y = 200, t = "res", res = "kWh", amount = 150, enabled = true  },
 
         -- In Captain Jordan's Quarters
         jordan1 =   { x = -69, y = -44, t = "doc", file = "Jordan - personal log" },
@@ -120,7 +119,7 @@ function gems.grabGemIcon( icon )
         if res == "h2o" then
             format = "%d liters of Water"
         elseif res == "kWh" then
-            format = "%d kWh of Energy"
+            format = "Rover Recharge"
         elseif res == "food" then
             format = "%d kg of food"
         else
@@ -136,7 +135,9 @@ function gems.grabGemIcon( icon )
     game.messageBox( text, { x = x, y = y, onTouch = touchGemMessageBox } )
 
     -- Use and remove the gem
-	game.saveState.usedGems[icon.name] = true
+    if not gemGrabbed.recurring then 
+	   game.saveState.usedGems[icon.name] = true
+    end
     icon:removeSelf()
 end	
 
@@ -144,14 +145,19 @@ end
 function gems.newGemIcon( group, name, gem )
     -- Select image based on the icon type
     local image
-    local size = 20
+    local size = 24
     if gem.t == "act" then
         image = "gemStar.png"
-        size = 24
     elseif gem.t == "doc" then
         image = "gemDoc.png"
+        size = 20
     else
-        image = "gemRes.png"
+        -- Resource gems
+        if gem.res == "kWh" then
+            image = "gemEnergy.png"
+        else
+            image = "gemRes.png"
+        end
     end
 
     -- Create a rotating image

@@ -267,7 +267,7 @@ end
 
 -- Start the act
 function act:start()
-	game.playAmbientSound( "Light Mood.mp3" )
+	game.playAmbientSound( "HarpPiano.mp3" )
 end
 
 -- Stop the act

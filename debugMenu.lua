@@ -17,6 +17,7 @@ local act = game.newAct()
 
 -- List of activities that can be run directly from the debug menu
 local debugActs = {
+	"startScreen",
 	"mainAct",
 	"thrustNav",
 	"doorLock",
@@ -27,9 +28,10 @@ local debugActs = {
 	"drill",
 	"rover",
 	"shipLanding",
+	"stasis",
 	"blankAct",
 	"layoutTool",
-	"sampleAct",
+	"about",
 }
 
 -- File local variables
@@ -70,7 +72,7 @@ function onRowTouch( event )
 	hideKeyboard()
 	if event.phase == "tap" or event.phase == "release" then
 		-- Run the selected activity module on the main tab
-		game.gotoTab( "mainAct" )
+		game.gotoTab( "mainAct", false )
 		game.gotoAct( debugActs[event.target.index] )  
 	end
 end

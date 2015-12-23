@@ -329,6 +329,10 @@ function act:init()
 	-- create group for rotating background space objects
 	spaceGroup = act:newGroup()
 
+	-- create the console image
+	consoleImage = act:newImage( "console.png", { width = act.width - 20 } )
+	consoleImage.y = act.yMax - 60
+
 	-- Create control buttons, background, etc.
 	buttonTurnLeft = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
 	buttonTurnLeft.rotation = -90
@@ -419,14 +423,14 @@ function act:init()
 	onTargetXY.isVisible = false
 
     -- Set up buttons
-	buttonTurnLeft.x = act.xMin + act.width / 8
+	buttonTurnLeft.x = act.xMin + act.width / 6
 	buttonTurnLeft.y = act.yMax - act.height / 12
 	buttonTurnLeft.isVisible = true
 	buttonTurnLeftFlame.x = buttonTurnLeft.x + buttonTurnLeft.width / 2 + buttonTurnLeftFlame.height / 2
 	buttonTurnLeftFlame.y = buttonTurnLeft.y
 	buttonTurnLeftFlame.isVisible = false 
 
-	buttonTurnRight.x = act.xMax - act.width / 8
+	buttonTurnRight.x = act.xMax - act.width / 6
 	buttonTurnRight.y = act.yMax - act.height / 12
 	buttonTurnRight.isVisible = true
 	buttonTurnRightFlame.rotation = -90
@@ -445,7 +449,7 @@ function act:init()
 	--- buttonRollRight.isVisible = true
 
 	buttonPitchUp.x = act.xCenter
-	buttonPitchUp.y = act.yMax - act.height / 8 
+	buttonPitchUp.y = act.yMax - act.height / 6
 	buttonPitchUp.isVisible = true
 	buttonPitchUpFlame.x = buttonPitchUp.x 
 	buttonPitchUpFlame.y = buttonPitchUp.y + buttonPitchUp.width / 4 + buttonPitchUpFlame.height / 2
@@ -453,7 +457,7 @@ function act:init()
 
 
 	buttonPitchDown.x = act.xCenter
-	buttonPitchDown.y = act.yMax - act.height / 30 
+	buttonPitchDown.y = act.yMax - act.height / 18 
 	buttonPitchDown.isVisible = true
 	buttonPitchDownFlame.x = buttonPitchDown.x 
 	buttonPitchDownFlame.y = buttonPitchDown.y - buttonPitchDown.width / 4 - buttonPitchDownFlame.height / 2

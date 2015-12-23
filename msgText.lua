@@ -53,8 +53,8 @@ local msgText = {
 -- Insert trigger
 -- SAS - Partial file retrieval. Document on Moore's terminal. (Moore - personal log)
 
-	green1 = 	"SAS -  Critical irrigation failure. Food supply inadequate. " ..
-				"Restore food level to 150 kg. Report to Greenhouse immediately.",
+	green1 = 	"SAS - Automated irrigation failure. Food supply inadequate. " ..
+				"Restore food level to at least 150 kg. Report to Greenhouse immediately.",
 
 -- Insert triggers
 -- greenhouse panel game 
@@ -104,7 +104,16 @@ local msgText = {
 	mars1 = 	"SAS - Resume primary mission objectives: \n" .. 
 				"1. Explore surface and drill for water. \n" ..
 				"2. Manage greenhouse food production. \n" ..
-				"3. Investigate artifacts.",	
+				"3. Investigate artifacts.",
+
+	foodOut =	"SAS - CRITICAL ALERT: Food supplies exhausted. Replenish immediately. \n" ..
+				"Rover use disabled.",
+
+	resOut =	"SAS - CRITICAL EMERGENCY: Food and water supplies exhaused. \n" ..
+				"Report to lab for emergency stasis.",	
+
+	regenerated = 	"SAS - Stasis terminated. Emergency water supply has been generated. " ..
+					"Food supply exhausted. Replenish immediately",
 }
 
 return msgText
