@@ -272,6 +272,8 @@ function act:prepare()
 		print( "playing second round of thrustNav", game.saveState.thrustNav.state )
 		-- mars.width = mars.width * 8
    		-- mars.height = mars.height * 8
+   		xVelocityInc = 0.05
+   		yVelocityInc = 0.05
    		mars:scale( 8, 8 )
    		totalRocketImpulses = 0
 		xVelocity = 0
@@ -279,7 +281,7 @@ function act:prepare()
     	-- put a circle around big Mars
    		-- local xCenter = mars.x
 		-- local yCenter = mars.y
-		circle:scale( 8, 8 )
+		-- circle:scale( 8, 8 )
 		-- circle = display.newCircle( spaceGroup, xCenter, yCenter, ( mars.width * 4 ) +  mars.width / 1.6 )
 		print( "xCenter=", circle.x,"  yCenter=", circle.y )
 		print( "mars.width= ", mars.width )
@@ -401,10 +403,10 @@ function act:init()
 	rotVelocityInc = 0.01
 
     -- Crosshair in the center
-	local dy = 200
-	local dx = 20
-	display.newLine( act.group, act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
-	display.newLine( act.group, act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
+	-- local dy = 200
+	-- local dx = 20
+	-- display.newLine( act.group, act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
+	-- display.newLine( act.group, act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
 	--targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
 	targetRect = act:newImage( "ship.png", {width = 30})
 
@@ -504,8 +506,8 @@ function updateNavStats()
 	local rotStr = ""
 
 	if( game.saveState.thrustNav.state < 1 ) then	-- start of first play
-		xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter
-		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
+		xTargetDelta = ( ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter ) * 90 / act.width
+		yTargetDelta = ( ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter ) * 90 / act.height
 	elseif ( game.saveState.thrustNav.state == 2 ) then	-- start of second play
 		xTargetDelta = ( mars.contentBounds.xMax + 20 ) - act.xCenter  
 		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
@@ -560,8 +562,8 @@ function updateNavStats()
 		sunHasCollided = true
 	else
 		navStatsText1.text = string.format( "                       %+6s %+5s", "Angle", "Vel"  )
-		navStatsText2.text = string.format( "%+12s  %+8d %+7.1f", "Horizontal=", xTargetDelta , xVelocity )
-		navStatsText3.text = string.format( "%+12s  %+8d %+7.1f", " Vertical    =", yTargetDelta , yVelocity )
+		navStatsText2.text = string.format( "%+12s  %+8d %+7.2f", "Horizontal=", xTargetDelta , xVelocity )
+		navStatsText3.text = string.format( "%+12s  %+8d %+7.2f", " Vertical    =", yTargetDelta , yVelocity )
 	end
 end
 
@@ -574,7 +576,7 @@ function updatePosition()
 	-- check for button holds
 	if( leftAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
-		if( accelerateFrameCount % 5 == 0 ) then
+		if( accelerateFrameCount % 10 == 0 ) then
 			xVelocity = xVelocity + xVelocityInc
 			updateEnergy()
 		end
@@ -584,7 +586,7 @@ function updatePosition()
 		end
 	elseif( rightAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
-		if( accelerateFrameCount % 5 == 0 ) then
+		if( accelerateFrameCount % 10 == 0 ) then
 			xVelocity = xVelocity - xVelocityInc
 			updateEnergy()
 		end
@@ -594,7 +596,7 @@ function updatePosition()
 		end
 	elseif( upAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
-		if( accelerateFrameCount % 5 == 0 ) then
+		if( accelerateFrameCount % 10 == 0 ) then
 			yVelocity = yVelocity + yVelocityInc
 			updateEnergy()
 		end
@@ -604,7 +606,7 @@ function updatePosition()
 		end
 	elseif( downAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
-		if( accelerateFrameCount % 5 == 0 ) then
+		if( accelerateFrameCount % 10 == 0 ) then
 			yVelocity = yVelocity - yVelocityInc
 			updateEnergy()
 		end
