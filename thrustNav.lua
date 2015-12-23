@@ -330,8 +330,8 @@ function act:init()
 	spaceGroup = act:newGroup()
 
 	-- create the console image
-	consoleImage = act:newImage( "console.png", { width = act.width - 20 } )
-	consoleImage.y = act.yMax - 60
+	-- consoleImage = act:newImage( "console.png", { width = act.width - 20 } )
+	-- consoleImage.y = act.yMax - 60
 
 	-- Create control buttons, background, etc.
 	buttonTurnLeft = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
@@ -510,8 +510,8 @@ function updateNavStats()
 	local rotStr = ""
 
 	if( game.saveState.thrustNav.state < 1 ) then	-- start of first play
-		xTargetDelta = ( ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter ) * 90 / act.width
-		yTargetDelta = ( ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter ) * 90 / act.height
+		xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter  
+		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter  
 	elseif ( game.saveState.thrustNav.state == 2 ) then	-- start of second play
 		xTargetDelta = ( mars.contentBounds.xMax + 20 ) - act.xCenter  
 		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
@@ -566,8 +566,8 @@ function updateNavStats()
 		sunHasCollided = true
 	else
 		navStatsText1.text = string.format( "                       %+6s %+5s", "Angle", "Vel"  )
-		navStatsText2.text = string.format( "%+12s  %+8d %+7.2f", "Horizontal=", xTargetDelta , xVelocity )
-		navStatsText3.text = string.format( "%+12s  %+8d %+7.2f", " Vertical    =", yTargetDelta , yVelocity )
+		navStatsText2.text = string.format( "%+12s  %+8.1f %+7.2f", "Horizontal=", xTargetDelta * 90 / act.width , xVelocity )
+		navStatsText3.text = string.format( "%+12s  %+8.1f %+7.2f", " Vertical    =", yTargetDelta * 90 / act.height , yVelocity )
 	end
 end
 
