@@ -30,6 +30,7 @@ local tapeSelected = false
 local wireCutterSelected = false
 local manual  
 local manualPage                      -- what page of the manual you are on
+local gameOver = false
 -- audio
 local cutSFX
 local tapeSFX
@@ -199,6 +200,7 @@ end
 
 -- end of act function
 local function endAct()
+	gameOver = true
 	local panel = act:newImage( "panel.png", { width = 440, folder = "media/circuit" } )
 	panel.x = act.xMax + 450
 	panel.y = act.yCenter - 15
@@ -287,19 +289,23 @@ end
 
 -- function for cutting the wire
 local function wireTouch ( event )
-	local w = event.target
-	if event.phase == "ended" then
-		if w.wire.isCut == false and wireCutterSelected == true then-- ========================================================================================
-			w.wire:setFrame( 2 )
-			w.wire.isCut = true
-			game.playSound (cutSFX)
-		elseif w.wire.isCut == true and tapeSelected == true then
-			w.wire:setFrame( 1 )
-			w.wire.isCut = false
-			game.playSound (tapeSFX)
+	if gameOver then
+		-- if game over is true disable this funciton
+	else
+		local w = event.target
+		if event.phase == "ended" then
+			if w.wire.isCut == false and wireCutterSelected == true then-- ========================================================================================
+				w.wire:setFrame( 2 )
+				w.wire.isCut = true
+				game.playSound (cutSFX)
+			elseif w.wire.isCut == true and tapeSelected == true then
+				w.wire:setFrame( 1 )
+				w.wire.isCut = false
+				game.playSound (tapeSFX)
+			end
 		end
+		checkState ()  -- check the state of the game
 	end
-	checkState ()  -- check the state of the game
 	return true
 end
 
