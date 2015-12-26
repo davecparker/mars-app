@@ -207,7 +207,8 @@ local function createSideThrustButton( scene, x, y, vertices, listener )
 		x = x, y = y,
 		shape = "polygon",
 		vertices = vertices,
-		fillColor = { default={ 1, 0.5, 0 }, over={ 1, 0.4, 0 } },
+		fillColor = { default = { game.themeColor.r, game.themeColor.g, game.themeColor.b }, 
+			over = { game.themeHighlightColor.r, game.themeHighlightColor.g, game.themeHighlightColor.b } },
 	    labelColor = { default={ 1, 1, 1 } },
 		onEvent = listener
 	}
@@ -222,8 +223,6 @@ end
 function act:init( )
 
 	SHIPSTARTX, SHIPSTARTY = act.xCenter, 80 
-
-	
 
 	-- Scale used to determine altitude of ship
 	verticalScale = act:newGroup( )
@@ -319,14 +318,15 @@ function act:init( )
 	--------------------
 	-- Buttons
 	--------------------
-
+--[[
 	-- Back Button
 	local backBtn = widget.newButton {
 		label = "Back",
 		x = act.xMin + 40, y = act.yMin + 30,
 		shape = "roundedRect",
 		width = 60, height = 40,
-		fillColor = { default={ 1, 0.5, 0 }, over={ 1, 0.4, 0 } },
+		fillColor = { default = { game.themeColor.r, game.themeColor.g, game.themeColor.b }, 
+			over = { game.themeHighlightColor.r, game.themeHighlightColor.g, game.themeHighlightColor.b } },
 	    labelColor = { default={ 1, 1, 1 } },
 	    onEvent = back
 	}
@@ -334,11 +334,12 @@ function act:init( )
 
 	-- Thrust Button
 	local thrustBtn = widget.newButton {
-		label = "Thrust",
-		x = act.xMin + 40, y = act.yMax - 35,
+		--label = "Thrust",
+		x = act.xMin + 40, y = act.yMax, -- yMax - 35
 		shape = "circle",
 		radius = 30,
-		fillColor = { default={ 1, 0.5, 0 }, over={ 1, 0.4, 0 } },
+		fillColor = { default = { game.themeColor.r, game.themeColor.g, game.themeColor.b }, 
+			over = { game.themeHighlightColor.r, game.themeHighlightColor.g, game.themeHighlightColor.b } },
 	    labelColor = { default={ 1, 1, 1 } },
 	    onEvent = thrust
 	}
@@ -351,6 +352,7 @@ function act:init( )
 		{ 0, -30, 40, 0, 0, 30 }, rotateCC )
 
 	--physics.setDrawMode( "hybrid" )
+--]]
 end
 
 -----------------------------------------------------------------------------------------
