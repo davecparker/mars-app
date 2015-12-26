@@ -12,7 +12,7 @@
 local game = {
     -- Misc constants
     themeColor = { r = 0.58, g = 0, b = 0 },            -- dark red
-    themeHighlightColor = { r = 0.73, g = 0, b = 0 },    -- light red
+    themeHighlightColor = { r = 0.78, g = 0, b = 0 },    -- light red
 
     -- Data for the current act to use
     cheatMode = false,    -- true if cheat mode is on (debug)
