@@ -224,8 +224,8 @@ end
 local function mapZoom( event )
 
 	-- Convert the tracking dot position into zoom point coordinates 
-	local fullZoomX = (data.map.rover.x - data.mapZoomGrp.x / data.mapZoomGrp.xScale) * data.map.scale  
-	local fullZoomY = (data.map.rover.y - data.mapZoomGrp.y / data.mapZoomGrp.yScale) * data.map.scale  
+	local fullZoomX = (data.map.rover.x - data.mapZoomGrp.x) / data.mapZoomGrp.xScale * data.map.scale  
+	local fullZoomY = (data.map.rover.y - data.mapZoomGrp.y) / data.mapZoomGrp.yScale * data.map.scale  
 
 	-- Calculate the coordinate value beyond which the map will leave its container's edges
 	local zoomBoundary = (data.map.width * data.map.scale - data.map.width)/2
@@ -234,7 +234,7 @@ local function mapZoom( event )
 	local zoomX = -game.pinValue( fullZoomX, -zoomBoundary, zoomBoundary )
 	local zoomY = -game.pinValue( fullZoomY, -zoomBoundary, zoomBoundary )
 
-	-- Calculate the tracking dot's new coordinates, which will be zero unless fullZoomX or fullZoomY exceeds zoomBoundary
+	-- Calculate tracking dot's new coordinates, which will be zero unless fullZoomX or fullZoomY exceeds zoomBoundary
 	local roverX = fullZoomX + zoomX
 	local roverY = fullZoomY + zoomY
 
@@ -364,10 +364,10 @@ local function newGaugeElement( newX, newY, w, h, xScale )
 -- 		count = 5,
 -- 	}
 
--- 	for i = 1, 50 do
--- 		gaugeSprite[i] = display.newSprite( data.displayPanelGrp, gaugeSheet, sequenceData )
--- 		gaugeSprite[i]:scale( 0.12, 0.12 )
-end
+	-- 	for i = 1, 50 do
+	-- 		gaugeSprite[i] = display.newSprite( data.displayPanelGrp, gaugeSheet, sequenceData )
+	-- 		gaugeSprite[i]:scale( 0.12, 0.12 )
+	end
 
 -- Zoom-in button handler
 local function onZoomInRelease( event )
@@ -387,7 +387,7 @@ local function onZoomOutRelease( event )
 	end
 end
 
--- Create the speed display text
+	-- Create the speed display text
 local function newDisplayPanel()
 
 	-- Create display panel background image
@@ -464,6 +464,35 @@ local function newDisplayPanel()
 	data.speedText.y = speedBgRect[6].y + 10
 	data.speedText.format = format
 
+	-- Create new energy display object
+	local batteryData = { 
+		parent = data.displayPanelGrp, 
+		x = act.xMax - 26,
+		y = act.yMin + 12, 
+		width = 44, 
+		height = 17 
+	} 
+
+	local battery = act:newImage( "battery.png", batteryData )
+
+	-- Create energy display text object
+	local format = "%3d%s"
+	local options = 
+	{
+		parent = data.displayPanelGrp,
+		text = string.format( format, game.energy(), "%" ),
+		x = act.xMax - 11,
+		y = act.yMin + 5,
+		font = native.systemFontBold,
+		fontSize = 12,
+	}
+
+	data.energyText = display.newText( options )
+	data.energyText:setFillColor( 0.0, 1.0, 0.0 )
+	data.energyText.anchorX = 1
+	data.energyText.anchorY = 0
+	data.energyText.format = format
+
 	data.staticFgGrp:insert( data.zoomInButton )
 	data.staticFgGrp:insert( data.zoomOutButton )
 
@@ -472,13 +501,19 @@ local function newDisplayPanel()
 	-- end
 end
 
+-- Update the energy display
+local function updateEnergyDisplay()
+	data.energyText.text = string.format( data.energyText.format, game.energy() , "%")
+end
+
 -- Accelerate the rover up to angular velocity of 8000 w/higher initial acceleration
 local function accelRover()
-
 	if data.rover.angularV <= 150 then -- higher initial acceleration
 		data.rover.angularV = data.rover.angularV + 50 
 	--elseif data.rover.angularV > 700 and data.rover.angularV < 2000 then
 	--	data.rover.angularV = data.rover.angularV + 100
+	elseif data.rover.isAutoNav and data.rover.angularV + 20 > 2000 then
+		data.rover.angularV = 2000
 	elseif data.rover.angularV + 20 > 8000 then -- top speed
 		data.rover.angularV = 8000
 	else
@@ -486,6 +521,7 @@ local function accelRover()
 	end
 
 	game.addEnergy( -0.001 )
+	updateEnergyDisplay()
 end
 
 -- Decelerate the rover; deceleration varies inversely with speed for stability
@@ -559,31 +595,67 @@ local function updateCoordinates()
 	-- Update rover coordinates
 	data.map.rover.x = data.map.rover.x + (distMoved * data.map.courseVX) * data.mapZoomGrp.xScale
 	data.map.rover.y = data.map.rover.y + (distMoved * data.map.courseVY) * data.mapZoomGrp.yScale
-	game.saveState.rover.x1 = data.map.rover.x
-	game.saveState.rover.y1 = data.map.rover.y
-
-	-- Calculate new course length
-	-- data.map.courseLength = data.map.courseLength - distMoved
 end
 
--- Determine whether the rover has returned home and return to mainAct if so
-local function checkIfRoverIsHome()
+-- Return to mainAct if the rover has returned to the ship
+local function checkIfRoverAtShip()
 
-	local x1 = data.map.rover.x 
-	local y1 = data.map.rover.y 
-	local x2 = data.mapZoomGrp.x / data.map.xScale
-	local y2 = data.mapZoomGrp.y / data.map.yScale
+	local x1 = data.mapZoomGrp.x
+	local y1 = data.mapZoomGrp.y
+	local x2 = data.map.rover.x
+	local y2 = data.map.rover.y
 
-	-- Calculate the rover's distance from the ship
+	-- Calculate the distance from the rover (in mapGrp) to the ship (at mapZoomGrp origin)
 	local distanceFromShip = util.calcDistance( x1, y1, x2, y2 ) / data.mapZoomGrp.xScale
 
 	-- If the rover has returned to the ship, then go to mainAct
-	if distanceFromShip <= 6 and data.map.rover.leftShip then
-		data.map.rover.leftShip = false
-		game.gotoAct ( "mainAct" )
-	elseif not data.map.rover.leftShip and distanceFromShip > 6 then
-		data.map.rover.leftShip = true
+	if distanceFromShip <= 2 then
+		if data.map.rover.leftShip then
+			data.map.rover.leftShip = false
+			game.gotoAct( "mainAct" )
+		end
+	elseif not data.map.rover.leftShip then
+		data.map.rover.leftShip = true	
 	end
+end
+
+-- Engage auto navigation back to the ship (mandatory course, governed speed, disabled water scan)
+local function engageAutoNav()
+
+	local x1 = data.map.rover.x 
+	local y1 = data.map.rover.y 
+	local x2 = game.saveState.rover.x2
+	local y2 = game.saveState.rover.y2
+	local vX = data.map.courseVX
+	local vY = data.map.courseVY
+
+	-- Set auto navigation flag
+	data.rover.isAutoNav = true
+
+	-- Hide the water button and set the course to the ship
+	data.ctrlPanelGrp.waterButton.isVisible = false
+	util.replaceCourse( act, data.mapGrp, x1, y1, 0, 0, vX, vY )	
+
+	-- Remover map touch listener to prevent course changes
+	data.map:removeEventListener( "touch", mapTouched )
+
+	-- Set course variables
+	x2 = 0
+	y2 = 0
+	game.saveState.rover.x2 = 0
+	game.saveState.rover.y2 = 0
+	data.map.courseLength = util.calcDistance( x1, y1, x2, y2 )
+	data.map.courseVX, data.map.courseVY = util.calcUnitVectors( x1, y1, x2, y2, data.map.courseLength )
+
+	-- Display message to user 
+	local options = { 
+		x = act.xMax - 26,
+		y = act.yMin + 12,
+		time = 3000,
+		width = 220
+	}
+
+	game.messageBox( "ON RESERVE POWER!\n\nAuto navigation engaged.", options )
 end
 
 local function updatePosition()
@@ -598,28 +670,17 @@ local function updatePosition()
 		local vY = data.map.courseVY
 
 		updateCoordinates()
-		checkIfRoverIsHome()
+		checkIfRoverAtShip()
 		checkCraters()
 
 		-- If the rover has just run out of food or energy then mandate course back to ship
 		if ( game.energy() <= 0 or game.food() <= 0 ) and not data.rover.isAutoNav then
-			data.rover.isAutoNav = true
-			util.replaceCourse( act, data.mapGrp, x1, y1, 0, 0, vX, vY )	
-			data.map:removeEventListener( "touch", mapTouched )
-
-			x2 = 0
-			y2 = 0
-			game.saveState.rover.x2 = 0
-			game.saveState.rover.y2 = 0
-			data.map.courseLength = util.calcDistance( x1, y1, x2, y2 )
-			data.map.courseVX, data.map.courseVY = util.calcUnitVectors( x1, y1, x2, y2, data.map.courseLength )
+			engageAutoNav()
 		end
 
 		-- If the rover is within the map's boundaries
 		if game.xyInRect( x1, y1, data.mapGrp ) and data.map.courseLength > 0 then	-- ARE BOTH CONDITIONS NECESSARY?
-
 			util.replaceCourse( act, data.mapGrp, x1, y1, x2, y2, vX, vY )	
-
 		else -- If map boundary has been reached
 
 			-- Deactivate rover, cease acceleration, and initiate braking
@@ -875,6 +936,10 @@ local function onRecoverPress( event )
 	data.ctrlPanelGrp.waterButton.isVisible = true
 	data.ctrlPanelGrp.recoverButton.isVisible = false
 
+	-- deduct energy cost
+	game.addEnergy( -5.0 )
+	updateEnergyDisplay()
+
 	return true
 end
 
@@ -976,7 +1041,7 @@ local function newControlPanel()
 end
 
 -- Update the speed display
-local function updateDisplay()
+local function updateSpeedDisplay()
 	local kmPerCoronaUnit = 0.00006838462 -- based on estimated rover length
 	local elapsedTimePerHr = 7200 -- every 0.5 seconds
 	data.rover.kph = ( data.rover.x - data.rover.speedOldX ) * kmPerCoronaUnit * elapsedTimePerHr
@@ -993,12 +1058,15 @@ end
 function act:start()
 	game.stopAmbientSound()
 	data.rover.engineChannel = game.playSound(data.rover.engineSound, { channel = 1, loops = -1 } )
+	physics.start()
 end	
 
 -- Stop the act
 function act:stop()
-	-- Stop all audio
-	audio.stop()
+	game.saveState.rover.x1 = data.map.rover.x
+	game.saveState.rover.y1 = data.map.rover.y
+	audio.stop()	-- Stop all audio
+	physics.stop()
 end
 
 -- Init the act
@@ -1009,7 +1077,7 @@ function act:init()
 	-- start physics, set gravity 
 	physics.start()
 	physics.setGravity( 0, 3.3 )
-	physics.setContinuous( true )
+	-- physics.setContinuous( true )
 	-- physics.setDrawMode( "hybrid" )
 
 	-- seed math.random()
@@ -1055,7 +1123,7 @@ function act:init()
 	newDisplayPanel()
 	newControlPanel()
 
-	timer.performWithDelay( 500, updateDisplay, 0 )
+	timer.performWithDelay( 500, updateSpeedDisplay, 0 )
 end
 
 -- Handle enterFrame events

@@ -4,8 +4,6 @@
 --
 -----------------------------------------------------------------------------------------
 
-display.setStatusBar( display.HiddenStatusBar )
-
 -- Require statements
 
 widget = require( "widget" )
@@ -16,8 +14,8 @@ local act = game.newAct()
 
 
 -- Constant declaration
-local W = act.width
-local H = act.height
+local W = act.xMax
+local H = act.yMax
 local XC = act.xCenter
 local YC = act.yCenter
 local YMIN = act.yMin
@@ -42,23 +40,19 @@ local textGroup
 local infoGroup
 
 -- Variable declaration
-local marsSurface
-local infoConsole
-local scanConsole
-local contText
-local freezeText
-local sizeText
-local costText
-local contamText
-local freezeText
-local litersText
-local energyText
-local drillButton
-local currentLiters = 0
-local currentCost = 0
-local scanDistance = 0
-local numSpots = 0
-game.drillDiff = 0
+local marsSurface -- Holder for current martian background
+local infoConsole -- Lower console area containing drill button and informative text
+local contamText -- Text telling player how contaminated the given point is
+local freezeText -- Text telling player how frozen the given point is
+local litersText -- Text telling player how much water they will receive from the given point
+local energyText -- Text telling player how much it costs to drill the given point
+local drillButton -- Button to transfer player to drill game
+local lackEnergy -- Text for if the player doesn't have enough energy to start drilling
+local currentLiters = 0 -- Numerical holder for current liters
+local currentCost = 0 -- Numerical holder for current cost
+local scanDistance = 0 -- Numerical holder for the distance from nearest water point. Currently unused
+local numSpots = 0 -- Numerical holder for how many spots spawn on screen
+game.drillDiff = 0 -- Global numerical holder for difficulty to pass to drill
 
 -- Array declaration
 local waterSpot = {}
@@ -80,7 +74,7 @@ function act:init()
 	-- Create the water spots
 	for i = 1, numSpots do
 		
-		waterSpot[i] = display.newImage( act.group, "media/drillScan/WaterSpot.png", math.random( XMIN + 10, W - 10 ), math.random( YMIN + 50, ( H - 2 * H / 5 ) - 10 ), true )
+		waterSpot[i] = display.newImage( act.group, "media/drillScan/WaterSpot.png", math.random( XMIN + 10, W - 10 ), math.random( YMIN + 50, ( H - 1 * H / 5 ) - 10 ), true )
 		waterSpot[i].isVisible = false
 		waterSpot[i].contamination = math.random( 0, 100 )
 		waterSpot[i].frigidity = 100 - waterSpot[i].contamination
@@ -121,14 +115,15 @@ function act:init()
 
 	-- Create the information console
 	infoConsole = act:newImage( "Steel2.jpg", { width = 1024, height = 768 } )
-	infoConsole.x, infoConsole.y = XC, H - 2 * H / 5
+	infoConsole.x, infoConsole.y = XC, H - 1 * H / 5
 	infoConsole.anchorX = 0.5
 	infoConsole.anchorY = 0
+
 
 	-- Group to hold all of the text objects
 	textGroup = display.newGroup( )
 	textGroup.x = XC
-	textGroup.y = H - 1.8 * H / 5
+	textGroup.y = H - .8 * H / 5
 
 	-- Create the text to tell you how contaminated the water is
 	local contamOrigin = 0
@@ -150,7 +145,7 @@ function act:init()
 
 	-- Create the text to tell you how much energy it will cost you to drill the water
 	local energyOrigin = 0
-	energyText = display.newText( textGroup, "Energy Cost:  " .. energyOrigin .. " kWh", -150, 51, native.systemFont, 17 )
+	energyText = display.newText( textGroup, "Energy Cost:  " .. energyOrigin .. "%", -150, 51, native.systemFont, 17 )
 	energyText.fill = { 0 }
 	energyText.anchorX = 0
 
@@ -170,8 +165,15 @@ function act:init()
 
 	drillButton.anchorX = 1
 	drillButton.x = W - 10
-	drillButton.y = H - 1.5 * H / 5
+	drillButton.y = H - 0.5 * H / 5
 	drillButton.isVisible = false
+
+	-- Create text to inform user if they don't have sufficient energy
+
+	lackEnergy = display.newText( act.group, "Insufficient Energy", W - 10, H - 0.5 * H / 5, native.systemFontBold, 12 )
+	lackEnergy:setFillColor( 0, 0, 0 )
+	lackEnergy.anchorX = 1
+	lackEnergy.isVisible = false
 
 	-- Declare the introductory information group and check for a flag to hide/show it
 	infoGroup = display.newGroup()
@@ -186,7 +188,7 @@ function act:init()
 	local infoText1 = display.newText( infoGroup, "Tap drill button to go to Drill activity", 0, 30, native.systemFont, 20 )
 	local infoText1 = display.newText( infoGroup, "Tap this screen to dismiss it", 0, 60, native.systemFont, 20 )
 
-	if game.drillDone then
+	if game.drillScanDone then
 
 		infoGroup.isVisible = false
 
@@ -226,7 +228,8 @@ end
 
 function roverBack()
 
-	game.gotoAct( "rover", { time = 333, effect = "zoomOutInFade" } )
+	game.removeAct( drillScan )
+	game.gotoAct( "rover", { time = 333, effect = "fade" } )
 
 end
 
@@ -236,7 +239,7 @@ function infoGroupDismiss( event )
 	if event.phase == "began" then
 
 		infoGroup.isVisible = false
-		game.drillDone = true
+		game.drillScanDone = true
 
 	end
 
@@ -385,12 +388,20 @@ function waterSpotStats( event )
 			contamText.text = t.contamination .. "% Contaminated"
 			freezeText.text = t.frigidity .. "% Frozen"
 			litersText.text = t.liters .. " Liters"
-			energyText.text = "Energy Cost: " .. string.format( "%2.0f", math.floor( -t.energyCost ) ) .. " kWh"
+			energyText.text = "Energy Cost: " .. string.format( "%2.0f", math.floor( -t.energyCost ) ) .. "%"
 
-			drillButton.isVisible = true
+			if game.energy() > -t.energyCost then
+
+				drillButton.isVisible = true
+
+			else
+
+				lackEnergy.isVisible = true
+
+			end
 
 			game.currentLiters = math.floor( t.liters )
-			game.currentCost = math.floor( t.energyCost )
+			game.currentDrillCost = math.floor( t.energyCost )
 			game.drillDiff = t.difficulty
 
 		elseif t.group.isVisible == true then
@@ -400,12 +411,13 @@ function waterSpotStats( event )
 			contamText.text = "0% Contaminated"
 			freezeText.text = "0% Frozen"
 			litersText.text = "0 Liters"
-			energyText.text = "Energy Cost: 0 kWh"
+			energyText.text = "Energy Cost: 0%"
 
 			drillButton.isVisible = false
+			lackEnergy.isVisible = false
 
 			game.currentLiters = 0
-			game.currentCost = 0
+			game.currentDrillCost = 0
 			game.drillDiff = 0
 
 		end

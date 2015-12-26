@@ -145,7 +145,7 @@ local shipStateData = {
         					return true
         				end
         			end },
-	{ delay = 5, action =  -- Send land message
+	{ delay = 5, action =  -- Enable a bunch of remaining docs
 					function ()
  	        			game.sendMessage( "docs" )
 						gems.enableShipGem( "jordan2" )
@@ -155,7 +155,6 @@ local shipStateData = {
 	 					gems.enableShipGem( "maxwell" )
 						gems.enableShipGem( "cDevice" )
 						gems.enableShipGem( "cEnergy" )
-	        			game.sendMessage( "land" )
         				return true
         			end },
 	{ moves = 3, action =  -- Notify to fix panel #3
@@ -174,14 +173,22 @@ local shipStateData = {
 							return true
 						end        			
 					end },
-					---
-					-- TODO: shipLanding act here
-					---
-	{ delay = 2, action =  -- Landed
+	{ delay = 4, action =  -- Ready to land
 					function ()
-						game.landShip()
-	        			game.sendMessages( "landed", "mars1" )
-        			end },
+						gems.enableShipGem( "landing" )
+						gems.enableShipGem( "fly1", false )
+	        			game.sendMessage( "land" )						
+        				return true
+					end },
+	{ action =  -- Landing game
+					function ()
+						if game.shipLanded and game.currentActName() == "mainAct" then
+							game.landShip()
+							game.sendMessage( "landed", 4000 )
+							game.sendMessage( "mars1", 10000 )
+							return true
+						end        			
+					end },
     ----- Ship State Table ends when ship has landed on Mars -----
 } 
 

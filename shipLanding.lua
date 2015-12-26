@@ -51,6 +51,7 @@ local verticalScale, horizontalScale
 
 -- Listener for Back Button
 local function back()
+	game.shipLanded = true  -- TODO: Temporary
 	game.gotoAct( "mainAct", { effect = "zoomOutIn", time = 500 } )
 end
 

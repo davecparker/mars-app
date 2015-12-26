@@ -118,7 +118,7 @@ local function makePlant( x, y )
 	local plant = act:newGroup( plants )
 	plant.x = x
 	plant.y = y + size / 2
-	local leaves = act:newImage( "plant.png", { parent = plant, height = size, x = 0, y = 0 } )
+	local leaves = act:newImage( "potatoPlant.png", { parent = plant, height = size, x = 0, y = 0 } )
 	leaves.anchorY = 1   -- grow from bottom up
 	leaves:setFillColor( 0, 0.6, 0 )
 	plant.leaves = leaves
@@ -267,7 +267,7 @@ end
 
 -- Start the act
 function act:start()
-	game.playAmbientSound( "Light Mood.mp3" )
+	game.playAmbientSound( "HarpPiano.mp3" )
 end
 
 -- Stop the act

@@ -4,9 +4,6 @@
 --
 -----------------------------------------------------------------------------------------
 
-display.setStatusBar( display.HiddenStatusBar )
-
-
 -- Declare access to game and act variables
 game = globalGame
 act = game.newAct()
@@ -15,7 +12,7 @@ act = game.newAct()
 widget = require( "widget" )
 
 -- Declare constants
-local W = act.width
+local W = act.xMax
 local H = act.height
 local XC = act.xCenter
 local YC = act.yCenter
@@ -51,6 +48,8 @@ local tapText -- Flashing tap text
 local tapTime = 5 -- Time left until tap stops flashing
 local tapTimerShow -- Timer to keep track of the tap text
 local tapTimerHide -- Timer to keep track of the tap text
+local drillSound = {} -- Sound container for drill sound
+local endTimer -- Timer used when the player finishes the drill
 
 function act:init()
 
@@ -117,15 +116,15 @@ function act:init()
 	-- Intro screen
 	game.drillPlayed = false
 
-	if game.currentCost == nil and game.currentLiters == nil then
+	if game.currentDrillCost == nil and game.currentLiters == nil then
 
-		game.currentCost = 11
+		game.currentDrillCost = 11
 		game.currentLiters = 50
 
 	end
 
 	-- Cost text
-	costText = display.newText( act.group, "Cost: " ..  -game.currentCost + math.abs( math.floor( bar.difference / 10 ) ) .. " KWH", XC, YC, native.systemFont, 25 )
+	costText = display.newText( act.group, "Cost: " ..  -game.currentDrillCost + math.abs( math.floor( bar.difference / 10 ) ) .. "%", XC, YC, native.systemFont, 25 )
 	costText.fill = { 0, 0.42, 1 }
 	costText.xScale, costText.yScale = 0.01, 0.01
 	costText.isVisible = false
@@ -141,19 +140,55 @@ function act:init()
 	tapText.fill = { 0, 0.42, 1 }
 	tapText.isVisible = false
 
+	-- Declare the introductory information group and check for a flag to hide/show it
+	infoGroup = display.newGroup()
+	infoGroup.x, infoGroup.y = XC, YC
+
+	local infoScreen = display.newRect( infoGroup, 0, 0, W, H )
+	infoScreen.fill = { 0, 0, 0, 0.7 }
+
+	local infoText1 = display.newText( infoGroup, "Rapidly tap the screen", 0, -30, native.systemFontBold, 20 )
+	local infoText1 = display.newText( infoGroup, "Aim to be in the blue range", 0, 0, native.systemFontBold, 20 )
+	local infoText1 = display.newText( infoGroup, "Return to the rover to continue", 0, 30, native.systemFontBold, 20 )
+
+	infoScreen:addEventListener( "touch", infoGroupDismiss )
+
+	act.group:insert( infoGroup )
+
+	game.drillStopped = false
+
 end
 
 function act:prepare()
 
 	resetButton.isVisible = false
 	game.playAmbientSound( "Engine.wav" )
-	start()
+
+	if game.drillDone then
+
+		infoGroup.isVisible = false
+		start()
+
+	else
+
+		infoGroup.isVisible = true
+
+	end
 
 end
 
 function act:stop()
 
+	if endTimer then
+
+		timer.cancel( endTimer )
+
+	end
+
+	game.stopSound( drillSound.channel )
 	game.stopAmbientSound()
+	game.drillStopped = true
+	game.removeAct( "drillScan" )
 	game.removeAct( "drill" )
 
 end
@@ -163,14 +198,29 @@ function newFrame()
 	
 	droppingBar()
 	bar.difference = H / 2 - bar.height
-	costText.text = "Cost: " .. -game.currentCost + math.abs( math.floor( bar.difference / 10 ) ) .. " KWH"
+	costText.text = "Cost: " .. -game.currentDrillCost + math.abs( math.floor( bar.difference / 20 ) ) .. "%"
+
+end
+
+-- Dismisses the introduction information and sets a flag so it doesn't show up until the player restarts the application
+function infoGroupDismiss( event )
+
+	if event.phase == "began" then
+
+		infoGroup.isVisible = false
+		game.drillDone = true
+		start()
+
+	end
+
+	return true
 
 end
 
 -- Function to begin all of the level's purposes
 function start()
 
-	if startTimer.count > 0 then
+	if startTimer.count > 0 and game.drillStopped == false then
 
 		startTimer.isVisible = true
 		startTimer.text = "Beginning in: " .. startTimer.count
@@ -179,8 +229,8 @@ function start()
 
 	elseif startTimer.count == 0 then
 
-		drillSound = act:loadSound( "Drill.wav" )
-		game.playSound( drillSound )
+		drillSound.sound = act:loadSound( "Drill.wav" )
+		drillSound.channel = game.playSound( drillSound.sound )
 
 		local function hideTimer()
 
@@ -197,7 +247,7 @@ function start()
 		Runtime:addEventListener( "enterFrame", newFrame )
 
 		-- Time limit
-		timer.performWithDelay( 5000, timeLimit )
+		endTimer = timer.performWithDelay( 5000, timeLimit )
 
 	end
 
@@ -261,6 +311,8 @@ end
 -- Function to control what happens when the player finishes drilling
 function timeLimit()
 
+	endTimer = nil
+
 	Runtime:removeEventListener( "enterFrame", newFrame )
 	Runtime:removeEventListener( "touch", risingBar )
 
@@ -293,9 +345,21 @@ function timeLimit()
 
 	end
 
-	game.addEnergy( energyCost + game.currentCost )
+	if game.energy() > ( -energyCost - game.currentDrillCost ) then
+
+		game.addEnergy( energyCost + game.currentDrillCost )
+
+	else
+
+		game.addEnergy( -game.energy() )
+
+	end
 	game.addWater( game.currentLiters)
+	game.currentLiters = 0
+	game.currentDrillCost = 0
+	game.drillDiff = 20.0
 	timer.performWithDelay( 1500, resetVisible )
+
 end
 
 return act.scene
