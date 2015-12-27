@@ -11,7 +11,8 @@
 -- The game object where game global data and functions are stored
 local game = {
     -- Misc constants
-    themeColor = { r = 0.58, g = 0, b = 0 },   -- dark red
+    themeColor = { r = 0.58, g = 0, b = 0 },            -- dark red
+    themeHighlightColor = { r = 0.78, g = 0, b = 0 },    -- light red
 
     -- Data for the current act to use
     cheatMode = false,    -- true if cheat mode is on (debug)
@@ -23,6 +24,7 @@ local game = {
     doorCode = nil,       -- door code for locked room or nil if none
     doorUnlocked = nil,   -- set to true when a locked door is successfully unlocked
     panelFixed = nil,     -- set to true when a circuit panel is successfully fixed
+    shipLanded = nil,     -- set to true when landing game succeeds
 
     -- Game state tracking
     paused = false,         -- true when the game is paused

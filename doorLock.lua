@@ -246,12 +246,12 @@ function act:init()
 	-- Screen
 	screen = act:newImage( "screen.png", { width=200 })
 	screen.x = act.xCenter
-	screen.y = act.yCenter - 150
+	screen.y = act.yCenter - 120
 
 	-- Button Panel
 	local panel = act:newImage( "panel.png", { width=250 })
 	panel.x = act.xCenter
-	panel.y = act.yCenter + 50
+	panel.y = act.yCenter + 70
 
 	-- Buttons
 	button.one = createButton( act.group, 1, panel.x - 60, panel.y - 90, 
