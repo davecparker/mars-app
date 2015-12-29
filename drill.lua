@@ -4,26 +4,20 @@
 --
 -----------------------------------------------------------------------------------------
 
-display.setStatusBar( display.HiddenStatusBar )
-
-
 -- Declare access to game and act variables
-
 game = globalGame
 act = game.newAct()
 
 -- Require statements
-
 widget = require( "widget" )
 
 -- Declare constants
-
-local W = act.width
+local W = act.xMax
 local H = act.height
 local XC = act.xCenter
 local YC = act.yCenter
 local YMIN = act.yMin
-YMAX = act.yMax
+local YMAX = act.yMax
 
 
 --Declare file local functions to be used
@@ -35,17 +29,27 @@ local timeLimit
 local start
 local finish
 local reset
+local tap
 
 --Declare file local tables to be used
 local bg -- Background image
 local drillSpot -- Effectiveness of drill usage
 local bar -- The bar being adjusted
-local splash -- Splash screen for when the player finishes
+local splashTop -- Splash subset for the start timer
+local splashMiddle -- Splash subset for primary info bits
+local splashBottom -- Splash subset for reset button
 local startTimer -- Timer when beginning
 local range -- Text for range user finished in
+local waterText -- Displays how much water the user has earned
 local resetButton -- The button that allows you to restart the game
 local difficulty = {} -- Difficulty of drill game
-local testText
+local costText -- Text to represent the total cost of drilling out the water
+local tapText -- Flashing tap text
+local tapTime = 5 -- Time left until tap stops flashing
+local tapTimerShow -- Timer to keep track of the tap text
+local tapTimerHide -- Timer to keep track of the tap text
+local drillSound = {} -- Sound container for drill sound
+local endTimer -- Timer used when the player finishes the drill
 
 function act:init()
 
@@ -63,6 +67,7 @@ function act:init()
 	bar.anchorX = 0
 	bar.anchorY = 1
 	bar.fill = { 0.36, 0.25, 0.13, 0.5 }
+	bar.difference = H / 2 - bar.height
 
 	-- Create the splash screen
 	splash = display.newRoundedRect( act.group, XC, YC, 200, 400, 25 )
@@ -73,10 +78,10 @@ function act:init()
 	startInit = 5
 	startTimer = display.newText( act.group, "Beginning in: " .. startInit, XC, YC - 100, native.systemFontBold, 25 )
 	startTimer.count = startInit
+	startTimer.fill = { 0, 0.42, 1 }
 	startTimer.isVisible = false
 
 	-- Create splash screen button
-
 	local options =
 	{
 		width = 80,
@@ -86,9 +91,10 @@ function act:init()
 		sheetContentHeight = 40
 	}
 
+	-- Create the button to take you back to the rover game
 	local buttonSheet = graphics.newImageSheet( "media/drillScan/Button.png", options )
 
-	resetButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Restart", onPress = reset }
+	resetButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Rover", onPress = reset }
 
 	resetButton.x = XC
 	resetButton.y = YC + 140
@@ -97,27 +103,6 @@ function act:init()
 
 	-- Intro screen
 	game.drillPlayed = false
-
-	-- Create splash screen button
-
-	local options =
-	{
-		width = 80,
-		height = 40,
-		numFrames = 2,
-		sheetContentWidth = 160,
-		sheetContentHeight = 40
-	}
-
-	local buttonSheet = graphics.newImageSheet( "media/drillScan/Button.png", options )
-
-	local resetButton = widget.newButton{ sheet = buttonSheet, defaultFrame = 1, overFrame = 2, label = "Restart", onPress = reset }
-
-	resetButton.x = XC
-	resetButton.y = YC + 170
-	resetButton.isVisible = false
-
-	act.group:insert( resetButton )
 
 	-- Set difficulty
 	if game.drillDiff then
@@ -131,37 +116,111 @@ function act:init()
 	-- Intro screen
 	game.drillPlayed = false
 
-	-- Test text
-	testText = display.newText( act.group, string.format( "%3.0f", math.abs( YMAX / 2 - bar.height ) ), XC, YC, native.systemFont, 25 )
+	if game.currentDrillCost == nil and game.currentLiters == nil then
+
+		game.currentDrillCost = 11
+		game.currentLiters = 50
+
+	end
+
+	-- Cost text
+	costText = display.newText( act.group, "Cost: " ..  -game.currentDrillCost + math.abs( math.floor( bar.difference / 10 ) ) .. "%", XC, YC, native.systemFont, 25 )
+	costText.fill = { 0, 0.42, 1 }
+	costText.xScale, costText.yScale = 0.01, 0.01
+	costText.isVisible = false
+
+	-- Water Text
+	waterText = display.newText( act.group, "Water: " .. game.currentLiters .. " Liters", XC, YC - 20, native.systemFont, 25 )
+	waterText.fill = { 0, 0.42, 1 }
+	waterText.xScale, waterText.yScale = 0.01, 0.01
+	waterText.isVisible = false
+
+	-- Tap Timer Text
+	tapText = display.newText( act.group, "TAP", XC, YC - 75, native.systemFontBold, 35 )
+	tapText.fill = { 0, 0.42, 1 }
+	tapText.isVisible = false
+
+	-- Declare the introductory information group and check for a flag to hide/show it
+	infoGroup = display.newGroup()
+	infoGroup.x, infoGroup.y = XC, YC
+
+	local infoScreen = display.newRect( infoGroup, 0, 0, W, H )
+	infoScreen.fill = { 0, 0, 0, 0.7 }
+
+	local infoText1 = display.newText( infoGroup, "Rapidly tap the screen", 0, -30, native.systemFontBold, 20 )
+	local infoText1 = display.newText( infoGroup, "Aim to be in the blue range", 0, 0, native.systemFontBold, 20 )
+	local infoText1 = display.newText( infoGroup, "Return to the rover to continue", 0, 30, native.systemFontBold, 20 )
+
+	infoScreen:addEventListener( "touch", infoGroupDismiss )
+
+	act.group:insert( infoGroup )
+
+	game.drillStopped = false
 
 end
 
 function act:prepare()
 
 	resetButton.isVisible = false
-	start()
-	print( YC )
-	print( H )
-	print( H - YC )
-	print( YMIN )
+	game.playAmbientSound( "Engine.wav" )
+
+	if game.drillDone then
+
+		infoGroup.isVisible = false
+		start()
+
+	else
+
+		infoGroup.isVisible = true
+
+	end
 
 end
 
 function act:stop()
 
+	if endTimer then
+
+		timer.cancel( endTimer )
+
+	end
+
+	game.stopSound( drillSound.channel )
+	game.stopAmbientSound()
+	game.drillStopped = true
+	game.removeAct( "drillScan" )
 	game.removeAct( "drill" )
 
 end
 
+-- Generic new frame function
 function newFrame()
 	
 	droppingBar()
-	testText.text = string.format( "%3.0f", math.abs( YMAX / 2 - bar.height ) )
+	bar.difference = H / 2 - bar.height
+	costText.text = "Cost: " .. -game.currentDrillCost + math.abs( math.floor( bar.difference / 20 ) ) .. "%"
+
 end
 
+-- Dismisses the introduction information and sets a flag so it doesn't show up until the player restarts the application
+function infoGroupDismiss( event )
+
+	if event.phase == "began" then
+
+		infoGroup.isVisible = false
+		game.drillDone = true
+		start()
+
+	end
+
+	return true
+
+end
+
+-- Function to begin all of the level's purposes
 function start()
 
-	if startTimer.count > 0 then
+	if startTimer.count > 0 and game.drillStopped == false then
 
 		startTimer.isVisible = true
 		startTimer.text = "Beginning in: " .. startTimer.count
@@ -170,29 +229,70 @@ function start()
 
 	elseif startTimer.count == 0 then
 
-		startTimer.isVisible = false
+		drillSound.sound = act:loadSound( "Drill.wav" )
+		drillSound.channel = game.playSound( drillSound.sound )
+
+		local function hideTimer()
+
+			startTimer.isVisible = false
+
+		end
+
+		tapTimerShow()
+
+		transition.to( startTimer, { time = 150, xScale = 0.01, yScale = 0.01, onComplete = hideTimer } )
+		costText.isVisible = true
+		transition.to( costText, { time = 150, xScale = 1, yScale = 1 } )
 		Runtime:addEventListener( "touch", risingBar )
 		Runtime:addEventListener( "enterFrame", newFrame )
 
 		-- Time limit
-		timer.performWithDelay( 5000, timeLimit )
+		endTimer = timer.performWithDelay( 5000, timeLimit )
 
 	end
 
 end
 
+-- Function to show the tap text
+function tapTimerShow()
+
+	tapText.isVisible = true
+
+	tapTime = tapTime - 0.23
+
+	timer.performWithDelay( 100, tapTimerHide )
+
+end
+
+-- Function to hide the tap text and test for the timer
+function tapTimerHide()
+
+	tapText.isVisible = false
+
+	if tapTime > 0 then
+
+		timer.performWithDelay( 100, tapTimerShow )
+
+	end
+
+end
+
+-- Function to send you back to the mars rover game
 function reset()
 
 	startTimer.count = 5
 	Runtime:removeEventListener( "touch", risingBar )
 	Runtime:removeEventListener( "enterFrame", newFrame )
 	bar.height = H / 4
+	costText.isVisible = false
 	range.isVisible = false
+	waterText.isVisible = false
 	game.removeAct( "drillScan" )
-	game.gotoAct( "drillScan", { effect = "zoomInOutFade", time = 333 } )
+	game.gotoAct( "rover", { effect = "zoomInOutFade", time = 333 } )
 
 end
 
+-- Per frame function to cause the bar to drop
 function droppingBar()
 
 	if bar.height > 0 then
@@ -200,6 +300,7 @@ function droppingBar()
 	end
 end
 
+-- Touch function to cause the bar to rise
 function risingBar( event )
 
 	if event.phase == "began" then
@@ -207,19 +308,28 @@ function risingBar( event )
 	end
 end
 
+-- Function to control what happens when the player finishes drilling
 function timeLimit()
+
+	endTimer = nil
 
 	Runtime:removeEventListener( "enterFrame", newFrame )
 	Runtime:removeEventListener( "touch", risingBar )
 
-	local x = math.abs( YMAX / 2 - bar.height )
+	local x = math.abs( bar.difference )
 	range = display.newText( act.group, "", XC, YC + 20, native.systemFontBold, 25 )
+	range.fill = { 0, 0.42, 1 }
+	range.xScale, range.yScale = 0.01, 0.01
+	transition.to( range, { time = 100, xScale = 1, yScale = 1 } )
+	waterText.isVisible = true
+	transition.to( waterText, { time = 100, xScale = 1, yScale = 1 } )
+
 
 	if x <= 15 then
 		range.text = "Ideal range"
-	elseif x <= 62 then
+	elseif x <= 70 then
 		range.text = "Good range"
-	elseif x <= 121 then
+	elseif x <= 140 then
 		range.text =  "Mediocre range"
 	elseif x <= 183 then
 		range.text =  "Bad range"
@@ -227,14 +337,29 @@ function timeLimit()
 		range.text = "Horrible range"
 	end
 
+	local energyCost = math.floor( -x / 10 )
+
 	local function resetVisible()
 
 		resetButton.isVisible = true
 
 	end
 
-	game.addEnergy( -x/10 )
+	if game.energy() > ( -energyCost - game.currentDrillCost ) then
+
+		game.addEnergy( energyCost + game.currentDrillCost )
+
+	else
+
+		game.addEnergy( -game.energy() )
+
+	end
+	game.addWater( game.currentLiters)
+	game.currentLiters = 0
+	game.currentDrillCost = 0
+	game.drillDiff = 20.0
 	timer.performWithDelay( 1500, resetVisible )
+
 end
 
 return act.scene

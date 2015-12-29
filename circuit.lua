@@ -15,6 +15,7 @@ local widget = require( "widget" )  -- need to make buttons
 
 ------------------------- Variables ---------------------------------------------------------
 
+local panelDone = false
 local nutsRemoved = 0    -- the number of nuts that have been removed
 local panel
 local largeBG
@@ -27,6 +28,8 @@ local toolbox
 local toolIcon           -- the tool selected icon
 local manual  
 local manualPage         -- what page of the manual you are on
+-- audio
+local toolboxSFX
 
 ------------------------- Functions -------------------------------------------------------
 
@@ -89,10 +92,16 @@ end
 -- controls what happnes when you touch the manual
 local function manualTouch ( event )
 	if event.phase == "ended" then
+		-- manual image sheets to be used, set to 1 for debug mode
+		local param = 1
+		local manualVersion = {"manual.png", "manual2.png", "manual3.png", "manual4.png"}
+		if game.actParam then
+			param = game.actParam
+		end
 		-- manual image sheet
 		local manualOptions = { width = 440, height = 600, numFrames = 3 }
 		local manualSequence = { name = manual, start = 1, count = 3 }
-		local manualImageSheet = graphics.newImageSheet( "media/circuit/manual.png", manualOptions )
+		local manualImageSheet = graphics.newImageSheet( "media/circuit/" .. manualVersion[param], manualOptions )
 		manual = display.newSprite( act.group, manualImageSheet, manualSequence )
 		manual.x = act.xCenter
 		manual.y = act.yCenter
@@ -123,6 +132,7 @@ end
 -- function for the toolbox touch
 local function toolboxTouch (event) 
 	if event.phase == "began" then
+		game.playSound (toolboxSFX)
 		if toolWindow == nil then
 			if wrench then      --- remove the wrech if there is already one on screen
 				wrench:removeSelf()
@@ -262,10 +272,12 @@ local function removePanel ( event )
 			if panel.x > act.xMax then
 				-- move panel off screen and transition to the next part of the game
 				transition.to( panel, { time = 500, x = 500, onComplete = game.gotoAct( "wireCut", "fade" ) } )
+				panelDone = true
 			end
 			if panel.x < act.xMin then
 				-- move panel off screen and transition to the next part of the game
 				transition.to( panel, { time = 500, x = -220, onComplete = game.gotoAct( "wireCut", "fade" ) } )
+				panelDone = true
 			end
 		end
 		return true
@@ -367,6 +379,9 @@ function act:init()
 	nut.BR.y = act.yCenter + 158
 	nut.BR:addEventListener( "touch", nutTouch )
 	nut.BR.angle = 225
+
+	-- load the sound
+	toolboxSFX = act:loadSound ("ToolboxOpen.wav", "media/wireCut")
 	
 	-- Draws the large background (NEEDS TO BE LAST THING DRAWN)
 	largeBG = act:newImage ( "backgroundLarge.jpg", { width = 480 / 1.5} )
@@ -374,6 +389,13 @@ function act:init()
 	largeBG:addEventListener( "touch", removeBG )    -- added a touch event if the player wants to skip the zoom in
 	transition.scaleBy( largeBG, { xScale = 0.5, yScale = 0.5, time = 2000 } )  -- this is the zoom in time controls how long this sequence is (2000 = 2 seconds)
 	timer.performWithDelay( 2500, removeBG )  -- 2500 (2.5 seconds)  is the delay amount. Needs to be equal or greater to the transistion time
+end
+
+-- if this part is done then go to the next part of th game
+function  act:prepare ()
+	if panelDone == true then
+		game.gotoAct( "wireCut" )
+	end
 end
 
 ------------------------- End of Activity ----------------------------------------------------------------------------------------

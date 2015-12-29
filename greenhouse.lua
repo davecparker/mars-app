@@ -23,7 +23,30 @@ local timerID          -- repeating timer
 local waterHintShown   -- true when the hint to water plants has been shown
 local nPlantsDied = 0  -- total number of plants that have died
 local nWaterings = 0   -- total number of times user has watered any plant
+local waterText        -- water readout label
+local foodText         -- food readout label
+local waterLight       -- water status light
+local foodLight        -- food status light
 
+
+-- Update a resource light's color based on its value, warning level, and low level
+local function setResLightColor( light, value, low, warning )
+	if value < low then
+		light:setFillColor( 1, 0, 0 )  -- red for low
+	elseif value < warning then
+		light:setFillColor( 1, 1, 0 )  -- yellow for warning
+	else
+		light:setFillColor( 0, 1, 0 )  -- green
+	end
+end
+
+-- Update food and water level display
+local function updateResDisplay()
+	waterText.text = string.format( "Water: %d liters", game.water() )
+	foodText.text = string.format( "Food: %d kg", game.food() )
+	setResLightColor( waterLight, game.water(), 50, 100 )
+	setResLightColor( foodLight, game.food(), 50, 150 )
+end
 
 -- Called when the drops are done animating
 local function dropsDone( drops )
@@ -44,8 +67,10 @@ local function waterPlant( plant )
 	act:newImage( "drop.png", { parent = drops, x = 0, y = 0, width = dropSize } )
 	drops.plant = plant
 	game.addWater( -1 )
+	updateResDisplay()
 
-	-- Animate the drops falling
+	-- Animate the drops falling with sound effect
+	game.playSound( act.wateringSound )
 	transition.to( drops, { y = plant.y - 20, xScale = 2, yScale = 2,
 			time = 500, onComplete = dropsDone } )
 end
@@ -60,6 +85,7 @@ local function touchPlant( event )
 			-- Remove dead plant
 			if not plant.beingRemoved then
 				plant.beingRemoved = true
+				game.playSound( act.plantingSound )
 				transition.to( plant, { xScale = 1, yScale = 1, alpha = 0, 
 						time = 500, onComplete = game.removeObj })
 			end
@@ -67,8 +93,10 @@ local function touchPlant( event )
 			-- Harvest mature plant
 			if not plant.beingHarvested then 
 				plant.beingHarvested = true
+				game.playSound( act.plantingSound )
 				transition.fadeOut( plant, { time = 500, onComplete = game.removeObj } )
 				game.addFood( 10 )
+				updateResDisplay()
 				game.floatMessage( "10 kg food", event.x, event.y )
 			end
 		else
@@ -90,7 +118,7 @@ local function makePlant( x, y )
 	local plant = act:newGroup( plants )
 	plant.x = x
 	plant.y = y + size / 2
-	local leaves = act:newImage( "plant.png", { parent = plant, height = size, x = 0, y = 0 } )
+	local leaves = act:newImage( "potatoPlant.png", { parent = plant, height = size, x = 0, y = 0 } )
 	leaves.anchorY = 1   -- grow from bottom up
 	leaves:setFillColor( 0, 0.6, 0 )
 	plant.leaves = leaves
@@ -102,6 +130,7 @@ end
 local function touchDirt( event )
 	if event.phase == "began" then
 		makePlant( event.x, event.y )
+		game.playSound( act.plantingSound )
 	end
 	return true
 end
@@ -185,6 +214,19 @@ local function backButtonPress ( event )
 	return true
 end
 
+-- Create a resource label at the given y location and initally empty text
+local function makeResLabel( y )
+	local t = display.newText( act.group, "", act.xCenter, y, native.systemFont, 16 )
+	t.anchorX = 0
+	t:setFillColor( 0 )   -- black text
+	return t
+end
+
+-- Make a resource status light
+local function makeResLight( x, y )
+	return act:newImage( "roundLight.png", { x = x, y = y, height = 16 } )
+end
+
 -- Init the act
 function act:init()
 	-- Dirt background
@@ -194,12 +236,25 @@ function act:init()
 	-- Group for plants
 	plants = act:newGroup()
 
+	-- UI/Display area
+	local uiHeight = 60
+	local area = act:newImage( "bamboo.png", { x = act.xCenter, y = act.yMin + uiHeight / 2, 
+					width = act.width, height = uiHeight } )
+	waterText = makeResLabel( act.yMin + uiHeight * 0.3 )
+	foodText = makeResLabel( act.yMin + uiHeight * 0.7 )
+	waterLight = makeResLight( act.xMax - 20, waterText.y )
+	foodLight = makeResLight( waterLight.x, foodText.y )
+
 	-- back button
 	local backButton = act:newImage( "backButton.png", { width = 50 } )
-	backButton.x = act.xMin + 30
-	backButton.y = act.yMin + 30
+	backButton.x = act.xMin + uiHeight / 2
+	backButton.y = act.yMin + uiHeight / 2
 	backButton:addEventListener( "tap", backButtonPress )
 	backButton:addEventListener( "touch", game.eatTouch )
+
+	-- Load sound effects
+ 	act.plantingSound = act:loadSound( "Planting.wav" )
+ 	act.wateringSound = act:loadSound( "Pour4.wav" )
 end
 
 -- Prepare the act
@@ -207,21 +262,27 @@ function act:prepare()
 	-- Start a repeating timer for time action
 	assert( timerID == nil )
 	timerID = timer.performWithDelay( msTimer, timerTick, 0 )
+	updateResDisplay()
 end
 
 -- Start the act
 function act:start()
-	game.playAmbientSound( "Light Mood.mp3" )
+	game.playAmbientSound( "HarpPiano.mp3" )
 end
 
 -- Stop the act
 function act:stop()
-	game.stopAmbientSound()
-	-- TODO: Keep timer running when act is not active?
+	game.endMessageBox()
 	if timerID then
 		timer.cancel( timerID )
 		timerID = nil
 	end
+end
+
+-- Destroy the act
+function act:destroy()
+	game.disposeSound( act.plantingSound )
+	game.disposeSound( act.wateringSound )
 end
 
 

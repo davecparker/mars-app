@@ -30,23 +30,22 @@ end
 ------------------------- Activity Methods  --------------------------------
 
 -- Make an new imageRect display object with the given filename, and options:
---    parent          -- display group, default is act.group
---    folder          -- subfolder where filename is located, default is media/actName
---    x, y            -- initial position of the center of the object, default is act center
---    width, height   -- display object size (default to original size/aspect)
---    allowFail       -- set to true to just return nil if image not found instead of error
+--    parent            -- display group, default is act.group
+--    folder            -- subfolder where filename is located, default is media/actName
+--    x, y              -- initial position of the center of the object, default is act center
+--    anchorX, anchorY  -- anchor location (default 0.5 for center)
+--    width, height     -- display object size (default to original size/aspect)
+--    allowFail         -- set to true to just return nil if image not found instead of error
 -- If only one of width or height is included, the other is calculated to retain the aspect.
 function Act:newImage( filename, options )
     -- Check the parameter types
     assert( type( filename ) == "string" )
     assert( not options or (type( options ) == "table") )
 
-    -- Get default values for options
+    -- Get some default values
     options = options or {}
     local parent = options.parent or self.group
     local folder = options.folder or "media/" .. self.name 
-    local x = options.x or self.xCenter
-    local y = options.y or self.yCenter
     local width = options.width
     local height = options.height
 
@@ -56,7 +55,7 @@ function Act:newImage( filename, options )
     -- Do we need to calculate width or height from the original image size?
     if not width or not height then
         -- TODO: Replace this with a more efficient implementation (read PNG/JPG header)
-        local image = display.newImage( parent, path, x, y, true )
+        local image = display.newImage( parent, path, 0, 0, true )
         if image then
             if not width and not height then
                 width = image.width
@@ -81,8 +80,10 @@ function Act:newImage( filename, options )
         end
         error( "Image not found: " .. path, 2 )  -- report runtime error at the calling location
     else
-        image.x = x
-        image.y = y
+        image.x = options.x or self.xCenter
+        image.y = options.y or self.yCenter
+        image.anchorX = options.anchorX or 0.5
+        image.anchorY = options.anchorY or 0.5
     end
     return image
 end
@@ -103,11 +104,11 @@ function Act:whiteBackground()
     return bg
 end    
 
--- Make and return a light gray background for the act.
-function Act:grayBackground()
+-- Make and return a background with the given grayscale shade (0-1, default 0.7) for the act.
+function Act:grayBackground( gray )
     -- Background for the whole view
     local bg = display.newRect( self.group, self.xCenter, self.yCenter, self.width, self.height )
-    bg:setFillColor( 0.7 )  -- light gray
+    bg:setFillColor( gray or 0.7 )
     return bg
 end    
 
@@ -122,7 +123,7 @@ function Act:makeTitleBar( title, backListener )
     local bar = display.newRect( group, self.xMin, self.yMin, self.width, self.dyTitleBar )
     bar.anchorX = 0
     bar.anchorY = 0
-    bar:setFillColor( 0.5, 0, 0 )   -- dark red
+    bar:setFillColor( game.themeColor.r, game.themeColor.g, game.themeColor.b )
     bar:addEventListener( "touch", game.eatTouch )  -- eat touches on title bar
     bar:addEventListener( "tap", game.eatTouch )    -- and taps too
 
@@ -135,12 +136,12 @@ function Act:makeTitleBar( title, backListener )
 
     -- Back button if requested
     if backListener then
-        local bb = self:newImage( "back.png", { 
+        local bb = self:newImage( "backArrow.png", { 
             parent = group, 
             folder = "media/game", 
             height = self.dyTitleBar * 0.6 
         } )
-        bb.x = self.xMin + 15
+        bb.x = self.xMin + 17
         bb.y = self.yMin + self.dyTitleBar / 2
         bb:addEventListener( "tap", backListener )
     end
@@ -157,10 +158,15 @@ end
 
 ------------------------- Game Activity Management  --------------------------------
 
--- Go to a given act, with transition options (see composer.gotoScene for parameters)
-function game.gotoAct( name, options )
-    game.setCurrentTabAct( name )
-    composer.gotoScene( name, options )  -- CRASH? If you get 'sceneName' nil here then you
+-- Go to the given scene with transition options (see composer.gotoScene)
+function game.gotoScene( scene, options )
+    composer.gotoScene( scene, options )
+end
+
+-- Go to a given act on the main tab, with transition options (see composer.gotoScene)
+function game.gotoAct( act, options )
+    game.currentMainAct = act    -- Remember the current act running on the main tab
+    composer.gotoScene( act, options )  -- CRASH? If you get 'sceneName' nil here then you
                                          -- forgot to return act.scene from your act file.
 end
 
