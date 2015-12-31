@@ -30,6 +30,13 @@ function new.background()
 	sky.y = data.act.yCenter
 end
 
+local function onCollision( self, event )
+	if event.phase == "began" and event.other.isRemover then
+		self:removeSelf()
+		self = nil
+	end
+end
+
 -- Create new terrain component rectangle 
 -- Accepts x-coord & height, returns rectangle display object
 function new.rectangle( x, y, w, h, isCrater )
@@ -39,14 +46,6 @@ function new.rectangle( x, y, w, h, isCrater )
 	rect.anchorY = 0
 	physics.addBody( rect, "static", { friction = 1.0 } )
 	rect.isCrater = isCrater
-
-	local function onCollision( self, event )
-		if event.phase == "began" and event.other.isRemover then
-			self:removeSelf()
-			self = nil
-		end
-	end
-
 	rect.collision = onCollision
 	rect:addEventListener( "collision" )
 
@@ -59,18 +58,9 @@ function new.circle( x, y, r )
 	local yDev = math.random( r * 0.7, r * 0.9 ) -- randomly vary y coord w/radius
 	local circle = display.newCircle( data.dynamicGrp, x, y + yDev, r )
 	physics.addBody( circle, "static", { friction = 1.0, radius = r } )
-
-	local function onCollision( self, event )
-		if event.phase == "began" and event.other.isRemover then
-			self:removeSelf()
-			self = nil
-		end
-		-- newObstacle( data.rover.x + data.act.width, data.rover.x + 2 * data.act.width )
-	end
-
 	circle.collision = onCollision
 	circle:addEventListener( "collision" )
-
+	-- newObstacle( data.rover.x + data.act.width, data.rover.x + 2 * data.act.width )
 	return circle
 end
 
@@ -80,15 +70,6 @@ function new.square( x, y, s )
 	local square = display.newRect( data.dynamicGrp, x, y + s/3, s, s )
 	square.rotation = math.random( 30, 60 ) -- random rotation for variation
 	physics.addBody( square, "static", { friction = 1.0 } )
-
-	local function onCollision( self, event )
-		if event.phase == "began" and event.other.isRemover then
-			self:removeSelf()
-			self = nil
-		end
-		-- newObstacle( data.rover.x + data.act.width, data.rover.x + 2 * data.act.width )
-	end
-
 	square.collision = onCollision
 	square:addEventListener( "collision" )
 
@@ -101,15 +82,6 @@ function new.roundSquare( x, y, s )
 	local square = display.newRoundedRect( data.dynamicGrp, x, y + s/3, s, s, s/4 )
 	square.rotation = math.random( 30, 60 )
 	physics.addBody( square, "static", { friction = 1.0 } )
-
-	local function onCollision( self, event )
-		if event.phase == "began" and event.other.isRemover then
-			self:removeSelf()
-			self = nil
-		end
-		-- newObstacle( data.rover.x + data.act.width, data.rover.x + 2 * data.act.width )
-	end
-
 	square.collision = onCollision
 	square:addEventListener( "collision" )
 
@@ -125,15 +97,6 @@ function new.poly( x, y, s )
 	local poly = display.newPolygon( data.dynamicGrp, x, y + 1.5, vertices )
 	poly.rotation = rotation
 	physics.addBody( poly, "static", { friction = 1.0 } )
-
-	local function onCollision( self, event )
-		if event.phase == "began" and event.other.isRemover then
-			self:removeSelf()
-			self = nil
-		end
-		-- newObstacle( data.rover.x + data.act.width, data.rover.x + 2 * data.act.width )
-	end
-
 	poly.collision = onCollision
 	poly:addEventListener( "collision" )
 
@@ -173,17 +136,8 @@ function new.rectTerrain( width, height )
 
 	local rect = new.terrainElement( params )
 	physics.addBody( rect, "static", { friction = 1.0 } )
-
-	local function onCollision( self, event )
-		if event.phase == "began" and event.other.isRemover then
-			self:removeSelf()
-			self = nil
-		end
-	end
-
 	rect.collision = onCollision
 	rect:addEventListener( "collision" )
-
 	data.nextX = data.nextX + width
 end
 
