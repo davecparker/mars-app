@@ -51,6 +51,7 @@ local verticalScale, horizontalScale
 
 -- Listener for Back Button
 local function back()
+	game.shipLanded = true  -- TODO: Temporary
 	game.gotoAct( "mainAct", { effect = "zoomOutIn", time = 500 } )
 end
 
@@ -118,6 +119,7 @@ local function autopilot( event )
 	ship.autopilot = true
 	physics.removeBody( ship )
 
+	-- Function to turn off Autopilot
 	local autoPilotOff = function( obj )
 		physics.addBody( ship, { density = 0.6 } )
 
@@ -128,7 +130,7 @@ local function autopilot( event )
 
 		ship.autopilot = false
 	end
-
+	-- Autopilot Transition
 	transition.to( ship, { y = ship.y - 1000, rotation = 0, time = 3000, onComplete = autoPilotOff } )
 
 	ship.leftThrust.isVisible, ship.midLeftThrust.isVisible = true, true
@@ -143,12 +145,14 @@ local function endTheGame( )
 	endGame.isVisible = true
 	physics.pause( )
 	gameEnded = true
+	game.shipLanded = true
 end
 
 --------------------
 -- Looped Functions
 --------------------
 
+-- Function to adjust map objects according to ship
 local function moveCamera()
 	if ( ship.y > 200 and ship.y < 3355 ) then --3275
 		map.y = -ship.y + 200 
@@ -158,6 +162,7 @@ local function moveCamera()
 	end
 end
 
+-- Function to test whether the landing is succsessful or not 
 local function testLanding()
 
 	if ship.y > LANDDETECTOR then
@@ -181,6 +186,7 @@ local function testLanding()
 	end
 end
 
+-- Function to test whether or not to fire Autopilot
 local function testWillCrash()
 
 	-- If the ship has passed the CRASHDETECTOR and is about to crash
@@ -207,7 +213,8 @@ local function createSideThrustButton( scene, x, y, vertices, listener )
 		x = x, y = y,
 		shape = "polygon",
 		vertices = vertices,
-		fillColor = { default={ 1, 0.5, 0 }, over={ 1, 0.4, 0 } },
+		fillColor = { default = { game.themeColor.r, game.themeColor.g, game.themeColor.b }, 
+			over = { game.themeHighlightColor.r, game.themeHighlightColor.g, game.themeHighlightColor.b } },
 	    labelColor = { default={ 1, 1, 1 } },
 		onEvent = listener
 	}
@@ -223,8 +230,6 @@ function act:init( )
 
 	SHIPSTARTX, SHIPSTARTY = act.xCenter, 80 
 
-	
-
 	-- Scale used to determine altitude of ship
 	verticalScale = act:newGroup( )
 	verticalScale.top = act.yMin + 40
@@ -235,10 +240,12 @@ function act:init( )
 	horizontalScale.left = act.xMin + 100
 	horizontalScale.right = act.xMax - 40
 
+	-- Physics
 	physics.start( )
 	physics.pause( )
 	physics.setScale( 10 )
 
+	-- Sound
 	sound.ignite = act:loadSound( "ignite.wav" )
 	sound.thrust = act:loadSound( "thrust.wav" )
 
@@ -255,30 +262,6 @@ function act:init( )
 	ground:setFillColor( 1, 1, 1, 0 )
 	physics.addBody( ground, "static" )
 
-	-- Ship
-	ship = act:newGroup( map )
-	ship.x, ship.y = SHIPSTARTX, SHIPSTARTY
-	ship.image = act:newImage( "ship.png", { parent = ship, width = 150 } )
-	ship.image.x, ship.image.y = 0, 0
-
-	ship.leftThrust = act:newImage( "rocketfire.png", { parent = ship } )
-	ship.leftThrust.x, ship.leftThrust.y, ship.leftThrust.rotation = -55, 15, 45
-	ship.midLeftThrust = act:newImage( "rocketfire.png", { parent = ship } )
-	ship.midLeftThrust.x, ship.midLeftThrust.y = 4, 20
-	ship.midRightThrust = act:newImage( "rocketfire.png", { parent = ship } )
-	ship.midRightThrust.x, ship.midRightThrust.y = 22, 20
-	ship.rightThrust = act:newImage( "rocketfire.png", { parent = ship } )
-	ship.rightThrust.x, ship.rightThrust.y, ship.rightThrust.rotation = 65, 15, -45
-	
-	physics.addBody( ship, { density = 0.6 } )
-
-	ship.leftThrust.isVisible = false
-	ship.midLeftThrust.isVisible = false
-	ship.midRightThrust.isVisible = false
-	ship.rightThrust.isVisible = false
-
-	ship.autopilot = false
-
 	-- Torches
 	local torch1 = act:newImage( "torch.png", { parent = map, width = 25 } )
 	local torch2 = act:newImage( "torch.png", { parent = map, width = 25 } )
@@ -290,6 +273,38 @@ function act:init( )
 	endGame.header = display.newText( endGame, "Successful Landing", act.xCenter, act.yCenter, native.systemFontBold, 30 )
 	endGame.header:setFillColor( 0 )
 	endGame.isVisible = false
+
+	--------------------
+	-- Ship
+	--------------------
+
+	-- Ship
+	ship = act:newGroup( map )
+	ship.x, ship.y = SHIPSTARTX, SHIPSTARTY
+	ship.image = act:newImage( "ship.png", { parent = ship, width = 150 } )
+	ship.image.x, ship.image.y = 0, 0
+
+	-- Thrusters
+	ship.leftThrust = act:newImage( "rocketfire.png", { parent = ship } )
+	ship.leftThrust.x, ship.leftThrust.y, ship.leftThrust.rotation = -55, 15, 45
+	ship.midLeftThrust = act:newImage( "rocketfire.png", { parent = ship } )
+	ship.midLeftThrust.x, ship.midLeftThrust.y = 4, 20
+	ship.midRightThrust = act:newImage( "rocketfire.png", { parent = ship } )
+	ship.midRightThrust.x, ship.midRightThrust.y = 22, 20
+	ship.rightThrust = act:newImage( "rocketfire.png", { parent = ship } )
+	ship.rightThrust.x, ship.rightThrust.y, ship.rightThrust.rotation = 65, 15, -45
+	
+	-- Thrust Visability
+	ship.leftThrust.isVisible = false
+	ship.midLeftThrust.isVisible = false
+	ship.midRightThrust.isVisible = false
+	ship.rightThrust.isVisible = false
+
+	-- Ship Physics
+	physics.addBody( ship, { density = 0.6 } )
+
+	-- Autopilot
+	ship.autopilot = false
 
 	--------------------
 	-- Scales
@@ -326,7 +341,8 @@ function act:init( )
 		x = act.xMin + 40, y = act.yMin + 30,
 		shape = "roundedRect",
 		width = 60, height = 40,
-		fillColor = { default={ 1, 0.5, 0 }, over={ 1, 0.4, 0 } },
+		fillColor = { default = { game.themeColor.r, game.themeColor.g, game.themeColor.b }, 
+			over = { game.themeHighlightColor.r, game.themeHighlightColor.g, game.themeHighlightColor.b } },
 	    labelColor = { default={ 1, 1, 1 } },
 	    onEvent = back
 	}
@@ -338,7 +354,8 @@ function act:init( )
 		x = act.xMin + 40, y = act.yMax - 35,
 		shape = "circle",
 		radius = 30,
-		fillColor = { default={ 1, 0.5, 0 }, over={ 1, 0.4, 0 } },
+		fillColor = { default = { game.themeColor.r, game.themeColor.g, game.themeColor.b }, 
+			over = { game.themeHighlightColor.r, game.themeHighlightColor.g, game.themeHighlightColor.b } },
 	    labelColor = { default={ 1, 1, 1 } },
 	    onEvent = thrust
 	}
@@ -351,6 +368,7 @@ function act:init( )
 		{ 0, -30, 40, 0, 0, 30 }, rotateCC )
 
 	--physics.setDrawMode( "hybrid" )
+
 end
 
 -----------------------------------------------------------------------------------------

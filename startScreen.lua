@@ -48,7 +48,7 @@ function act:init()
 	 	act:newImage( "titleMars.jpg", { y = act.yMin - act.height*2, anchorY = 0, height = act.height*2 }  ),
 	 }
 	local imageMask = act:newImage( "titleScreenMask.png", { width = act.width } )
-	local title = display.newText( act.group, "Mars App", act.xCenter, act.yMin + 40, native.systemFontBold, 60 )
+	local title = display.newText( act.group, "Mars Explorer", act.xCenter, act.yMin + 60, native.systemFontBold, 40 )
 	local startBtn = widget.newButton 
 	{ 
 		label = "Start", 
