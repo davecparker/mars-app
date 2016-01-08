@@ -472,7 +472,6 @@ function act:prepare( )
 end
 
 function act:stop( )
-	game.stopAmbientSound( musicChannel )
 	physics.pause( )
 end
 
