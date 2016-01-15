@@ -325,15 +325,15 @@ function timeLimit()
 	transition.to( waterText, { time = 100, xScale = 1, yScale = 1 } )
 
 
-	if x <= 15 then
+	if x <= 3 * H / 64 then
 		range.text = "Ideal range"
-	elseif x <= 70 then
+	elseif x <= 6 * H / 32 then
 		range.text = "Good range"
-	elseif x <= 140 then
+	elseif x <= 9 * H / 32 then
 		range.text =  "Mediocre range"
 	elseif x <= 183 then
 		range.text =  "Bad range"
-	elseif x <= 250 then
+	elseif x <= H then
 		range.text = "Horrible range"
 	end
 

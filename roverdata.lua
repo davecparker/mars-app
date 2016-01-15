@@ -22,18 +22,6 @@ data.mapZoomGrp = nil			-- display group for map objects subject to zooming/pann
 data.dynamicGrp = nil 			-- display group for dynamic scroll-view objects
 
 -----------------------------------------------------------------------------------------
--- Act variables
------------------------------------------------------------------------------------------
--- data.WIDTH = 0
--- data.HEIGHT = 0
--- data.xMin = 0
--- data.yMin = 0
--- data.xMax = 0
--- data.yMax = 0
--- data.xCenter = 0
--- data.yCenter = 0
-
------------------------------------------------------------------------------------------
 -- Terrain variables
 -----------------------------------------------------------------------------------------
 data.terrain = {} 				-- basic terrain objects
@@ -41,24 +29,28 @@ data.shape = {} 				-- terrain obstacle shapes
 data.craterHeightMap = {}		-- crater height values
 data.courseHeightMap = {}		-- course height values
 data.defaultElevation = 100 	-- terrain elevation
+data.minTerrainX = -220
+data.maxTerrainX = 420
 data.terrainExcess = 100 		-- off-display terrain amount
 data.terrainOffset = -100 		-- terrain offset
+data.terrainExtent = data.maxTerrainX - data.minTerrainX
 data.nTerrainRects = 10			-- number of basic terrain objects
+data.nObstacles = 25
 data.craterIndex = 1			-- crater array index
 data.craterEndX = 0				-- x-coordinate at which the current crater ends
 data.craterHeightIndex = 1				-- crater height array index
 data.floorY = data.defaultElevation		-- current crater floor height
-data.nextX = 0							-- x-coordinate for the next basic terrain object
-data.nextObstacle = nextX					-- x-coordinate for the next terrain obstacle
+data.nextX = data.minTerrainX 			-- x-coordinate for the next basic terrain object
 data.terrainColor = { 0.8, 0.35, 0.25 }		-- terrain color
 data.obstacleColor = { 0.3, 0.1, 0.1 }		-- obstace color
-data.removalSensorRect = nil				-- terrain removal sensor disply object
+data.removalSensorRect = nil				-- terrain removal sensor display object
 
 -----------------------------------------------------------------------------------------
 -- Rover variables
 -----------------------------------------------------------------------------------------
 data.rover = nil 			-- rover display object
 data.wheelSprite = {} 		-- rover wheel display objects
+data.roverPosition = 100
 data.sideToMapScale = 400	-- distance scale between scroll view and overhead view
 
 -----------------------------------------------------------------------------------------

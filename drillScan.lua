@@ -179,7 +179,7 @@ function act:init()
 	infoGroup = display.newGroup()
 	infoGroup.x, infoGroup.y = XC, YC
 
-	local infoScreen = display.newRect( infoGroup, 0, 0, W, H )
+	local infoScreen = display.newRect( infoGroup, 0, 0, act.width, act.height )
 	infoScreen.fill = { 0, 0, 0, 0.7 }
 
 	local infoText1 = display.newText( infoGroup, "Tap to scan the surface of mars", 0, -60, native.systemFont, 20 )
@@ -228,7 +228,7 @@ end
 
 function roverBack()
 
-	game.removeAct( drillScan )
+	game.removeAct( "drillScan" )
 	game.gotoAct( "rover", { time = 333, effect = "fade" } )
 
 end
