@@ -31,18 +31,18 @@ local gems = {
         recharge =  { x = -58, y = 101, t = "res", res = "kWh", amount = 100, recurring = true },
 
         -- In Lab
-        h2oL1 =     { x = 124,  y = 106, t = "res", res = "h2o", amount = 50, enabled = true  },
-        foodL1 =    { x = 124,  y = 123, t = "res", res = "food", amount = 50, enabled = true  },     
-        panel2 =    { x = 124, y = 164, t = "act", act = "circuit", param = 2  },
-        msgHist =   { x = 42, y = 103, t = "doc", file = "Message History" },
+        h2oL1 =     { x = 38,  y = 114, t = "res", res = "h2o", amount = 50, enabled = true  },
+        foodL1 =    { x = 38,  y = 156, t = "res", res = "food", amount = 50, enabled = true  },     
+        panel2 =    { x = 133, y = 105, t = "act", act = "circuit", param = 2  },
+        msgHist =   { x = 75, y = 137, t = "doc", file = "Message History" },
         stasis =    { x = 68, y = 167, t = "act", act = "stasis" },
 
         -- In Lounge
         panel3 =    { x = 121, y = -103, t = "act", act = "circuit", param = 3  },
 
         -- In Greenhouse
-        h2oG1 =     { x = -65,  y = -120, t = "res", res = "h2o", amount = 20, enabled = true  },
-        h2oG2 =     { x = -65,  y = -103, t = "res", res = "h2o", amount = 20, enabled = true  },
+        h2oG1 =     { x = -65,  y = -110, t = "res", res = "h2o", amount = 20, enabled = true  },
+        h2oG2 =     { x = -65,  y = -100, t = "res", res = "h2o", amount = 20, enabled = true  },
         plants =    { x = -87,  y = -141, t = "act", act = "greenhouse" },
  
 		-- In Engineering room 
