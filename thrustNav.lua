@@ -28,6 +28,15 @@ local act = game.newAct()
 --   2) use two space images (one with Mars, one with Earth) for left and right
 --   3) detect and stop vertical up/down with equal reverse thrust
 
+-- fix text to be clean(horz/vert degrees and velocity) with columns and no "getting close" messages
+-- eliminate text impulses line
+-- add print of list of children to Act.lua in scene:show did area
+-- add texture memory info to debug screen
+-- fix close - ontarget to be just on-target
+-- remove vertical and horizontal white lines 
+-- fix target orbit circle disappearing when spin 360
+
+
 ------------------------- Start of Activity --------------------------------
 
 -- File local variables
@@ -60,6 +69,9 @@ local thrusterSound     -- thrust sound
 local leftAccelerate, rightAccelerate, upAccelerate, downAccelerate
 local accelerateFrameCount
 local onTargetX, onTargetY, onTargetXY -- graphics that become visible when on target
+local circle -- represents target orbit in round 2 of thrustNav
+local earthHasCollided = false -- flag for taunts to show one time only
+local sunHasCollided = false   -- flag for taunts to show one time only
 
 -- Make a small red circle centered at the given location
 local function makeStar( x, y )
@@ -96,11 +108,15 @@ local function backButtonPress ( event )
 		if ( ( math.abs( xVelocity ) > 0.00001 ) or 
 			( math.abs( yVelocity )  > 0.00001) ) then
 			-- game.showHint( "Still Spinning!", "Navigation", goMainAct )
-			game.messageBox( "Still Spinning!", { onDismiss = goMainAct } )
+			-- game.messageBox( "Still Spinning!", { onDismiss = goMainAct } )
+			game.messageBox( "Still Spinning!" )
+			game.gotoAct ( "mainAct" )
 		elseif ( ( math.abs( yTargetDelta ) >= 3 ) or 
 			( math.abs( xTargetDelta ) >= 3 ) ) then
 			-- game.showHint( "Still Off Target!", "Navigation", goMainAct )
-			game.messageBox( "Still Off Target!", { onDismiss = goMainAct } )
+			-- game.messageBox( "Still Off Target!", { onDismiss = goMainAct } )
+			game.messageBox( "Still Off Target!" )
+			game.gotoAct ( "mainAct" )
 		end
 	end
 	return true
@@ -110,7 +126,7 @@ end
 function updateEnergy()
 	totalRocketImpulses = totalRocketImpulses + 1
 	-- also update energy to main resources
-	game.saveState.resources.kWh = game.saveState.resources.kWh - 0.1
+	-- game.saveState.resources.kWh = game.saveState.resources.kWh - 0.1
 end
 
 -- Turn left button 
@@ -256,21 +272,25 @@ function act:prepare()
 		print( "playing second round of thrustNav", game.saveState.thrustNav.state )
 		-- mars.width = mars.width * 8
    		-- mars.height = mars.height * 8
+   		xVelocityInc = 0.05
+   		yVelocityInc = 0.05
    		mars:scale( 8, 8 )
    		totalRocketImpulses = 0
 		xVelocity = 0
 		printPositions()
     	-- put a circle around big Mars
-   		local xCenter = mars.x
-		local yCenter = mars.y
-		local c = display.newCircle( spaceGroup, xCenter, yCenter, ( mars.width * 4 ) +  mars.width / 1.6 )
-		print( "xCenter=", xCenter,"  yCenter=", yCenter )
+   		-- local xCenter = mars.x
+		-- local yCenter = mars.y
+		-- circle:scale( 8, 8 )
+		-- circle = display.newCircle( spaceGroup, xCenter, yCenter, ( mars.width * 4 ) +  mars.width / 1.6 )
+		print( "xCenter=", circle.x,"  yCenter=", circle.y )
 		print( "mars.width= ", mars.width )
 		print( "xmin=", mars.contentBounds.xMin, " xMax=", mars.contentBounds.xMax, 
 			" yMin=", mars.contentBounds.yMin, " yMax=", mars.contentBounds.yMax )
-		c.strokeWidth = 2
-		c:setStrokeColor( 0, 1, 0 ) 
-		c:setFillColor( 0, 0, 0, 0.2 )
+		circle.strokeWidth = 2
+		circle:setStrokeColor( 0, 1, 0 ) 
+		circle:setFillColor( 0, 0, 0, 0.2 )
+		circle.isVisible = true
     	if( game.cheatMode ) then		-- move spaceGroup to final position	
 			spaceGroup.x = act.width * ( -0.09375 )  --   -30 works for iphone5
     		spaceGroup.y = act.height * 0.4128 -- 165 works for iphone 5
@@ -309,6 +329,10 @@ function act:init()
 	-- create group for rotating background space objects
 	spaceGroup = act:newGroup()
 
+	-- create the console image
+	-- consoleImage = act:newImage( "console.png", { width = act.width - 20 } )
+	-- consoleImage.y = act.yMax - 60
+
 	-- Create control buttons, background, etc.
 	buttonTurnLeft = act:newImage( "arrowbutton.png", { width = 50, height = 50 } )
 	buttonTurnLeft.rotation = -90
@@ -332,7 +356,7 @@ function act:init()
 	bgLeft = display.newImageRect( spaceGroup, "media/thrustNav/starrynight.png", 2*act.width, 2*act.height )
 	bgLeft.x = act.xCenter
 	bgLeft.y = act.yCenter
-	bgRight = display.newImageRect( spaceGroup, "media/thrustNav/starrynight2.png", 2*act.width, 2*act.height )
+	bgRight = display.newImageRect( spaceGroup, "media/thrustNav/starrynight.png", 2*act.width, 2*act.height )
 	bgRight.x = act.xCenter * 5
 	bgRight.y = act.yCenter
 
@@ -359,6 +383,10 @@ function act:init()
     print("Mars anchorX=", mars.anchorX, "anchorY=", mars.anchorY )
     print("Mars is placed at ", mars.x, ",", mars.y , " in spaceGroup before move") 
 
+	-- create circle for target orbit and hide it
+	circle = display.newCircle( spaceGroup, mars.x, mars.y, ( mars.width * 4 ) +  mars.width / 1.6 )
+	circle.isVisible = false
+
     earth = display.newImageRect( spaceGroup, "media/thrustNav/earth.png", 30, 30 )
     earth.x = mars.x + ( 2 * act.width )
     earth.y = mars.y - 10
@@ -379,11 +407,12 @@ function act:init()
 	rotVelocityInc = 0.01
 
     -- Crosshair in the center
-	local dy = 200
-	local dx = 20
-	display.newLine( act.group, act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
-	display.newLine( act.group, act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
-	targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
+	-- local dy = 200
+	-- local dx = 20
+	-- display.newLine( act.group, act.xCenter, act.yCenter - dy, act.xCenter, act.yCenter + dy )
+	-- display.newLine( act.group, act.xCenter - dx, act.yCenter, act.xCenter + dx, act.yCenter )
+	--targetRect = display.newRect( act.group, act.xCenter, act.yCenter, 15, 15 )
+	targetRect = act:newImage( "ship.png", {width = 30})
 
 	-- On Target Indicators
 	onTargetX = act:newImage( "targetx.png", { height = act.width/2, width = act.width/2 } )
@@ -394,14 +423,14 @@ function act:init()
 	onTargetXY.isVisible = false
 
     -- Set up buttons
-	buttonTurnLeft.x = act.xMin + act.width / 8
+	buttonTurnLeft.x = act.xMin + act.width / 6
 	buttonTurnLeft.y = act.yMax - act.height / 12
 	buttonTurnLeft.isVisible = true
 	buttonTurnLeftFlame.x = buttonTurnLeft.x + buttonTurnLeft.width / 2 + buttonTurnLeftFlame.height / 2
 	buttonTurnLeftFlame.y = buttonTurnLeft.y
 	buttonTurnLeftFlame.isVisible = false 
 
-	buttonTurnRight.x = act.xMax - act.width / 8
+	buttonTurnRight.x = act.xMax - act.width / 6
 	buttonTurnRight.y = act.yMax - act.height / 12
 	buttonTurnRight.isVisible = true
 	buttonTurnRightFlame.rotation = -90
@@ -420,7 +449,7 @@ function act:init()
 	--- buttonRollRight.isVisible = true
 
 	buttonPitchUp.x = act.xCenter
-	buttonPitchUp.y = act.yMax - act.height / 8 
+	buttonPitchUp.y = act.yMax - act.height / 6
 	buttonPitchUp.isVisible = true
 	buttonPitchUpFlame.x = buttonPitchUp.x 
 	buttonPitchUpFlame.y = buttonPitchUp.y + buttonPitchUp.width / 4 + buttonPitchUpFlame.height / 2
@@ -428,7 +457,7 @@ function act:init()
 
 
 	buttonPitchDown.x = act.xCenter
-	buttonPitchDown.y = act.yMax - act.height / 30 
+	buttonPitchDown.y = act.yMax - act.height / 18 
 	buttonPitchDown.isVisible = true
 	buttonPitchDownFlame.x = buttonPitchDown.x 
 	buttonPitchDownFlame.y = buttonPitchDown.y - buttonPitchDown.width / 4 - buttonPitchDownFlame.height / 2
@@ -481,8 +510,8 @@ function updateNavStats()
 	local rotStr = ""
 
 	if( game.saveState.thrustNav.state < 1 ) then	-- start of first play
-		xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter
-		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
+		xTargetDelta = ( mars.contentBounds.xMax + mars.contentBounds.xMin ) / 2 - act.xCenter  
+		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter  
 	elseif ( game.saveState.thrustNav.state == 2 ) then	-- start of second play
 		xTargetDelta = ( mars.contentBounds.xMax + 20 ) - act.xCenter  
 		yTargetDelta = ( mars.contentBounds.yMax + mars.contentBounds.yMin ) / 2 - act.yCenter 
@@ -491,18 +520,12 @@ function updateNavStats()
 	if( math.abs( xTargetDelta ) < 3  ) then 
 		xStr = xStr .. " On Target" 
 		onTargetX.isVisible = true
-	elseif( math.abs( xTargetDelta ) < 6  ) then 
-		xStr = xStr .. " Getting close" 
-		onTargetX.isVisible = true
 	else
 		onTargetX.isVisible = false
 		onTargetXY.isVisible = false
 	end
 	if( math.abs( yTargetDelta ) < 3  ) then 
 		yStr = yStr .. " On Target" 
-		onTargetY.isVisible = true
-	elseif( math.abs( yTargetDelta ) < 6  ) then 
-		yStr = yStr .. " Getting close" 
 		onTargetY.isVisible = true
 	else
 		onTargetY.isVisible = false
@@ -533,16 +556,18 @@ function updateNavStats()
 		game.saveState.thrustNav.onTarget = true
 	end
 
-	if( hasCollided( earth, targetRect ) ) then
-		game.messageBox( "Are you going Home!?!"  )
-		navStatsText1.text = "Where are you going?  Home?"	
-	elseif( hasCollided( sun, targetRect ) ) then
-		navStatsText1.text = "That will be VERY HOT!"
+	if( hasCollided( earth, targetRect )  and earthHasCollided == false ) then
+		game.messageBox( "Are you going Home!?!" )
+		-- navStatsText1.text = "Where are you going?  Home?"	
+		earthHasCollided = true
+	elseif( hasCollided( sun, targetRect ) and sunHasCollided == false ) then
+		-- navStatsText1.text = "That will be VERY HOT!"
 		game.messageBox( "That will be VERY HOT!!"  )	
+		sunHasCollided = true
 	else
-		navStatsText1.text = string.format( "%s  %3d %5.1f   %s", "xDelta=", xTargetDelta , xVelocity, xStr)
-		navStatsText2.text = string.format( "%s  %3d %5.1f   %s", "yDelta=", yTargetDelta , yVelocity, yStr)
-		navStatsText3.text = string.format( "%s %4d", "Total Impulses= ", totalRocketImpulses )
+		navStatsText1.text = string.format( "                       %+6s %+5s", "Angle", "Vel"  )
+		navStatsText2.text = string.format( "%+12s  %+8.1f %+7.2f", "Horizontal=", xTargetDelta * 90 / act.width , xVelocity )
+		navStatsText3.text = string.format( "%+12s  %+8.1f %+7.2f", " Vertical    =", yTargetDelta * 90 / act.height , yVelocity )
 	end
 end
 
@@ -555,7 +580,7 @@ function updatePosition()
 	-- check for button holds
 	if( leftAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
-		if( accelerateFrameCount % 5 == 0 ) then
+		if( accelerateFrameCount % 10 == 0 ) then
 			xVelocity = xVelocity + xVelocityInc
 			updateEnergy()
 		end
@@ -565,7 +590,7 @@ function updatePosition()
 		end
 	elseif( rightAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
-		if( accelerateFrameCount % 5 == 0 ) then
+		if( accelerateFrameCount % 10 == 0 ) then
 			xVelocity = xVelocity - xVelocityInc
 			updateEnergy()
 		end
@@ -575,7 +600,7 @@ function updatePosition()
 		end
 	elseif( upAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
-		if( accelerateFrameCount % 5 == 0 ) then
+		if( accelerateFrameCount % 10 == 0 ) then
 			yVelocity = yVelocity + yVelocityInc
 			updateEnergy()
 		end
@@ -585,7 +610,7 @@ function updatePosition()
 		end
 	elseif( downAccelerate == true and game.saveState.thrustNav.state % 2 == 0 ) then
 		accelerateFrameCount = accelerateFrameCount + 1
-		if( accelerateFrameCount % 5 == 0 ) then
+		if( accelerateFrameCount % 10 == 0 ) then
 			yVelocity = yVelocity - yVelocityInc
 			updateEnergy()
 		end
@@ -602,6 +627,7 @@ function updatePosition()
 		if( hasCollided( bgRight, mars ) ) then   -- move mars as needed
 			print( "move mars with right tile to left")
 			mars.x = mars.x - ( 4 * act.width )
+			circle.x = circle.x - ( 4 * act.width )  -- move circle with mars
 		end
 		if( hasCollided( bgRight, earth ) ) then   -- move earth as needed
 			print( "move Earth with right tile to left")
@@ -620,6 +646,7 @@ function updatePosition()
 		if( hasCollided( bgLeft, mars ) ) then  -- move mars as needed
 			print( "Move Mars with left tile to right")
 			mars.x = mars.x + ( 4 * act.width )
+			circle.x = circle.x + ( 4 * act.width )  -- move circle with mars
 		end
 		if( hasCollided( bgLeft, earth ) ) then  -- move earth as needed
 			print( "Move Earth with left tile to right")
@@ -653,6 +680,7 @@ end
 -- print debug positon information to console
 function printPositions()
 	print("Mars  x=", mars.x, "  y=", mars.y, "  ax=", mars.anchorX, "  ay=", mars.anchorY )
+	print("Circle  x=", circle.x, "  y=", circle.y, "  ax=", circle.anchorX, "  ay=", circle.anchorY )
 	print("Mars  contentBounds.xMin=", mars.contentBounds.xMin, "  Mars cb.xMax=", mars.contentBounds.xMax )
 	print("Mars  contentBounds.yMin=", mars.contentBounds.yMin, "  Mars cb.yMax=", mars.contentBounds.yMax )
 	print("Space x=", spaceGroup.x, "  y=", spaceGroup.y, "  ax=", spaceGroup.anchorX, "  ay=", spaceGroup.anchorY )

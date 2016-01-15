@@ -104,11 +104,11 @@ function Act:whiteBackground()
     return bg
 end    
 
--- Make and return a light gray background for the act.
-function Act:grayBackground()
+-- Make and return a background with the given grayscale shade (0-1, default 0.7) for the act.
+function Act:grayBackground( gray )
     -- Background for the whole view
     local bg = display.newRect( self.group, self.xCenter, self.yCenter, self.width, self.height )
-    bg:setFillColor( 0.7 )  -- light gray
+    bg:setFillColor( gray or 0.7 )
     return bg
 end    
 
@@ -123,7 +123,7 @@ function Act:makeTitleBar( title, backListener )
     local bar = display.newRect( group, self.xMin, self.yMin, self.width, self.dyTitleBar )
     bar.anchorX = 0
     bar.anchorY = 0
-    bar:setFillColor( 0.5, 0, 0 )   -- dark red
+    bar:setFillColor( game.themeColor.r, game.themeColor.g, game.themeColor.b )
     bar:addEventListener( "touch", game.eatTouch )  -- eat touches on title bar
     bar:addEventListener( "tap", game.eatTouch )    -- and taps too
 

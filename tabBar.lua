@@ -25,9 +25,19 @@ local buttons = {
 }
 
 
+-- Automatically pause or unpause the game as appropriate for going to the given tab name
+local function autoPauseGame( tabName )
+    local pause = (tabName == "menu")
+    if pause ~= game.paused then
+        game.paused = pause
+        print( "game.paused = ", game.paused )
+    end
+end
+
 -- Handle tab bar button events
 local function handleTabBarEvent( event )
     local scene = event.target._id   -- tab id is the scene name
+    autoPauseGame( scene )
     local effect = "slideLeft"
     if scene == "mainAct" then
     	-- Restore current act playing on the main tab
@@ -93,14 +103,23 @@ function initTabBar()
         tabSelectedFrameHeight = game.dyTabBar - 10,
         buttons = buttons,
     }
+
+    -- Put the side bars on top, if any
+    if game.sideBars then
+        game.sideBars:toFront()
+    end
 end
 
--- Go to the given game tab name
-function game.gotoTab( name )
+-- Go to the given game tab name, simulate a press if press is true (or omitted)
+function game.gotoTab( name, press )
 	-- Find the tab with the given name
+    autoPauseGame( name )
 	for i = 1, #buttons do
 		if buttons[i].id == name then
-			tabBar:setSelected( i, true )
+            if press ~= false then
+                press = true
+            end
+			tabBar:setSelected( i, press )
 			return
 		end
 	end
@@ -112,7 +131,7 @@ function game.showMessagePreview( text )
     msgPreview.text.text = string.gsub( text, "\n", " ")  -- replace newlines with spaces
     transition.cancel( msgPreview )
     transition.to( msgPreview, { y = msgPreview.yShow, time = 500 } )
-    transition.to( msgPreview, { y = msgPreview.yHide, delay = 2500, time = 500 } )
+    transition.to( msgPreview, { y = msgPreview.yHide, delay = 3500, time = 500 } )
 end
 
 -- Hide the message preview box if showing
