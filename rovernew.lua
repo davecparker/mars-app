@@ -171,7 +171,7 @@ function new.rover( roverX, roverY )
 		parent = data.dynamicGrp, 
 		x = roverX, 
 		y = roverY, 
-		width = 65, 
+		width = 75, 
 		height = 50 
 	} 
 	
