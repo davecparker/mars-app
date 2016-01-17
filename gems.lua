@@ -27,8 +27,8 @@ local gems = {
         crew =      { x = 25, y = -226, t = "doc", file = "Crew Manifest", enabled = true },
 
         -- In Rover Bay
-        rover =     { x = -104, y = 140, t = "act", act = "rover" },
-        recharge =  { x = -58, y = 101, t = "res", res = "kWh", amount = 100, recurring = true },
+        rover =     { x = -82, y = 140, t = "act", act = "rover" },
+        recharge =  { x = -44, y = 101, t = "res", res = "kWh", amount = 100, recurring = true },
 
         -- In Lab
         h2oL1 =     { x = 38,  y = 114, t = "res", res = "h2o", amount = 50, enabled = true  },
@@ -38,7 +38,7 @@ local gems = {
         stasis =    { x = 68, y = 167, t = "act", act = "stasis" },
 
         -- In Lounge
-        panel3 =    { x = 121, y = -103, t = "act", act = "circuit", param = 3  },
+        panel3 =    { x = 128, y = -116, t = "act", act = "circuit", param = 3  },
 
         -- In Greenhouse
         h2oG1 =     { x = -65,  y = -110, t = "res", res = "h2o", amount = 20, enabled = true  },
@@ -46,7 +46,7 @@ local gems = {
         plants =    { x = -87,  y = -141, t = "act", act = "greenhouse" },
  
 		-- In Engineering room 
-		panel1 =	{ x = 38, y = 243, t = "act", act = "circuit", param = 1 },
+		panel1 =	{ x = 26, y = 247, t = "act", act = "circuit", param = 1 },
 
         -- In Captain Jordan's Quarters
         jordan1 =   { x = -69, y = -44, t = "doc", file = "Jordan - personal log" },
