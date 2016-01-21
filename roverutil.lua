@@ -93,21 +93,15 @@ end
 
 
 function util.testPrint()
-	print( string.format("%s %.2f %s %.2f %s %.2f %s %.2f %s %.2f %s %s %s %s %s %s %s %.2f %s %.2f %s %.2f %s %.2f %s %.2f %s %.2f",
-						"mapZoomGrp.x: ", mapZoomGrp.x,
-						"map.rover.x: ", map.rover.x,
-						"mapZoomGrp.y: ", mapZoomGrp.y,
-						"map.rover.y: ", map.rover.y,
-						"map.courseLength: ", map.courseLength,
-						"rover.isActive: ", tostring(rover.isActive),
-						"rover.leftShip: ", tostring(map.rover.leftShip)
-						"rover.inCrater: ", tostring(rover.inCrater),
-						"craterIndex: ", craterIndex,
-						"nextX: ", nextX + dynamicGrp.x,
-						"craterEndX: ", craterEndX,
-						"craterEndX+dynamicGrp.x: ", craterEndX+dynamicGrp.x,
-						"#courseHeightMap: ", #courseHeightMap,
-						"Crater distance: ", calcDistance( map.rover.x, map.rover.y, game.saveState.craters[craterIndex].x, game.saveState.craters[craterIndex].y )
+	print( string.format("%s %.2f %s %s %s %.2f %s %.2f %s %.2f %s %.2f %s %.2f %s %.2f",
+						"rover.x", data.rover.x,
+						"inCrater: ", tostring(data.rover.inCrater),
+						"craterIndex: ", data.craterIndex,
+						"nextX+dynamicGrp.x: ", data.nextX + data.dynamicGrp.x,
+						"craterEndX: ", data.craterEndX,
+						"craterEndX+dynamicGrp.x: ", data.craterEndX + data.dynamicGrp.x,
+						"#courseHeightMap: ", #data.courseHeightMap,
+						"Crater distance: ", util.calcDistance( data.map.rover.x, data.map.rover.y, game.saveState.craters[data.craterIndex].x, game.saveState.craters[data.craterIndex].y )
 						))
 end 
 

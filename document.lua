@@ -19,14 +19,16 @@ local act = game.newAct()
 
 -- Act variables
 local dxyMargin = 10    -- margin around text area
-local scrollView
-local textBox
+local scrollView        -- scrolling view area for text
+local textBox           -- multi-line text box
+local loadedDoc         -- name of document currently loaded into the textbox or nil if none
 
 
 -- Handle tap on the back button
 local function backTapped()
 	-- "Close" the document being viewed, and go back to the documents list view
 	game.openDoc = nil
+	loadedDoc = nil
 	game.gotoScene( "documents", { effect = "slideRight", time = 300 } )
 	return true
 end
@@ -77,6 +79,11 @@ function act:prepare()
 	-- Set title bar text to name of document
 	act.title.text = game.openDoc
 
+	-- If the document is already loaded, then do nothing (preserves scroll position)
+	if loadedDoc == game.openDoc then
+		return
+	end
+
 	-- Open the document and load the text into the text box
 	textBox.text = ""   -- show empty contents if we fail
 	local path = system.pathForFile( "docs/" .. game.openDoc .. ".txt", system.ResourceDirectory )
@@ -86,6 +93,7 @@ function act:prepare()
 			local str = file:read( "*a" )	-- read entire file as a string
 			if str then
 				textBox.text = str
+				loadedDoc = game.openDoc
 			end
 			io.close( file )
 		else
@@ -93,9 +101,10 @@ function act:prepare()
 		end	
 	end
 
-	-- Set scroll height or disable scrolling if it all fits
+	-- Set scroll height, or disable scrolling if it all fits
 	local scrollHeight = textBox.height + dxyMargin * 2
 	scrollView:setScrollHeight( scrollHeight )
+	scrollView:scrollToPosition{ x = 0, y = 0, time = 0 }   -- start at beginning
 	scrollView:setIsLocked( scrollHeight <= scrollView.height )
 end
 

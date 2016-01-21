@@ -61,7 +61,7 @@ local function touchMessagePreview( event )
 end
 
 -- Initialize the app tab bar and message preview on the bottom of the screen
-function initTabBar()
+local function initTabBar()
     -- Assign properties common to all buttons
     local dxyIcon = game.dyTabBar - 5
     for i = 1, #buttons do
