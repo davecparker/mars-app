@@ -175,9 +175,9 @@ local function addFlowers( plant )
 	if not plant.flowers then
 		local flowers = act:newGroup( plant )
 		local size = 8   -- in unscaled plant units
-		act:newImage( "flower.png", { parent = flowers, width = size, x = 0, y = -20 } )
-		act:newImage( "flower.png", { parent = flowers, width = size, x = 7, y = -15} )
-		act:newImage( "flower.png", { parent = flowers, width = size, x = -5, y = -10 } )
+		act:newImage( "flower.png", { parent = flowers, width = size, x = 0, y = -30 } )
+		act:newImage( "flower.png", { parent = flowers, width = size, x = 7, y = -25} )
+		act:newImage( "flower.png", { parent = flowers, width = size, x = -5, y = -20 } )
 		plant.flowers = flowers
 	end
 end
