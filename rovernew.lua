@@ -12,6 +12,11 @@ local game = globalGame
 -- Load rover data table
 local data = require( "roverdata" )
 
+-- Load rover utility functions
+local util = require( "roverutil" )
+
+local bodySeparator = require( "bodySeparator" )
+
 local new = {}
 
 local onCollision
@@ -32,9 +37,7 @@ end
 
 -- Create sensor body for display object removal
 function new.RemovalSensor()
-	local width = 20
-	local x = data.minTerrainX - width/2
-	data.removalSensor = display.newRect( data.dynamicGrp, x, data.act.yCenter, width, data.act.height )
+	data.removalSensor = display.newRect( data.dynamicGrp, data.nextX, data.act.yCenter, 20, data.act.height )
 	data.removalSensor.anchorX = 1
 	data.removalSensor.isRemover = true
 	physics.addBody( data.removalSensor, "dynamic", { isSensor = true } )
@@ -53,9 +56,9 @@ function new.circle( x, y, r )
 end
 
 -- Accepts x, y coordinates and side length; returns square terrain physics object
-function new.square( x, y, s )
+function new.square( x, y, s, m )
 	local square = display.newRect( data.dynamicGrp, x, y + s/3, s, s )
-	square.rotation = math.random( 30, 60 ) -- random rotation for variation
+	square.rotation = math.random( 30, 60 ) + m
 	square.isObstacle = true
 	physics.addBody( square, "static", { friction = 1.0 } )
 	square.collision = onCollision
@@ -64,9 +67,9 @@ function new.square( x, y, s )
 end
 
 -- Accepts x, y coordinates and side length; returns rounded square terrain physics object
-function new.roundSquare( x, y, s )
+function new.roundSquare( x, y, s, m )
 	local square = display.newRoundedRect( data.dynamicGrp, x, y + s/3, s, s, s/4 )
-	square.rotation = math.random( 30, 60 )
+	square.rotation = math.random( 30, 60 ) + m
 	square.isObstacle = true
 	physics.addBody( square, "static", { friction = 1.0 } )
 	square.collision = onCollision
@@ -75,29 +78,27 @@ function new.roundSquare( x, y, s )
 end
 
 -- Accepts x, y coordinates of bottom-left vertice, returns trapezoid terrain physics object
-function new.poly( x, y, s )
+function new.polygon( x, y, s, m )
 	local l = math.random( 3, 10 )
 	local vertices = { x, y, x + s, y - s, x + s + l, y - s, x + 2 * s + l, y }
-	local poly = display.newPolygon( data.dynamicGrp, x, y + 1.5, vertices )
-	poly.rotation = math.random( -20, 20 )
-	poly.isObstacle = true
-	physics.addBody( poly, "static", { friction = 1.0 } )
-	poly.collision = onCollision
-	poly:addEventListener( "collision" )
-	return poly
+	local polygon = display.newPolygon( data.dynamicGrp, x, y + 1.5, vertices )
+	polygon.rotation = math.random( -20, 20 ) + m
+	polygon.isObstacle = true
+	physics.addBody( polygon, "static", { friction = 1.0 } )
+	polygon.collision = onCollision
+	polygon:addEventListener( "collision" )
+	return polygon
 end
 
 -- Accepts table of parameters: group, objTable, x, y, width, height, anchorX, anchorY, isObstacle, isCrater
 -- Returns a rectangular terrain display object
-function new.rectTerrainElement( params )
+function new.basicTerrainObj( params )
 	local rect = display.newRect( params.group, params.x, params.y, params.width, params.height )
 	rect:setFillColor( unpack(data.terrainColor) )
 	rect.objTable = params.objTable -- table to store rect
 	rect.index = #rect.objTable + 1 -- table index of next available element
 	rect.x = params.x
 	rect.y = params.y
-	rect.anchorX = params.anchorX
-	rect.anchorY = params.anchorY
 	rect.isObstacle = params.isObstacle
 	rect.isCrater = params.isCrater
 	rect.objTable[rect.index] = rect -- save into table
@@ -105,45 +106,116 @@ function new.rectTerrainElement( params )
 end
 
 -- Create a new rectangle terrain physics object
-function new.rectTerrain( w, h, isCrater )
+function new.basicTerrain( w, h, isObstacle, isCrater )
 
 	params = {
 		group = data.dynamicGrp,
 		objTable = data.terrain,
-		x = data.nextX,
-		y = data.act.yMax - h,
+		x = data.nextX + w/2,
+		y = data.act.yMax - h/2,
 		width = w,		
 		height = h,
-		anchorX = 0,
-		anchorY = 0,
-		isObstacle = false,
+		isObstacle = isObstacle,
 		isCrater = isCrater
 	}
 
-	local rect = new.rectTerrainElement( params )
+	local rect = new.basicTerrainObj( params )
 	physics.addBody( rect, "static", { friction = 1.0 } )
 	rect.collision = onCollision
 	rect:addEventListener( "collision" )
 	data.nextX = data.nextX + w
 end
 
+-- Accepts table of parameters: group, objTable, x, y, width, height, anchorX, anchorY, isObstacle, isCrater
+-- Returns a polygon terrain display object
+function new.craterTerrainObj( params )
+	local polygon = display.newPolygon( params.group, params.x, params.y, params.vertices, params.isObstacle, params.isCrater )
+	polygon:setFillColor( unpack(data.terrainColor) )
+	polygon.objTable = params.objTable -- table to store the object
+	polygon.index = #polygon.objTable + 1 -- table index of next available element
+	polygon.x = params.x
+	polygon.y = params.y
+	polygon.isObstacle = params.isObstacle
+	polygon.isCrater = params.isCrater
+	polygon.objTable[polygon.index] = polygon -- save into table
+	return polygon
+end
+
+-- Create a new crater terrain physics object
+function new.craterTerrain( isObstacle, isCrater )
+	if data.courseHeightIndex == #data.courseHeightMap then
+		new.basicTerrain( 1, data.courseHeightMap[data.courseHeightIndex], false, true )
+	else
+		local vertices = {}
+		local minY = data.act.yMax
+
+		for i = 1, 2 do
+			vertices[#vertices + 1] = data.nextX
+			vertices[#vertices + 1] = data.act.yMax - data.courseHeightMap[data.courseHeightIndex]
+
+			if vertices[#vertices] < minY then
+				minY = vertices[#vertices]
+			end
+
+			if data.courseHeightIndex == #data.courseHeightMap then
+				util.resetCraterData()
+				data.nextX = data.nextX - data.craterResolution
+				break
+			else
+				data.nextX = data.nextX + (2-i) * data.craterResolution
+				data.courseHeightIndex = data.courseHeightIndex + (2-i) * data.craterResolution
+				if data.courseHeightIndex > #data.courseHeightMap then
+					data.courseHeightIndex = #data.courseHeightMap
+				end
+			end
+		end
+
+		vertices[#vertices + 1] = vertices[#vertices - 1]
+		vertices[#vertices + 1] = data.act.yMax
+		vertices[#vertices + 1] = vertices[1]
+		vertices[#vertices + 1] = data.act.yMax
+
+		local minX = vertices[1]
+		local maxX = vertices[#vertices - 1]
+		local maxY = data.act.yMax
+
+		params = {
+			group = data.dynamicGrp,
+			objTable = data.terrain,
+			x = minX + (maxX - minX) / 2,
+			y = minY + (maxY - minY) / 2,
+			vertices = vertices,
+			isObstacle = isObstacle,
+			isCrater = isCrater
+		}
+
+		local polygon = new.craterTerrainObj( params )
+		bodySeparator.addNonConvexBody( polygon, { shape = vertices, bodyType = "static", bounce = 0.2, friction = 1, density = 1 } )
+		polygon.collision = onCollision
+		polygon:addEventListener( "collision" )
+	end
+	print(data.rover.x)
+end
+
 -- Accepts an optional x-coordinate in lieu of a randomly-generated x-coordinate
 -- Returns a randomly selected, sized, rotated obstacle physics object at coincident terrain height
 function new.obstacle( newX )
-	local minX = data.rover.x + data.act.width - data.roverPosition
 	local maxX = data.rover.x + data.act.width
+	local minX = maxX - data.roverPosition
 	local x = newX or math.random( minX, maxX )
-	local y = data.terrain[#data.terrain].y
-
-	-- Find the y-coordinate of the basic terrain object that contains this object's x-coordinate
-	local i = #data.terrain
-	while data.terrain[i].x > x do
-		i = i - 1
-		y = data.terrain[i].y
-	end 
-
+	local y = util.findTerrainHeight( x )
 	local size = math.random( 5, 10 )
-	local obstacle = data.shape[math.random(1, 4)]( x, y, size )
+	local m = util.findTerrainSlope( x )
+	
+	-- THIS IS A HACK TO ALIGN OBSTACLE HEIGHT WITH CRATER SLOPES. 
+	-- NEED TO UPDATE util.findTerrainHeight AND util.findTerrainSlope TO WORK PROPERLY WITH THE CRATER POLYGONS.
+	if m < -1 then
+		y = y - m/2 + size/5
+	elseif m > 1 then
+		y = y + m/2 + size/4
+	end
+
+	local obstacle = data.shape[math.random(1, 4)]( x, y, size, m )
 	obstacle:setFillColor( unpack(data.obstacleColor)  )
 	obstacle:toBack()
 end
@@ -184,12 +256,9 @@ function new.rover( roverX, roverY )
 	data.rover.accelerate = false
 	data.rover.brake = false
 	data.rover.isActive = true
-	data.rover.inCrater = false
 	data.rover.atShip = true
 	data.rover.isAutoNav = false
-	data.nextObstacle = data.rover.x + data.act.width
-	data.minTerrainX = data.rover.x - data.act.width
-	data.maxTerrainX = data.rover.x + data.act.width
+	data.nextX = data.rover.x - data.act.width + data.basicTerrainObjWidth / 2
 
 	-- Rover body physics: low density for minimal sway & increased stability
 	physics.addBody( data.rover, "dynamic", { density = 0.2, friction = 0.3, bounce = 0.2 } )
