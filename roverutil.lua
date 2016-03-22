@@ -28,11 +28,11 @@ function util.newCourse( group, x1, y1, x2, y2 )
 end
 
 -- Create new course arrow aligned with course direction
-function util.newArrow( act, group, x1, y1, x2, y2, vX, vY )
+function util.newArrow( act, group, x1, y1, x2, y2 )
 	local arrowData = { 
 		parent = group, 
-		x = x2 + 2 * vX, 
-		y = y2 + 2 * vY, 
+		x = x2 + 2 * data.map.courseVX, 
+		y = y2 + 2 * data.map.courseVY, 
 		height = 7
 	} 
 	local arrow = act:newImage( "arrow.png", arrowData )
@@ -42,67 +42,163 @@ function util.newArrow( act, group, x1, y1, x2, y2, vX, vY )
 end
 
 -- Replace current course with a new course
-function util.replaceCourse( act, group, x1, y1, x2, y2, vX, vY )
+function util.replaceCourse( act, group, x1, y1, x2, y2 )
 	display.remove( data.map.course )
 	display.remove( data.map.courseArrow )
 	data.map.course = util.newCourse( group, x1, y1, x2, y2 )
-	data.map.courseArrow = util.newArrow( act, group, x1, y1, x2, y2, vX, vY )
+	data.map.courseArrow = util.newArrow( act, group, x1, y1, x2 - data.map.courseVX, y2 - data.map.courseVY )
 	data.map.rover:toFront()
-	data.map.courseLength = util.calcDistance( x1, y1, x2, y2 )
 end
 
--- Calculate unit vectors
-function util.calcUnitVectors( x1, y1, x2, y2, length )
-	vX = (x2 - x1)/length
-	vY = (y2 - y1)/length
-	return vX, vY
+-- Calculate course unit vectors
+function util.calcUnitVectors( x1, y1, x2, y2 )
+	local courseLength = util.calcDistance( x1, y1, x2, y2 )
+	data.map.courseVX = (x2 - x1)/courseLength
+	data.map.courseVY = (y2 - y1)/courseLength
+	return data.map.courseVX, data.map.courseVY
 end
 
--- Calculate the course coordinates that intersect the current map boundary
+-- Calculate the course coordinates that intersect the mapGrp boundary
 function util.calcCourseCoords( group, x1, y1, x2, y2 )
-	data.map.courseLength = util.calcDistance( x1, y1, x2, y2 )
-	if data.map.courseLength > 0 then
-		data.map.courseVX, data.map.courseVY = util.calcUnitVectors( x1, y1, x2, y2, data.map.courseLength )
-		while game.xyInRect( x2, y2, group ) do
-			x2 = x2 + data.map.courseVX
-			y2 = y2 + data.map.courseVY
-		end
-		x2 = x2 - 2 * data.map.courseVX
-		y2 = y2 - 2 * data.map.courseVY
-	else
-		data.map.courseVX = 0
-		data.map.courseVY = 0
+
+	-- Ensure the starting course coordinates are within mapGrp  
+	if not game.xyInRect( x2, y2, group ) then
+		x2 = x1 + data.map.courseVX * data.map.courseLength / data.mapZoomGrp.xScale
+		y2 = y1 + data.map.courseVY * data.map.courseLength / data.mapZoomGrp.yScale
 	end
 
-	-- Set global variables to new destination coordinates
-	game.saveState.rover.x2 = x2
-	game.saveState.rover.y2 = y2
+	-- Find the coordinates that lie just within the mapGrp boundary
+	while game.xyInRect( x2, y2, group ) do
+		x2 = x2 + data.map.courseVX
+		y2 = y2 + data.map.courseVY
+	end
+	x2 = x2 - data.map.courseVX -- REFERENCING THE MAPGRP BOUNDARY HERE SHOULD PREVENT COURSE POINTER JITTER
+	y2 = y2 - data.map.courseVY
 
-	-- Calculate the length of the new course
 	data.map.courseLength = util.calcDistance( x1, y1, x2, y2 )
 
 	return x2, y2
 end
 
--- Calculate a y-coordinate for an x-coordinate
-function util.calcPtY( x1, y1, x2, y2, x3 )
-	local m = (y2 - y1)/(x2 - x1)
-	local b = y1 - m * x1
-	return m * x3 + b
+-- Determine whether cratersOnCourse table contains a particular crater
+function util.tableContains( table, value )
+	for i = 1, #table do
+		if table[i].id == value then
+			return true
+		end
+	end
+	return false
 end
 
+-- Empty table of its contents
+function util.emptyTable( table )
+	for i = #table, 1, -1 do
+		table[i] = nil
+	end
+end
 
-function util.testPrint()
-	print( string.format("%s %.2f %s %s %s %.2f %s %.2f %s %.2f %s %.2f %s %.2f %s %.2f",
-						"rover.x", data.rover.x,
-						"inCrater: ", tostring(data.rover.inCrater),
-						"craterIndex: ", data.craterIndex,
-						"nextX+dynamicGrp.x: ", data.nextX + data.dynamicGrp.x,
-						"craterEndX: ", data.craterEndX,
-						"craterEndX+dynamicGrp.x: ", data.craterEndX + data.dynamicGrp.x,
-						"#courseHeightMap: ", #data.courseHeightMap,
-						"Crater distance: ", util.calcDistance( data.map.rover.x, data.map.rover.y, game.saveState.craters[data.craterIndex].x, game.saveState.craters[data.craterIndex].y )
-						))
-end 
+-- Reset crater data variables and tables
+function util.resetCraterData()
+	data.drawingCrater = false
+	data.courseHeightIndex = 1
+	util.emptyTable( data.craterHeightMap )
+	util.emptyTable( data.courseHeightMap )
+end
+
+-- Load data.cratersOnCourse table with the craters that lie on the current rover course
+function util.findCratersOnCourse()
+	util.emptyTable( data.cratersOnCourse )
+	-- Remove scaling/panning from rover position
+	local roverX = (data.map.rover.x - data.mapZoomGrp.x) / data.mapZoomGrp.xScale
+	local roverY = (data.map.rover.y - data.mapZoomGrp.y) / data.mapZoomGrp.yScale
+
+	-- Reduce unit vector magnitude to increase crater detection resolution
+	local vX = data.map.courseVX / 100
+	local vY = data.map.courseVY / 100
+
+	while game.xyInRect( roverX, roverY, data.mapGrp ) do
+		for i = 1, #game.saveState.craters do
+			if not util.tableContains( data.cratersOnCourse, i ) then
+				local craterX = game.saveState.craters[i].x
+				local craterY = game.saveState.craters[i].y
+				local distance = util.calcDistance( roverX, roverY, craterX, craterY )
+				local craterR = game.saveState.craters[i].r
+				if distance <= craterR then
+					data.cratersOnCourse[#data.cratersOnCourse + 1] = {
+						id = i, 
+						x = craterX, 
+						y = craterY, 
+						r = craterR, 
+					}
+				end
+			end
+		end
+		roverX = roverX + vX
+		roverY = roverY + vY
+	end
+end
+
+-- Calculate crater intercept point
+function util.calcCraterIntercept( craterIndex )
+	local interceptX = (data.map.rover.x - data.mapZoomGrp.x) / data.mapZoomGrp.xScale
+	local interceptY = (data.map.rover.y - data.mapZoomGrp.y) / data.mapZoomGrp.yScale
+	local craterX = data.cratersOnCourse[craterIndex].x
+	local craterY = data.cratersOnCourse[craterIndex].y
+	local craterR = data.cratersOnCourse[craterIndex].r
+	local xStep = -data.map.courseVX / 1000
+	local yStep = -data.map.courseVY / 1000
+	local i = 1
+	local interceptDistance = util.calcDistance( interceptX, interceptY, craterX, craterY )
+	while interceptDistance <= craterR do
+		interceptX = interceptX + xStep
+		interceptY = interceptY + yStep
+		interceptDistance = util.calcDistance( interceptX, interceptY, craterX, craterY )
+	end
+
+	data.cratersOnCourse[craterIndex].interceptX = interceptX - xStep
+	data.cratersOnCourse[craterIndex].interceptY = interceptY - yStep
+end
+
+-- Find the terrain height for a given x-coordinate
+function util.findTerrainHeight( x )
+	local i = #data.terrain
+	while x < data.terrain[i].x - data.terrain[i].width/2 do
+		i = i - 1
+	end 
+	return data.terrain[i].y - data.terrain[i].height/2
+end
+
+-- Find the terrain height for a given x-coordinate
+function util.findTerrainSlope( x )
+	if x < data.rover.x + data.act.width - data.roverPosition then
+		return 0
+	else
+		local i = #data.terrain
+		while x < data.terrain[i].x - data.terrain[i].width/2 do
+			i = i - 1
+		end 
+		return math.deg(math.atan((data.terrain[i].y - data.terrain[i - 2].y) / (data.terrain[i].x - data.terrain[i - 2].x)))
+	end
+end
+
+-- Scale and pan coordinates. Accepts coordinate pair, returns scaled and panned coordinate pair.
+function util.calcZoomCoords( x, y )
+	local zoomX = x * data.mapZoomGrp.xScale + data.mapZoomGrp.x
+	local zoomY = y * data.mapZoomGrp.yScale + data.mapZoomGrp.y
+	return zoomX, zoomY
+end
+
+-- Set rover position
+function util.setRoverPosition( x, y )
+	data.map.rover.x = x
+	data.map.rover.y = y
+end
+
+-- Mark game.saveState craters for testing purposes
+function util.markCraters()
+	for i = 1, #game.saveState.craters do
+		data.craterMarkers[i] = display.newCircle( data.mapZoomGrp, game.saveState.craters[i].x, game.saveState.craters[i].y, game.saveState.craters[i].r )
+	end
+end
 
 return util
