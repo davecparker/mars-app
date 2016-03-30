@@ -6,15 +6,29 @@
 --
 -----------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------
+-- 
+-- The overhead map belongs to data.mapZoomGrp while the course and tracking dot display objects
+-- belong to the data.mapGrp container. This allows the map to be scaled and panned without 
+-- affecting the appearance of the tracking dot or the course. data.mapZoomGrp scales and pans via
+-- a transition and the tracking dot is coordinated with data.mapZoomGrp via its own transition. 
+-- data.mapGrp remains static. When determining spatial relationships, the features of interest
+-- must be in reference to the same coordinate system. Coordinates may be converted between the
+-- systems by applying or removing data.mapZoomGrp scaling and panning as appropriate. A distance
+-- may be converted by applying or removing data.mapZoomGrp scaling as appropriate. data.mapZoomGrp
+-- scaling is contained by the data.mapZoomGrp.xScale and data.mapZoomGrp.yScale fields. Their 
+-- values are always identical as currently implemented. data.mapZoomGrp panning is contained by
+-- the data.mapZoomGrp.x and data.mapZoomGrp.y fields, which are also inherently scaled. Touch 
+-- events are of the data.mapZoomGrp coordinate system. Coordinates may be converted by applying or
+-- removing scaling and panning as follows:
 --
--- Variables in the act table you can use:
---    act.group    -- display group for the act (parent of all display objects)
---    act.scene    -- composer scene associated with the act
+-- 		To apply scaling/panning and convert to data.mapZoomGrp: 	
 --
---    * If you define act:start() it will be called when the activity starts/resumes.
---    * If you define act:stop() it will be called when the activity suspends/ends.
---    * If you define act:destroy() it will be called when the activity is destroyed.
---    * If you define act:enterFrame() it will be called before every animation frame.
+-- 			newX = oldX * data.mapZoomGrp.xScale + data.mapZoomGrp.x 
+--
+-- 		To remove map scaling/panning and convert to data.mapGrp: 	
+--
+-- 			newX = (oldX - data.mapZoomGrp.x) / data.mapZoomGrp.xScale
+--
 -----------------------------------------------------------------------------------------
 -- Load the Corona widget module
 local widget = require "widget" 
@@ -40,121 +54,102 @@ local new = require( "rovernew" )
 ------------------------- Start of Activity --------------------------------
 
 -- Create new crater height map by filling data.craterHeightMap[] with crater height values
-local function newCraterHeightMap( yScale )
-	local r = game.saveState.craters[data.craterIndex].r * data.sideToMapScale
-	data.floorY = data.defaultElevation - r/100
-	local rimY = data.defaultElevation + r/100
-	local inSlope = (rimY - data.floorY) / (0.6 * r - 0.3 * r) / yScale
-	local outSlope = (data.defaultElevation - rimY) / (0.4 * r) / yScale
+-- Requires a data.cratersOnCourse index. Calculations are based on the following approximations: 
+-- Peak-to-floor of 4/3r, slope horizontal extent of 0.3r, floor diameter of 0.6r, rim peak of 0.1r
+local function newCraterHeightMap( craterIndex )
+	local craterRadius = data.cratersOnCourse[craterIndex].r * data.mapToMarsScale * data.mapScaleFactor
+	local totalHeight = 4/3 * craterRadius * data.craterHeightScale
+
+	if totalHeight > data.maxCraterHeight then
+		totalHeight = data.maxCraterHeight
+	end
+
+	local floorHeight = act.height/11 + (data.maxCraterHeight - totalHeight) * data.elevationFactor
+	local rimHeight = floorHeight + totalHeight
+	local innerSlopeStep = totalHeight / (0.3 * craterRadius)
+	local outerSlopeStep = (data.defaultElevation - rimHeight) / (0.3 * craterRadius)
 
 	-- Set floor values
-	for d = #data.craterHeightMap + 1, 0.3 * r do
-		data.craterHeightMap[d] = data.floorY
+	for d = #data.craterHeightMap + 1, 0.3 * craterRadius do
+		data.craterHeightMap[d] = floorHeight
 	end
 
 	-- Set inside slope values
-	for d = #data.craterHeightMap + 1, 0.6 * r do
-		data.craterHeightMap[d] = (data.craterHeightMap[d - 1] + inSlope * d)
+	for d = #data.craterHeightMap + 1, 0.6 * craterRadius do
+		data.craterHeightMap[d] = data.craterHeightMap[d - 1] + innerSlopeStep
 	end
 
 	-- Set inside peak values
-	local nPoints = 0.05 * r
-	local slopeStep = inSlope/nPoints
+	local nPoints = 0.05 * craterRadius
+	local peakSlopeStep = innerSlopeStep/nPoints
 	local firstPoint = #data.craterHeightMap + 1
-	for d = #data.craterHeightMap + 1, 0.65 * r do
-		data.craterHeightMap[d] = (data.craterHeightMap[d - 1] + (inSlope - (d - firstPoint) * slopeStep) * d)
+	for d = #data.craterHeightMap + 1, 0.65 * craterRadius do
+		data.craterHeightMap[d] = data.craterHeightMap[d - 1] + (innerSlopeStep - (d - firstPoint) * peakSlopeStep)
 	end
 
-	-- Set outside peak values
+	-- Set outside peak values by copying inside peak values in reverse for a mirror image
 	firstPoint = #data.craterHeightMap
-	for d = #data.craterHeightMap + 1, 0.7 * r do
-		data.craterHeightMap[d] = (data.craterHeightMap[firstPoint + (firstPoint + 1 - d)])
+	for d = #data.craterHeightMap + 1, 0.7 * craterRadius do
+		data.craterHeightMap[d] = data.craterHeightMap[firstPoint + (firstPoint + 1 - d)]
 	end
 
 	-- Set outside slope values
-	for d = #data.craterHeightMap + 1, r do
-		data.craterHeightMap[d] = (data.craterHeightMap[d - 1] + outSlope * d)
+	for d = #data.craterHeightMap + 1, craterRadius do
+		data.craterHeightMap[d] = data.craterHeightMap[d - 1] + outerSlopeStep
 	end
-
-	-- Offset height map to set edge to default terrain height
-	local offset = data.defaultElevation - data.craterHeightMap[#data.craterHeightMap] 
-	for i = 1, #data.craterHeightMap do
-		data.craterHeightMap[i] = data.craterHeightMap[i] + offset
-	end
-	data.floorY = data.craterHeightMap[1]
 end
 
--- Create new course height map by filling data.courseHeightMap[] with course-crater intercept height values
-local function newCourseHeightMap()
-	local craterX = game.saveState.craters[data.craterIndex].x
-	local craterY = game.saveState.craters[data.craterIndex].y
-	local craterDistance = util.calcDistance( data.map.rover.x, data.map.rover.y, craterX, craterY ) * data.sideToMapScale
-	local nextX = data.map.rover.x
-	local nextY = data.map.rover.y
+-- Fill data.courseHeightMap[] with course-crater intercept height values by indexing data.craterHeightMap
+-- with distances from crater center measured along the current course through the crater's extent
+local function newCourseHeightMap( craterIndex )
+	local craterX = data.cratersOnCourse[craterIndex].x
+	local craterY = data.cratersOnCourse[craterIndex].y
+	local currentX = data.cratersOnCourse[craterIndex].interceptX
+	local currentY = data.cratersOnCourse[craterIndex].interceptY
+	local craterR = data.cratersOnCourse[craterIndex].r * data.mapToMarsScale * data.mapScaleFactor
+	local craterD = math.round(util.calcDistance( currentX, currentY, craterX, craterY ) * data.mapToMarsScale * data.mapScaleFactor)
+
+	-- Correct distance-from-crater-center in the case that it is rounded to exceed craterR
+	if craterD > craterR then
+		craterD = #data.craterHeightMap
+	end
+
 	local i = 1
-
-	-- Get height values for each point along course by indexing the height map with distance from crater center 
-	while craterDistance <= game.saveState.craters[data.craterIndex].r * data.sideToMapScale do
-		data.courseHeightMap[i] = data.craterHeightMap[math.ceil(craterDistance)] -- Round to avoid indexing by zero
-		nextX = nextX + nextX/math.abs(nextX) * 1/data.sideToMapScale -- Use absolute value to get coordinate sign
-		nextY = util.calcPtY( data.map.rover.x, data.map.rover.y, game.saveState.rover.x2, game.saveState.rover.y2, nextX )
-		craterDistance = util.calcDistance( nextX, nextY, craterX, craterY ) * data.sideToMapScale  -- Calculate coordinate pair distance
+	while craterD <= craterR do
+		if craterD == 0 then
+			craterD = 1
+		end
+		data.courseHeightMap[i] = data.craterHeightMap[craterD]
+		currentX = currentX + data.map.courseVX / (data.mapToMarsScale * data.mapScaleFactor)
+		currentY = currentY + data.map.courseVY / (data.mapToMarsScale * data.mapScaleFactor)
+		craterD = math.round(util.calcDistance( currentX, currentY, craterX, craterY ) * data.mapToMarsScale * data.mapScaleFactor)
 		i = i + 1
-	end
+	end 
 end
 
--- Create crater display object and add to craterTerrain[]
--- local function newCraterTerrain( objWidth )
--- 	craterCount = craterCount + 1
--- 	local x = craterStartX + craterCount * objWidth
--- 	local y = act.yMax - data.courseHeightMap[craterCount]
--- 	local w = 1 * objWidth
--- 	local h = data.courseHeightMap[craterCount]
-
--- 	-- If the next height is of the same height, extend display object width
--- 	if data.courseHeightMap[craterCount] == data.courseHeightMap[craterCount+1] then
-		
--- 		-- Find number of consecutive elements of the same height and accumulate as object width
--- 		local i = craterCount
--- 		local rectW = 1
--- 		while data.courseHeightMap[i] == data.courseHeightMap[i+1] and i < #data.courseHeightMap do
--- 			rectW = rectW + 1
--- 			i = i + 1
--- 		end
--- 		craterCount = i
--- 		craterTerrain[#craterTerrain + 1] = new.rectangle( x, y, rectW * objWidth, h, true )
--- 	else
--- 		craterTerrain[craterCount] = new.rectangle( x, y, w, h, true )
--- 	end
-
--- 	if craterCount == #data.courseHeightMap then
--- 		data.drawingCrater = false
--- 	end
--- end
-
--- Check whether the rover is within a crater
+-- Check the craters on course for crater intercept
 local function checkCraters()
-	if data.rover.inCrater then
-		local craterX = game.saveState.craters[data.craterIndex].x
-		local craterY = game.saveState.craters[data.craterIndex].y
-		local craterDistance = util.calcDistance( data.map.rover.x, data.map.rover.y, craterX, craterY )
-		if craterDistance > game.saveState.craters[data.craterIndex].r then
-			data.rover.inCrater = false
+	local roverX = data.map.rover.x
+	local roverY = data.map.rover.y 
+	local cratersToRemove = {}
+
+	for i = 1, #data.cratersOnCourse do
+		local craterX, craterY
+		craterX, craterY = util.calcZoomCoords( data.cratersOnCourse[i].x, data.cratersOnCourse[i].y )
+		local craterR = data.cratersOnCourse[i].r * data.mapZoomGrp.xScale
+		local craterD = util.calcDistance( roverX, roverY, craterX, craterY )
+
+		if craterD <= craterR then
+			util.calcCraterIntercept( i )
+			newCraterHeightMap( i )
+			newCourseHeightMap( i )	
+			data.drawingCrater = true	
+			cratersToRemove[#cratersToRemove + 1] = i
 		end
-	else
-		for i = 1, #game.saveState.craters do
-			local craterX = game.saveState.craters[i].x
-			local craterY = game.saveState.craters[i].y
-			local craterDistance = util.calcDistance( data.map.rover.x, data.map.rover.y, craterX, craterY )
-			if craterDistance <= game.saveState.craters[i].r then
-				data.craterIndex = i
-				newCraterHeightMap( 150 )	-- Create crater height map
-				newCourseHeightMap()	-- Create course height map based on current course & craterHeightMap	
-				data.rover.inCrater = true
-				data.drawingCrater = true
-				break
-			end
-		end
+	end
+
+	for i = 1, #cratersToRemove do
+		table.remove( data.cratersOnCourse, cratersToRemove[i] )
 	end
 end
 
@@ -162,43 +157,40 @@ end
 local function mapTouched( event )
 
 	if event.phase == "began" or event.phase == "moved" then
+		local roverX = data.map.rover.x
+		local roverY = data.map.rover.y
+		local courseX = event.x - data.mapGrp.x 
+		local courseY = event.y - data.mapGrp.y
+print( courseX, courseY )
+		if courseX ~= roverX or courseY ~= roverY then  -- If course length is non-zero
+			util.calcUnitVectors( roverX, roverY, courseX, courseY )
+			courseX, courseY = util.calcCourseCoords( data.mapGrp, roverX, roverY, courseX, courseY )
 
-		local x1 = data.map.rover.x
-		local y1 = data.map.rover.y
-		local x2 = event.x - data.mapGrp.x
-		local y2 = event.y - data.mapGrp.y
-
-		-- Calculate course coordinates
-		x2, y2 = util.calcCourseCoords( data.mapGrp, x1, y1, x2, y2 )
-
-		-- replace old course with new course
-		display.remove( data.map.course )
-		display.remove( data.map.courseArrow )
-		data.map.course = util.newCourse( data.mapGrp, x1, y1, x2, y2 )
-		data.map.courseArrow = util.newArrow( act, data.mapGrp, x1, y1, x2, y2, data.map.courseVX, data.map.courseVY )
-		data.map.rover:toFront()	
-
-		-- Check for crater to generate new crater display objects and add them to terrain
-		data.rover.inCrater = false
+			-- updatePosition() applies scaling/panning to the course coordinates so remove prior to saving
+			game.saveState.rover.x2 = (courseX - data.mapZoomGrp.x) / data.mapZoomGrp.xScale
+			game.saveState.rover.y2 = (courseY - data.mapZoomGrp.y) / data.mapZoomGrp.yScale
+		end
+	elseif event.phase == "ended" then
 		data.nextX = data.rover.x - 100
+		util.findCratersOnCourse()
 		checkCraters()
 
-		if data.rover.inCrater and data.drawingCrater then
+		if data.drawingCrater then  -- ADD CRATER REDRAW FUNCTIONALITY
 
 			local x = data.rover.x
-			local y = data.rover.y - 20
+			local y = data.rover.y - 20  -- DETERMINE TERRAIN HEIGHT INSTEAD
 
-			-- remove rover body
+			-- Remove rover body
 			data.rover:removeSelf()
 			data.rover = nil
 
-			-- remove rover wheels
+			-- Remove rover wheels
 			for i = 1, #data.wheelSprite do
 				data.wheelSprite[i]:removeSelf()
 				data.wheelSprite[i] = nil
 			end
 
-			-- create new rover
+			-- Create new rover
 			new.rover( x, y )
 
 			for i = 1, #data.terrain do
@@ -209,16 +201,16 @@ local function mapTouched( event )
 			end
 
 			for i = 1, #data.courseHeightMap do
-				new.rectTerrain( 2, data.courseHeightMap[i], false )
-				data.craterHeightIndex = i
+				new.basicTerrain( 2, data.courseHeightMap[i], false, true )
+				data.courseHeightIndex = i
 			end
 
 			data.craterEndX = data.nextX + 200
-			data.craterHeightIndex = data.craterHeightIndex + 1
+			data.courseHeightIndex = data.courseHeightIndex + 1
 			data.drawingCrater = false
 		end
 
-		-- record the current x-axis position of the side scrolling rover
+		-- Record the current x-axis position of the side scrolling rover
 		data.rover.distOldX = data.rover.x
 
 		-- Make rover active to allow for position updating and to enable the accelerator
@@ -301,7 +293,7 @@ local function newMap()
 	} 
 
 	-- Create map image
-	data.map = act:newImage( "valles_marineris.png", mapData )
+	data.map = act:newImage( "sinai_planum.png", mapData )
 	data.map.scale = 1
 
 	data.mapGrp.left = -data.map.width/2
@@ -321,22 +313,33 @@ local function newMap()
 		height = 5 
 	} 
 	
-	spaceship = act:newImage( "spaceship.png", spaceshipData )	
+	spaceship = act:newImage( "spaceship.png", spaceshipData )	-- UPDATE IMAGE AND DECREASE SIZE
 
 	-- Add tracking dot to the map
 	new.mapDot()
 	
 	local x1 = data.map.rover.x
 	local y1 = data.map.rover.y
-	local x2 = math.random(-data.map.width/2, data.map.width/2)
-	local y2 = math.random(-data.map.width/2, data.map.width/2)
+	local x2 = x1
+	local y2 = y1
+
+	while x2 == x1 and y2 == y1 do
+		x2 = math.random(-data.map.width/2, data.map.width/2)
+		y2 = math.random(-data.map.width/2, data.map.width/2)
+	end
 
 	-- Calculate course coordinates
+	util.calcUnitVectors( x1, y1, x2, y2 )
 	x2, y2 = util.calcCourseCoords( data.mapGrp, x1, y1, x2, y2 )
+	game.saveState.rover.x2 = x2
+	game.saveState.rover.y2 = y2
+
+	-- Find the craters that lie on the course
+	util.findCratersOnCourse()
 
 	-- Draw the initial course
 	data.map.course = util.newCourse( data.mapGrp, x1, y1, x2, y2 )
-	data.map.courseArrow = util.newArrow( act, data.mapGrp, x1, y1, x2, y2, data.map.courseVX, data.map.courseVY )
+	data.map.courseArrow = util.newArrow( act, data.mapGrp, x1, y1, x2 - 2 * data.map.courseVX, y2 - 2 * data.map.courseVY )
 	data.map.rover:toFront()	
 
 	-- Record the current x-axis position of the side scrolling rover
@@ -404,7 +407,7 @@ local function newDisplayPanel()
 		x = act.xCenter, 
 		y = act.yMin + act.height/6 + 5, 
 		width = act.width, 
-		height = act.height/3 + 10 ,
+		height = act.height/3 + 10
 	} 
 
 	displayPanel = act:newImage( "panel.png", dispPanelData )
@@ -594,13 +597,10 @@ local function decelerate()
 	data.rover.stopChannel = game.playSound(data.rover.stopSound, options1)
 end
 
--- Update map rover coordinates based on scroll-view movement
+-- Update the rover's map position with the scaled distance the rover moved in the scrolling view
 local function updateCoordinates()
-	-- Calculate distance rover has moved in the scrolling view and scale to map
-	local distMoved = ( data.rover.x - data.rover.distOldX ) / data.sideToMapScale
+	local distMoved = ( data.rover.x - data.rover.distOldX ) * data.sideToMarsScale * data.mapSpeedFactor
 	data.rover.distOldX = data.rover.x
-
-	-- Update rover map coordinates
 	data.map.rover.x = data.map.rover.x + (distMoved * data.map.courseVX) * data.mapZoomGrp.xScale
 	data.map.rover.y = data.map.rover.y + (distMoved * data.map.courseVY) * data.mapZoomGrp.yScale
 end
@@ -614,10 +614,10 @@ local function checkIfRoverAtShip()
 	local y2 = data.map.rover.y
 
 	-- Calculate the distance from the rover (in mapGrp) to the ship (at mapZoomGrp origin)
-	local distanceFromShip = util.calcDistance( x1, y1, x2, y2 ) / data.mapZoomGrp.xScale
+	local distanceFromShip = util.calcDistance( x1, y1, x2, y2 )
 
 	-- If the rover has returned to the ship, then go to mainAct
-	if distanceFromShip <= 2 then
+	if distanceFromShip <= 2 * data.mapZoomGrp.xScale then
 		if not data.rover.atShip then
 			data.rover.atShip = true
 			game.gotoAct( "mainAct" )
@@ -627,33 +627,19 @@ local function checkIfRoverAtShip()
 	end
 end
 
--- Engage auto navigation back to the ship (mandatory course, governed speed, disabled water scan)
+-- Engage auto navigation back to the ship (mandatory course, governed speed, disabled water scan) --ADD UNZOOMING
 local function engageAutoNav()
-
-	local x1 = data.map.rover.x 
-	local y1 = data.map.rover.y 
-	local x2 = game.saveState.rover.x2
-	local y2 = game.saveState.rover.y2
-	local vX = data.map.courseVX
-	local vY = data.map.courseVY
+	game.saveState.rover.x2 = 0
+	game.saveState.rover.y2 = 0
 
 	-- Set auto navigation flag
 	data.rover.isAutoNav = true
 
 	-- Hide the water button and set the course to the ship
 	data.ctrlPanelGrp.waterButton.isVisible = false
-	util.replaceCourse( act, data.mapGrp, x1, y1, 0, 0, vX, vY )	
 
 	-- Remover map touch listener to prevent course changes
 	data.map:removeEventListener( "touch", mapTouched )
-
-	-- Set course variables
-	x2 = 0
-	y2 = 0
-	game.saveState.rover.x2 = 0
-	game.saveState.rover.y2 = 0
-	data.map.courseLength = util.calcDistance( x1, y1, x2, y2 )
-	data.map.courseVX, data.map.courseVY = util.calcUnitVectors( x1, y1, x2, y2, data.map.courseLength )
 
 	-- Display message to user 
 	local options = { 
@@ -667,28 +653,29 @@ local function engageAutoNav()
 end
 
 local function updatePosition()
-
 	if data.rover.isActive then 
 
-		local x1 = data.map.rover.x 
-		local y1 = data.map.rover.y 
-		local x2 = game.saveState.rover.x2
-		local y2 = game.saveState.rover.y2
-		local vX = data.map.courseVX
-		local vY = data.map.courseVY
-
 		updateCoordinates()
-		checkIfRoverAtShip()
+		checkIfRoverAtShip() -- DISALLOW THIS DURING THE ZOOMING TRANSITIONS
 		checkCraters()
 
-		-- If the rover has just run out of food or energy then mandate course back to ship
-		if ( game.energy() <= 0 or game.food() <= 0 ) and not data.rover.isAutoNav then
-			engageAutoNav()
+		local roverX = data.map.rover.x 
+		local roverY = data.map.rover.y 
+		local courseX = game.saveState.rover.x2 * data.mapZoomGrp.xScale + data.mapZoomGrp.x
+		local courseY = game.saveState.rover.y2 * data.mapZoomGrp.yScale + data.mapZoomGrp.y
+
+		if not data.rover.isAutoNav then -- CONSIDER USING A DIFFERENT VARIABLE
+			-- Calculate course coordinates
+			courseX, courseY = util.calcCourseCoords( data.mapGrp, roverX, roverY, courseX, courseY ) -- MAKE THIS ONLY RUN DURING PANNING
+			-- If the rover has just run out of food or energy then mandate course back to ship
+			if ( game.energy() <= 0 or game.food() <= 0 ) then
+				engageAutoNav()
+			end
 		end
 
 		-- If the rover is within the map's boundaries
-		if game.xyInRect( x1, y1, data.mapGrp ) and data.map.courseLength > 0 then	-- ARE BOTH CONDITIONS NECESSARY?
-			util.replaceCourse( act, data.mapGrp, x1, y1, x2, y2, vX, vY )	
+		if game.xyInRect( roverX, roverY, data.mapGrp ) and data.map.courseLength > 0 then	-- ARE BOTH CONDITIONS NECESSARY?
+			util.replaceCourse( act, data.mapGrp, roverX, roverY, courseX, courseY )	
 		else -- If map boundary has been reached
 
 			-- Deactivate rover, cease acceleration, and initiate braking
@@ -707,11 +694,11 @@ local function updatePosition()
 
 			-- Ensure the tracking dot remains within map boundaries
 			if math.abs(data.map.rover.x) > data.map.width/2 then
-				data.map.rover.x = math.abs(data.map.rover.x) / data.map.rover.x * data.map.width/2 * 0.99
+				data.map.rover.x = math.abs(data.map.rover.x) / data.map.rover.x * data.map.width/2 * 0.99  -- USE UNIT VECTORS HERE INSTEAD
 			end
 
 			if math.abs(data.map.rover.y) > data.map.width/2 then
-				data.map.rover.y = math.abs(data.map.rover.y) / data.map.rover.y * data.map.width/2 * 0.99
+				data.map.rover.y = math.abs(data.map.rover.y) / data.map.rover.y * data.map.width/2 * 0.99  -- USE UNIT VECTORS HERE INSTEAD
 			end
 		end		
 	end
@@ -777,39 +764,13 @@ local function moveRover()
 	end
 end
 
--- Scroll the terrain to the left
+-- Generate basic or crater terrain if new terrain is needed
 local function moveTerrain()
-
-	-- If new terrain needed
 	if data.terrain[#data.terrain].x + data.terrain[#data.terrain].width <= data.rover.x + act.width then
-		new.rectTerrain( data.terrainExtent/data.nTerrainRects, data.defaultElevation, false )
-
-		-- If crater has been reached but not created, then create crater display objects
 		if data.drawingCrater then
-			for i = 1, #data.courseHeightMap do
-				new.rectTerrain( 2, data.courseHeightMap[i], false )
-				data.craterHeightIndex = i
-			end
-			data.craterEndX = data.nextX + 200
-			data.craterHeightIndex = data.craterHeightIndex + 1
-			data.drawingCrater = false
-
-		-- If crater has been past
-		elseif data.rover.inCrater then
-			if data.craterHeightIndex > #data.courseHeightMap and data.craterEndX + data.dynamicGrp.x + act.width <= act.xMin + data.terrainOffset then
-				data.rover.inCrater = false
-				data.craterIndex = 1
-				data.craterHeightIndex = 1
-
-				-- Empty data.craterHeightMap[] and data.courseHeightMap[] tables
-				for i = #data.craterHeightMap, 1, -1 do
-						data.craterHeightMap[i] = nil
-				end
-
-				for i = #data.courseHeightMap, 1, -1 do
-						data.courseHeightMap[i] = nil
-				end
-			end
+			new.craterTerrain( false, true )
+		else
+			new.basicTerrain( data.basicTerrainObjWidth, data.defaultElevation, false, false )
 		end
 	end
 end
@@ -891,7 +852,7 @@ end
 -- Brake button event handler
 local function onBrakeRelease( event )
 	data.rover.brake = false
-
+	return true
 end
 
 -- Water scan button event handler
@@ -962,7 +923,7 @@ local function newControlPanel()
 		x = act.xCenter, 
 		y = act.yMax + act.height/12, 
 		width = act.width, 
-		height = act.height/3 + 10,
+		height = act.height/3,
 	} 
 
 	displayPanel = act:newImage( "panel.png", ctrlPanelData )
@@ -991,17 +952,17 @@ local function newControlPanel()
 
 	data.ctrlPanelGrp.accelButton = display.newSprite( data.ctrlPanelGrp, accelButtonSheet, sequenceData )
 	data.ctrlPanelGrp.accelButton.x = act.xCenter + 35
-	data.ctrlPanelGrp.accelButton.y = act.yMax - 24
-	data.ctrlPanelGrp.accelButton:scale( 40/128, 40/128 )
+	data.ctrlPanelGrp.accelButton.y = act.yMax - 22
+	data.ctrlPanelGrp.accelButton:scale( act.height/1707, act.height/1707 )
 	data.ctrlPanelGrp.accelButton:addEventListener( "touch", handleAccelButton )
 
 	-- create the stop button
 	local brakeButton = widget.newButton
 	{
 		x = act.xCenter - 35,
-		y = act.yMax - 24,
-		width = 40,
-		height = 40,
+		y = act.yMax - 22,
+		width = act.height/13.33,
+		height = act.height/13.33,
 		defaultFile = "media/rover/brake_unpressed.png",
 		overFile = "media/rover/brake_pressed.png",
 		onPress = onBrakePress,
@@ -1012,9 +973,9 @@ local function newControlPanel()
 	data.ctrlPanelGrp.waterButton = widget.newButton
 	{
 		x = act.xMax - 28,
-		y = act.yMax - 24,
-		width = 40,
-		height = 40,
+		y = act.yMax - 22,
+		width = act.height/13.33,
+		height = act.height/13.33,
 		defaultFile = "media/rover/water_unpressed.png",
 		overFile = "media/rover/water_pressed.png",
 		onRelease = onWaterRelease
@@ -1024,9 +985,9 @@ local function newControlPanel()
 	data.ctrlPanelGrp.recoverButton = widget.newButton
 	{
 		x = act.xCenter + 35,
-		y = act.yMax - 23.5,
-		width = 48,
-		height = 48,
+		y = act.yMax - 21.5,
+		width = act.height/12,
+		height = act.height/12,
 		defaultFile = "media/rover/reset_unpressed.png",
 		overFile = "media/rover/reset_pressed.png",
 		onPress = onRecoverPress
@@ -1064,7 +1025,7 @@ function act:stop()
 	game.saveState.rover.x1 = data.map.rover.x
 	game.saveState.rover.y1 = data.map.rover.y
 	audio.stop()	-- Stop all audio
-	physics.stop()
+	physics.pause()
 end
 
 -- Init the act
@@ -1081,7 +1042,7 @@ function act:init()
 	math.randomseed( os.time() )
 
 	-- Fill data.shape table with terrain obstacle shape functions
-	data.shape = { new.circle, new.square, new.roundSquare, new.poly }
+	data.shape = { new.circle, new.square, new.roundSquare, new.polygon }
 
 	-- Create display groups
 	data.staticBgGrp = act:newGroup()
@@ -1090,27 +1051,35 @@ function act:init()
 	data.ctrlPanelGrp = act:newGroup( data.staticFgGrp )
 	data.displayPanelGrp = act:newGroup( data.staticFgGrp )
 
-	-- Create the rover and the display and control panels
-	new.rover( act.xMin + 100, act.yMax - 112 )
+	-- Initialize act-dependent variables
+	data.roverPosition = act.xMin + 100
+	data.scrollViewTop = act.yMin + act.height/3
+	data.scrollViewBtm = act.yMax - act.height/11
+	data.defaultElevation = act.height/11 + (data.scrollViewBtm - data.scrollViewTop) * data.elevationFactor
+	data.maxCraterHeight = data.scrollViewBtm - data.scrollViewTop - 75
 
-	-- Create background and display object removal sensor
+	-- Create rover, background, object removal sensor, display panel, and control panel
+	new.rover( data.roverPosition, act.yMax - data.defaultElevation - 14 )
 	new.background()
 	new.RemovalSensor()
-
-	-- Create initial terrain
-	for i = 1, data.nTerrainRects do
-		new.rectTerrain( data.terrainExtent/data.nTerrainRects, data.defaultElevation, false )
-	end
-
-	for i = 1, data.nObstacles do
-		new.obstacle( math.random( data.minTerrainX, data.maxTerrainX ) )
-	end
-
 	newDisplayPanel()
 	newControlPanel()
 
+	-- Create initial terrain
+	while data.nextX < data.rover.x + act.width do
+		new.basicTerrain( data.basicTerrainObjWidth, data.defaultElevation, false, false )
+	end
+
+	for i = 1, data.nObstacles do
+		new.obstacle( math.random( data.removalSensor.x, data.rover.x + data.act.width ) )
+	end
+
 	-- Start rover speed display updating
 	timer.performWithDelay( 500, updateSpeedDisplay, 0 )
+
+	-- For testing purposes
+	-- util.setRoverPosition( 5, 50 )
+	-- util.markCraters()
 end
 
 -- Handle enterFrame events
@@ -1120,7 +1089,7 @@ function act:enterFrame( event )
 	moveRover() 
 
 	-- Move data.dynamicGrp and removal sensor along the x-axis the distance the rover has moved
-	data.dynamicGrp.x = act.xMin + data.roverPosition - data.rover.x
+	data.dynamicGrp.x = data.roverPosition - data.rover.x
 	data.removalSensor.x = data.rover.x - act.width
 
 	-- Remove and generate terrain
@@ -1129,8 +1098,6 @@ function act:enterFrame( event )
 	-- Set static group stack order
 	data.staticBgGrp:toBack()
 	data.staticFgGrp:toFront()
-
-	-- util.testPrint()
 end
 
 ------------------------- End of Activity --------------------------------

@@ -28,22 +28,25 @@ data.terrain = {} 				-- basic terrain objects
 data.shape = {} 				-- terrain obstacle shapes
 data.craterHeightMap = {}		-- crater height values
 data.courseHeightMap = {}		-- course height values
-data.defaultElevation = 100 	-- terrain elevation
-data.minTerrainX = -220
-data.maxTerrainX = 420
-data.terrainExcess = 100 		-- off-display terrain amount
-data.terrainOffset = -100 		-- terrain offset
-data.terrainExtent = data.maxTerrainX - data.minTerrainX
-data.nTerrainRects = 10			-- number of basic terrain objects
-data.nObstacles = 25
-data.craterIndex = 1			-- crater array index
-data.craterEndX = 0				-- x-coordinate at which the current crater ends
-data.craterHeightIndex = 1				-- crater height array index
-data.floorY = data.defaultElevation		-- current crater floor height
-data.nextX = data.minTerrainX 			-- x-coordinate for the next basic terrain object
+data.cratersOnCourse = {}
+data.defaultElevation = nil 	-- terrain elevation
+data.nextX = -220				-- x-coordinate for the next terrain object
+data.basicTerrainObjWidth = 50	-- basic terrain object width
+data.nObstacles = 25			-- total number of obstacles 
+data.courseHeightIndex = 1					-- course height array index
 data.terrainColor = { 0.8, 0.35, 0.25 }		-- terrain color
-data.obstacleColor = { 0.3, 0.1, 0.1 }		-- obstace color
-data.removalSensorRect = nil				-- terrain removal sensor display object
+data.obstacleColor = { 0.3, 0.1, 0.1 }		-- obstacle color
+data.removalSensor = nil					-- terrain removal sensor display object
+data.mapToMarsScale = 2610  	-- map-to-Mars scale based on Sinai Planum image actual length of ~460km
+data.sideToMarsScale = 0.00005 	-- side-to-map scale based on rover length of 15.3'
+data.mapScaleFactor = 0.25		-- map-to-Mars scaling; set to 1 for actual scale; increase for greater terrain scale
+data.mapSpeedFactor = 25		-- side-to-map scaling; set to 1 for actual scale; increase for greater rover map speed
+data.craterResolution = 30		-- crater terrain object width
+data.craterHeightScale = 0.08	-- crater height scaling
+data.maxCraterHeight = nil
+data.drawingCrater = false		-- true when a crater is to be drawn
+data.elevationFactor = 0.25
+data.craterMarkers = {}
 
 -----------------------------------------------------------------------------------------
 -- Rover variables
@@ -51,7 +54,6 @@ data.removalSensorRect = nil				-- terrain removal sensor display object
 data.rover = nil 			-- rover display object
 data.wheelSprite = {} 		-- rover wheel display objects
 data.roverPosition = 100
-data.sideToMapScale = 400	-- distance scale between scroll view and overhead view
 
 -----------------------------------------------------------------------------------------
 -- Control panel variables
@@ -67,10 +69,8 @@ data.map = nil				-- the map display object
 data.zoomInButton = nil
 data.zoomOutButton = nil
 data.speedText = nil		-- speed display object
+data.scrollViewTop = nil
+data.scrollViewBtm = nil
 
------------------------------------------------------------------------------------------
--- Other variables
------------------------------------------------------------------------------------------			
-data.drawingCrater = false		-- state variable: is true when a crater is to be drawn
 
 return data
