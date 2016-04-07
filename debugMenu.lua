@@ -29,6 +29,7 @@ local debugActs = {
 	"rover",
 	"shipLanding",
 	"stasis",
+	"spaceWalk",
 	"blankAct",
 	"layoutTool",
 	"about",
