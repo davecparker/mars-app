@@ -12,6 +12,10 @@ local game = globalGame
 -- Create the act object
 local act = game.newAct()
 -------------------------- Variables ------------------------------------------------------
+local spaceBgs         -- Space background image
+local brokenTop        -- borken parts
+local brokenMid
+local brokenBottom
 local player
 local playerY          -- saves the player location for swipe event
 local panelT = false   -- area for the panel repairs T is top, M is middle and B is bottom
@@ -20,6 +24,18 @@ local panelB = false
 local repairBar        -- the visual repair bar
 
 ------------------------- Functions -------------------------------------------------------
+
+-- Handle new frame events
+function act:enterFrame()
+	-- Continuous scroll of the endless space background
+	for i = 1, 2 do
+		local bg = spaceBgs[i]
+		bg.y = bg.y + 0.5
+		if bg.y > act.yMax then
+			bg.y = act.yMin - act.height
+		end
+	end
+end
 
 -- swipe event for the player
 local function swipePlayer( event )
@@ -59,9 +75,20 @@ end
 -- Init the act
 function act:init()
 
+	-- Space background images (2 for continuous scrolling)
+	spaceBgs = {
+		act:newImage( "space.jpg", { y = act.yMin, anchorY = 0, height = act.height, folder = "media/mainAct"}  ),
+	 	act:newImage( "space.jpg", { y = act.yMin - act.height, anchorY = 0, height = act.height, folder = "media/mainAct" }  ),
+	 }
+
 	-- create the background
-	bg = act:newImage("background.jpg", {width = act.width})
+	bg = act:newImage("solarPanel.png", {width = act.width})
 	bg:addEventListener( "touch", swipePlayer )
+
+	-- display borken parts
+	brokenTop = act:newImage("topBreak.png", { width = 80, x = act.xCenter - 60, y = act.yCenter - 150})
+	brokenMid = act:newImage("midBreak.png", { width = 110, x = act.xCenter + 70, y = act.yCenter + 10})
+	brokenBottom = act:newImage("bottomBreak.png", { width = 100, x = act.xCenter - 80, y = act.yCenter + 140})
 
 	-- create the player
 	player = act:newImage( "Astronaut.png", {width = 100} )
