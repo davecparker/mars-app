@@ -66,11 +66,13 @@ data.waterButton = nil
 -- Display panel variables
 -----------------------------------------------------------------------------------------
 data.map = nil				-- the map display object
+data.mapLength = nil
 data.zoomInButton = nil
 data.zoomOutButton = nil
 data.speedText = nil		-- speed display object
 data.scrollViewTop = nil
 data.scrollViewBtm = nil
-
+data.energyGaugeSprite = {} -- energy gauge display objects
+data.energyGaugeIndex = nil
 
 return data
