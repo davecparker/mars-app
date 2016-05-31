@@ -161,7 +161,7 @@ local function mapTouched( event )
 		local roverY = data.map.rover.y
 		local courseX = event.x - data.mapGrp.x 
 		local courseY = event.y - data.mapGrp.y
-print( courseX, courseY )
+
 		if courseX ~= roverX or courseY ~= roverY then  -- If course length is non-zero
 			util.calcUnitVectors( roverX, roverY, courseX, courseY )
 			courseX, courseY = util.calcCourseCoords( data.mapGrp, roverX, roverY, courseX, courseY )
@@ -261,20 +261,19 @@ end
 -- Create new map
 local function newMap()
 
-	-- temporary variables for map dimensions and position
-	local mapLength = act.height/3
+	-- variables for map position
 	local mapX = act.xMin + act.height/6 + 5
 	local mapY = act.yMin + act.height/6 + 5 
 
 	-- create map background
 	local mapBgRect = {}
 	for i = 1, 5 do
-		mapBgRect[i] = display.newRect( data.displayPanelGrp, mapX, mapY, mapLength + 6 - i, mapLength + 6 - i )
+		mapBgRect[i] = display.newRect( data.displayPanelGrp, mapX, mapY, data.mapLength + 6 - i, data.mapLength + 6 - i )
 		mapBgRect[i]:setFillColor( 0.5 - i/10, 0.5 - i/10, 0.5 - i/10 )
 	end
 
 	-- create map display container
-	data.mapGrp = display.newContainer( data.displayPanelGrp, mapLength, mapLength )
+	data.mapGrp = display.newContainer( data.displayPanelGrp, data.mapLength, data.mapLength )
 	data.mapGrp:translate( mapX, mapY )
 
 	-- initialize rover map starting coordinates to map center
@@ -288,8 +287,8 @@ local function newMap()
 		parent = data.mapZoomGrp, 
 		x = 0, 
 		y = 0, 
-		width = mapLength,
-		height = mapLength
+		width = data.mapLength,
+		height = data.mapLength
 	} 
 
 	-- Create map image
@@ -346,39 +345,123 @@ local function newMap()
 	data.rover.distOldX = data.rover.x
 end
 
-local function newGaugeElement( newX, newY, w, h, xScale )
+-- Create new battery indicator. Accepts x,y coordinates.
+local function newBattIndicator( x, y )
 
-	-- set sky background
-	local energyData = { 
+	-- Create new battery indicator display object
+	local batteryData = { 
 		parent = data.displayPanelGrp, 
-		x = newX, 
-		y = newY, 
-		width = w * xScale, 
-		height = h 
+		x = x + 5,
+		y = y + 27, 
+		width = 26, 
+		height = 13, 
 	} 
 
-	energyGauge = act:newImage( "gauge_element.png", energyData )
+	local battery = act:newImage( "battery.png", batteryData )
+	battery.anchorX = 1
+	battery.anchorY = 1
 
--- 	-- create an image sheet for the energy gauge
--- 	local options = {
--- 		width = 63,
--- 		height = 33,
--- 		numFrames = 8,
--- 		border = 1
--- 	}
+	-- Create battery indicator display text object
+	local format = "%3d%s"
+	local options = 
+	{
+		parent = data.displayPanelGrp,
+		text = string.format( format, game.energy(), "%" ),
+		x = x + 2,
+		y = y + 25.5, --act.yMin + data.mapLength + 5.5,
+		font = native.systemFontBold,
+		fontSize = 8,
+	}
 
--- 	local gaugeSheet = graphics.newImageSheet( 'media/rover/gauge_sheet2.png', options )
+	data.energyText = display.newText( options )
+	data.energyText:setFillColor( 0.0, 1.0, 0.0 )
+	data.energyText.anchorX = 1
+	data.energyText.anchorY = 1
+	data.energyText.format = format
+end
 
--- 	local sequenceData = {
--- 		name = "energySequence",
--- 		start = 5,
--- 		count = 5,
--- 	}
+-- Create new energy gauge
+local function newEnergyGauge( x, y )
 
-	-- 	for i = 1, 50 do
-	-- 		gaugeSprite[i] = display.newSprite( data.displayPanelGrp, gaugeSheet, sequenceData )
-	-- 		gaugeSprite[i]:scale( 0.12, 0.12 )
+	-- Create an energy gauge image sheet 
+	local options = {
+		width = 60,
+		height = 2,
+		numFrames = 8,
+		sheetContentWidth = 60,
+		sheetContentHeight = 16,
+	}
+
+	-- Energy gauge variables
+	local length = math.round( data.mapLength ) - 16
+	local nElements = 50
+	local hScale = 1.0
+	local height = options.height
+	local spacing = 1.25 --math.round(10 * (length - nElements * height * hScale) / (nElements)) / 10
+
+	-- Create an energy gauge background
+	local energyGaugeBg = {}
+	for i = 1, length + 5 do
+		for j = 1, 6 do
+			energyGaugeBg[i] = {}
+			local width = options.width * math.pow( 2, (i*(nElements/(length + 5))*i*(nElements/(length + 5))/3000)) - (33 - i/100) - j
+			energyGaugeBg[i][j] = display.newRect( data.displayPanelGrp, act.xCenter, act.yCenter, width, 1 )
+			energyGaugeBg[i][j].anchorX = 1
+			energyGaugeBg[i][j].anchorY = 1
+			energyGaugeBg[i][j].x = x + 5 - (j - 1)/2
+			energyGaugeBg[i][j].y = y - (i - 1)
+			energyGaugeBg[i][j]:setFillColor( 0.6 - j/10, 0.6 - j/10, 0.6 - j/10 )
+		end
 	end
+
+	-- Create top background border
+	local energyGaugeBgTopBorder = {}
+	for i = 1, 6 do
+		energyGaugeBgTopBorder[i] = {}
+		local width = options.width * math.pow( 2, (50-(i-1)/2*50/(length + 5))*(50-(i-1)/2*50/(length + 5))/3000 ) - 33 - i
+		energyGaugeBgTopBorder[i] = display.newRect( data.displayPanelGrp, act.xCenter, act.yCenter, width, 1 )
+		energyGaugeBgTopBorder[i].anchorX = 1
+		energyGaugeBgTopBorder[i].anchorY = 1
+		energyGaugeBgTopBorder[i].x = x + 5 - (i - 1)/2
+		energyGaugeBgTopBorder[i].y = y - (length + 4) + (i - 1)/2
+		energyGaugeBgTopBorder[i]:setFillColor( 0.4 - i/15, 0.4 - i/15, 0.4 - i/15 )
+	end
+
+	-- Create bottom background border
+	local energyGaugeBgBtmBorder = {}
+	for i = 1, 6 do
+		energyGaugeBgBtmBorder[i] = {}
+		local width = options.width * math.pow( 2, (1*(nElements/(length + 5))*1*(nElements/(length + 5))/3000)) - 33 - i
+		energyGaugeBgBtmBorder[i] = display.newRect( data.displayPanelGrp, act.xCenter, act.yCenter, width, 1 )
+		energyGaugeBgBtmBorder[i].anchorX = 1
+		energyGaugeBgBtmBorder[i].anchorY = 1
+		energyGaugeBgBtmBorder[i].x = x + 5 - (i - 1)/2
+		energyGaugeBgBtmBorder[i].y = y - (i - 1)/2 + 1
+		energyGaugeBgBtmBorder[i]:setFillColor( 0.4 - i/15, 0.4 - i/15, 0.4 - i/15 )
+	end
+
+	local gaugeSheet = graphics.newImageSheet( 'media/rover/gauge_sheet.png', options )
+
+	local sequenceData = {
+		name = "energySequence",
+		start = 1,
+		count = 8,
+	}
+
+	-- Create energy gauge sprites
+	for i = 1, nElements do
+		data.energyGaugeSprite[i] = display.newSprite( data.displayPanelGrp, gaugeSheet, sequenceData )
+		data.energyGaugeSprite[i].anchorX = 1
+		data.energyGaugeSprite[i].anchorY = 1
+		data.energyGaugeSprite[i].x = x + 1
+		data.energyGaugeSprite[i].y = y - (height * hScale + spacing) * (i - 1) - 1.51
+		-- This is a hack to produce an attractive gauge curve. The exponential function produces the curve while '0.7' 
+		-- reduces the width of each gauge element for aesthetics. Each gauge background block above employs this as well.
+		data.energyGaugeSprite[i]:scale( math.pow( 2, i*i/3000 ) - 0.7, hScale )
+		data.energyGaugeSprite[i]:setFrame( 5 )
+		data.energyGaugeSprite[i].bright = true
+	end
+end
 
 -- Zoom-in button handler
 local function onZoomInRelease( event )
@@ -453,7 +536,7 @@ local function newDisplayPanel()
 	speedBgRect[6] = display.newRect( data.displayPanelGrp, act.xCenter, act.yCenter, 80, 20 )
 	speedBgRect[6].x = act.xMin + data.map.width + 53
 	speedBgRect[6].y = act.yMin + data.map.width - 5
-	speedBgRect[6]:setFillColor( 0.25, 0.25, 0.25 )
+	speedBgRect[6]:setFillColor( 0.2, 0.2, 0.2 )
 
 	-- Create speed display text object
 	local format = "%4d %s"
@@ -475,46 +558,82 @@ local function newDisplayPanel()
 	data.speedText.y = speedBgRect[6].y + 10
 	data.speedText.format = format
 
-	-- Create new energy display object
-	local batteryData = { 
-		parent = data.displayPanelGrp, 
-		x = act.xMax - 26,
-		y = act.yMin + 12, 
-		width = 44, 
-		height = 17 
-	} 
-
-	local battery = act:newImage( "battery.png", batteryData )
-
-	-- Create energy display text object
-	local format = "%3d%s"
-	local options = 
-	{
-		parent = data.displayPanelGrp,
-		text = string.format( format, game.energy(), "%" ),
-		x = act.xMax - 11,
-		y = act.yMin + 5,
-		font = native.systemFontBold,
-		fontSize = 12,
-	}
-
-	data.energyText = display.newText( options )
-	data.energyText:setFillColor( 0.0, 1.0, 0.0 )
-	data.energyText.anchorX = 1
-	data.energyText.anchorY = 0
-	data.energyText.format = format
-
 	data.staticFgGrp:insert( data.zoomInButton )
 	data.staticFgGrp:insert( data.zoomOutButton )
 
-	-- for i = 1, 50 do
-	-- 	newGaugeElement( data.mapGrp.x + 90, data.mapGrp.y + 90, 20, 3, 1)--, i*i*0.001)
-	-- end
+	-- Create battery indicator and energy gauge display
+	newEnergyGauge( act.xMax - 6, speedBgRect[1].y + speedBgRect[1].height/2 - 16  )
+	newBattIndicator( act.xMax - 6, speedBgRect[1].y + speedBgRect[1].height/2 - 27 )
 end
 
--- Update the energy display
+-- Set energy gauge color
+local function setEnergyGaugeColor()
+	local spriteFrame
+	if game.energy() > 80 then
+		spriteFrame = 5
+	elseif game.energy() > 60 then
+		spriteFrame = 4
+	elseif game.energy() > 40 then
+		spriteFrame = 3
+	elseif game.energy() > 20 then
+		spriteFrame = 2
+	else
+		spriteFrame = 1
+	end
+
+	for i = 1, data.energyGaugeIndex do
+		if data.energyGaugeSprite[i].frame ~= spriteFrame then
+			data.energyGaugeSprite[i]:setFrame( spriteFrame )
+		end
+	end
+end
+
+-- Reset energy gauge
+local function resetEnergyGauge()
+	setEnergyGaugeColor()
+
+	for i = 1, data.energyGaugeIndex do
+		data.energyGaugeSprite[i]:setFillColor( 1 )
+		data.energyGaugeSprite[i].isVisible = true
+	end
+
+	for i = data.energyGaugeIndex + 1, 50 do
+		data.energyGaugeSprite[i].isVisible = false
+		data.energyGaugeSprite[i]:setFillColor( 1 )
+	end
+end
+
+-- Update the battery indicator and energy gauge
 local function updateEnergyDisplay()
+	-- Update energy text
 	data.energyText.text = string.format( data.energyText.format, game.energy() , "%")
+
+	-- If the truncated game.energy() integer has diminished from odd to even then dim the top gauge element
+	if math.floor( game.energy() ) % 2 == 0 then
+		if data.energyGaugeIndex - math.floor( game.energy() )/2 == 1 then
+			if data.energyGaugeSprite[data.energyGaugeIndex].bright then
+				data.energyGaugeSprite[data.energyGaugeIndex]:setFillColor( 0.5 )
+				data.energyGaugeSprite[data.energyGaugeIndex].bright = false
+			end
+		else -- Reset the energy gauge because game.energy() has changed in an unpredictable manner
+			data.energyGaugeIndex = math.floor( game.energy() )/2
+			setEnergyGaugeColor()
+			resetEnergyGauge()
+		end
+	else -- If game.energy() integer has diminished from even to odd then set top gauge element visibility and color, update index
+		if data.energyGaugeIndex - math.ceil( game.energy()/2 ) == 1 then
+			data.energyGaugeSprite[data.energyGaugeIndex].isVisible = false
+			data.energyGaugeIndex = math.ceil( game.energy()/2 ) -- Could simply decrement the index?
+			if data.energyGaugeIndex % 10 == 0 then
+				setEnergyGaugeColor()
+			end
+		-- Reset the energy gauge because game.energy() has changed in an unpredictable manner
+		elseif data.energyGaugeIndex - math.ceil( game.energy()/2 ) ~= 0 then
+			data.energyGaugeIndex = math.ceil( game.energy()/2 ) 
+			setEnergyGaugeColor()
+			resetEnergyGauge()
+		end
+	end
 end
 
 -- Accelerate the rover up to angular velocity of 8000 w/higher initial acceleration
@@ -1057,6 +1176,8 @@ function act:init()
 	data.scrollViewBtm = act.yMax - act.height/11
 	data.defaultElevation = act.height/11 + (data.scrollViewBtm - data.scrollViewTop) * data.elevationFactor
 	data.maxCraterHeight = data.scrollViewBtm - data.scrollViewTop - 75
+	data.mapLength = act.height/3
+	data.energyGaugeIndex = math.ceil( game.energy()/2 )
 
 	-- Create rover, background, object removal sensor, display panel, and control panel
 	new.rover( data.roverPosition, act.yMax - data.defaultElevation - 14 )
@@ -1064,6 +1185,8 @@ function act:init()
 	new.RemovalSensor()
 	newDisplayPanel()
 	newControlPanel()
+	resetEnergyGauge()
+	updateEnergyDisplay()
 
 	-- Create initial terrain
 	while data.nextX < data.rover.x + act.width do
