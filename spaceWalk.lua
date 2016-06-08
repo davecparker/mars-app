@@ -21,8 +21,9 @@ local HTPText                          -- how to play text
 local danger                           -- danger sign
 local meteorReset                      -- the meteor reset function
 local meteor                           -- the meteor object
-local player                           -- table for the player, player.pos gives the players position
-local playerY                          -- saves the player location for swipe event
+local player                           -- table for the player, player.yPos gives the players position
+local playerY                          -- saves the player y location for swipe event
+local playerX                          -- saves the player x location for swipe event
 local playerGroup                      -- a group for all the stuff that needs to animate together
 local gameOverCheck = false            -- checks game over state
 local barPos = {                       -- properties of the status bar
@@ -87,7 +88,7 @@ local function sendMeteor ()
 				meteor:removeSelf( )
 				meteor = nil
 				math.randomseed(os.time())
-				local meteorInterval = math.random(500, 5000)
+				local meteorInterval = math.random(500, 2000)
 				timer.performWithDelay(meteorInterval, sendMeteor)
 			end
 		end
@@ -97,7 +98,7 @@ local function sendMeteor ()
 		danger = act:newImage("danger.png",{y = barPos[meteorPosition].y, x = xCenter, width = act.width/2})
 		meteor = act:newImage("meteor.png",{y = barPos[meteorPosition].y, x = act.width + 100, width = 50})
 		meteor.pos = meteorPosition
-		transition.to( meteor, {time = 1000, delay = 500, x = -150, rotation = 360, onComplete = meteorReset} )
+		transition.to( meteor, {time = 1000, delay = 1000, x = -150, rotation = 360, onComplete = meteorReset} )
 	end
 end
 
@@ -124,7 +125,7 @@ function act:enterFrame()
 			end
 		end
 		-- removes an empty status bar if the player moves away
-		if barPos[i].progress < 1 and player.pos ~= i and barPos[i].statusBarBorder then
+		if barPos[i].progress < 1 and player.yPos ~= i and barPos[i].statusBarBorder then
 			barRemove(i)
 		end
 		if barPos[i].progress > 240 then
@@ -140,7 +141,7 @@ function act:enterFrame()
 
 	-- checks for a hit
 	if meteor then
-		if (meteor.x < (act.xCenter + 25)) and (player.pos == meteor.pos) then
+		if (meteor.x < (player.x + 25)) and (meteor.x > player.x - 25) and (player.yPos == meteor.pos) then
 			-- if its a hit remove the progress
 			transition.cancel( meteor )
 			meteorReset ()
@@ -181,43 +182,65 @@ end
 -- creates the status bar when the player moves
 function createStatusBar()
 	-- create a new status bar
-	if barPos[player.pos].statusBar then
+	if barPos[player.yPos].statusBar then
 		--if there is a bar do nothing
 	else
-		barPos[player.pos].statusBar = display.newRect(  act.group, (act.width/2), (barPos[player.pos].y), barPos[player.pos].progress, 10 )
-		barPos[player.pos].statusBar:setFillColor( 0, 1, 0 )
-		barPos[player.pos].statusBarBorder = act:newImage("statusBar.png", {y = barPos[player.pos].y, x = act.width/2, width = 250, height = 10})
+		barPos[player.yPos].statusBar = display.newRect(  act.group, (act.width/2), (barPos[player.yPos].y), barPos[player.yPos].progress, 10 )
+		barPos[player.yPos].statusBar:setFillColor( 0, 1, 0 )
+		barPos[player.yPos].statusBarBorder = act:newImage("statusBar.png", {y = barPos[player.yPos].y, x = act.width/2, width = 250, height = 10})
 	end
 end
 
 -- swipe event for the player
 local function swipePlayer( event )	
-	local lastPos = player.pos
+	local lastPos = player.yPos
 	if event.phase == "began" then
 		playerY = event.y
+		playerX = event.x
 
 	elseif event.phase == "ended" then
 		--swiped down
-		if event.y > playerY + 20 then
-			if player.pos == 2 then
-				player.pos = 3
+		if event.y > playerY + 30 then
+			if player.yPos == 2 then
+				player.yPos = 3
 				transition.to( player, { y = player.y + 120, time = 500, transition = easing.outQuad} )
 				
-			elseif player.pos == 1 then
-				player.pos = 2
+			elseif player.yPos == 1 then
+				player.yPos = 2
 				transition.to( player, { y = player.y + 120, time = 500, transition = easing.outQuad} )
-				
 			end
+		
 		-- swipe up
-		elseif event.y < playerY - 20 then
-			if player.pos == 3 then
-				player.pos = 2
+		elseif event.y < playerY - 30 then
+			if player.yPos == 3 then
+				player.yPos = 2
 				transition.to( player, { y = player.y - 120, time = 500, transition = easing.outQuad} )
 				
-			elseif player.pos == 2 then
-				player.pos = 1
+			elseif player.yPos == 2 then
+				player.yPos = 1
 				transition.to( player, { y = player.y - 120, time = 500, transition = easing.outQuad} )
-				
+			end
+		
+		-- swipe left
+		elseif event.x < playerX - 30 then
+			if player.xPos == 2 then
+				player.xPos = 1
+				transition.to( player, { x = player.x - 60, time = 400, transition = easing.outQuad} )
+			
+			elseif player.xPos == 3 then
+				player.xPos = 2
+				transition.to( player, { x = player.x - 60, time = 400, transition = easing.outQuad} )
+			end
+		
+		-- swipe right	
+		elseif event.x > playerX + 30 then
+			if player.xPos == 2 then
+				player.xPos = 3
+				transition.to( player, { x = player.x + 60, time = 400, transition = easing.outQuad} )
+			
+			elseif player.xPos == 1 then
+				player.xPos = 2
+				transition.to( player, { x = player.x + 60, time = 400, transition = easing.outQuad} )
 			end
 		end
 	end
@@ -226,13 +249,16 @@ end
 -- player taping to repair the panels
 local function repairTap( event )
 	-- checks to see if the part is still broken
-	if barPos[player.pos].fixed == false then
-		-- this part makes a bar if the player taps at the initial position and there is no bar
-		if barPos[player.pos].statusBar == nil then
-			createStatusBar()
+	if barPos[player.yPos].fixed == false then
+		-- check to see if the player is in the right postions
+		if (player.xPos == 1 and player.yPos == 1) or (player.xPos == 3 and player.yPos == 2) or (player.xPos == 1 and player.yPos == 3 ) then
+			-- this part makes a bar if the player taps at the initial position and there is no bar
+			if barPos[player.yPos].statusBar == nil then
+				createStatusBar()
+			end
+			barPos[player.yPos].progress = barPos[player.yPos].progress + 10
+			barPos[player.yPos].statusBar.width = barPos[player.yPos].progress
 		end
-		barPos[player.pos].progress = barPos[player.pos].progress + 10
-		barPos[player.pos].statusBar.width = barPos[player.pos].progress
 	end
 end
 
@@ -270,7 +296,8 @@ function act:init()
 	player = act:newImage( "Astronaut.png", {width = 100} )
 	player.x = act.xCenter
 	player.y = act.yCenter
-	player.pos = 2   -- position of player 1 = top, 2 = middle and 3 = bottom
+	player.yPos = 2   -- y position of player: 1 = top, 2 = middle and 3 = bottom
+	player.xPos = 2   -- x position of player: 1 = left, 2 = middle and 3 = right
 	player:addEventListener( "tap", repairTap )
 
 	-- put everyting that needs animation in a group
