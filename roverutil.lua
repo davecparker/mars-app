@@ -14,12 +14,12 @@ local data = require( "roverdata" )
 
 local util = {}
 
--- Calculate the distance between two cartesian coordinates
+-- Calculate the distance between two cartesian coordinates. Accepts two coordinate pairs, returns distance.
 function util.calcDistance( x1, y1, x2, y2 )
 	return math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
 end
 
--- Create a new map course and course arrow
+-- Create new map course. Accepts group and 2 course coordinate pairs, returns course reference.
 function util.newCourse( group, x1, y1, x2, y2 )
 	local course = display.newLine( group, x1, y1, x2, y2 )
 	course:setStrokeColor( 1, 1, 1 )
@@ -27,7 +27,7 @@ function util.newCourse( group, x1, y1, x2, y2 )
 	return course
 end
 
--- Create new course arrow aligned with course direction
+-- Create new course arrow. Accepts act, group, & 2 course coordinate pairs, returns course arrow reference.
 function util.newArrow( act, group, x1, y1, x2, y2 )
 	local arrowData = { 
 		parent = group, 
@@ -41,7 +41,7 @@ function util.newArrow( act, group, x1, y1, x2, y2 )
 	return arrow
 end
 
--- Replace current course with a new course
+-- Replace current course with a new course. Accepts act, group, and 2 course coordinate pairs.
 function util.replaceCourse( act, group, x1, y1, x2, y2 )
 	display.remove( data.map.course )
 	display.remove( data.map.courseArrow )
@@ -50,7 +50,7 @@ function util.replaceCourse( act, group, x1, y1, x2, y2 )
 	data.map.rover:toFront()
 end
 
--- Calculate course unit vectors
+-- Calculate course unit vectors. Accepts 2 coordinate pairs, returns the unit vectors.
 function util.calcUnitVectors( x1, y1, x2, y2 )
 	local courseLength = util.calcDistance( x1, y1, x2, y2 )
 	data.map.courseVX = (x2 - x1)/courseLength
@@ -58,7 +58,8 @@ function util.calcUnitVectors( x1, y1, x2, y2 )
 	return data.map.courseVX, data.map.courseVY
 end
 
--- Calculate the course coordinates that intersect the mapGrp boundary
+-- Calculate the coordinates of the intersection between the course and the mapGrp boundary. 
+-- Accepts group & 2 course coordinate pairs, returns the intersection coordinates.
 function util.calcCourseCoords( group, x1, y1, x2, y2 )
 
 	-- Ensure the starting course coordinates are within mapGrp  
@@ -80,7 +81,7 @@ function util.calcCourseCoords( group, x1, y1, x2, y2 )
 	return x2, y2
 end
 
--- Determine whether cratersOnCourse table contains a particular crater
+-- Determine whether a table contains a particular value. Accepts a table and a value, returns a boolean.
 function util.tableContains( table, value )
 	for i = 1, #table do
 		if table[i].id == value then
@@ -90,7 +91,7 @@ function util.tableContains( table, value )
 	return false
 end
 
--- Empty table of its contents
+-- Empty a table of its contents. Accepts table.
 function util.emptyTable( table )
 	for i = #table, 1, -1 do
 		table[i] = nil
@@ -108,6 +109,7 @@ end
 -- Load data.cratersOnCourse table with the craters that lie on the current rover course
 function util.findCratersOnCourse()
 	util.emptyTable( data.cratersOnCourse )
+
 	-- Remove scaling/panning from rover position
 	local roverX = (data.map.rover.x - data.mapZoomGrp.x) / data.mapZoomGrp.xScale
 	local roverY = (data.map.rover.y - data.mapZoomGrp.y) / data.mapZoomGrp.yScale
@@ -116,6 +118,7 @@ function util.findCratersOnCourse()
 	local vX = data.map.courseVX / 100
 	local vY = data.map.courseVY / 100
 
+	-- Increment along the course checking for and recording any intercepted craters not already recorded
 	while game.xyInRect( roverX, roverY, data.mapGrp ) do
 		for i = 1, #game.saveState.craters do
 			if not util.tableContains( data.cratersOnCourse, i ) then
@@ -138,13 +141,14 @@ function util.findCratersOnCourse()
 	end
 end
 
--- Calculate crater intercept point
+-- Calculate the crater intercept point upon occurrence of a course/crater intercept. Accepts crater index.
 function util.calcCraterIntercept( craterIndex )
 	local interceptX = (data.map.rover.x - data.mapZoomGrp.x) / data.mapZoomGrp.xScale
 	local interceptY = (data.map.rover.y - data.mapZoomGrp.y) / data.mapZoomGrp.yScale
 	local craterX = data.cratersOnCourse[craterIndex].x
 	local craterY = data.cratersOnCourse[craterIndex].y
 	local craterR = data.cratersOnCourse[craterIndex].r
+	-- Use negative course unit vectors because the intercept has already occurred
 	local xStep = -data.map.courseVX / 1000
 	local yStep = -data.map.courseVY / 1000
 	local i = 1
@@ -159,7 +163,7 @@ function util.calcCraterIntercept( craterIndex )
 	data.cratersOnCourse[craterIndex].interceptY = interceptY - yStep
 end
 
--- Find the terrain height for a given x-coordinate
+-- Find the terrain height for a given x-coordinate. Accepts x-coordinate, returns terrain surface y-coordinate.
 function util.findTerrainHeight( x )
 	local i = #data.terrain
 	while x < data.terrain[i].x - data.terrain[i].width/2 do
@@ -168,7 +172,7 @@ function util.findTerrainHeight( x )
 	return data.terrain[i].y - data.terrain[i].height/2
 end
 
--- Find the terrain height for a given x-coordinate
+-- Find the terrain slope for a given x-coordinate. Accepts x-ccordinate, returns slope in degrees.
 function util.findTerrainSlope( x )
 	if x < data.rover.x + data.act.width - data.roverPosition then
 		return 0
@@ -177,27 +181,29 @@ function util.findTerrainSlope( x )
 		while x < data.terrain[i].x - data.terrain[i].width/2 do
 			i = i - 1
 		end 
-		return math.deg(math.atan((data.terrain[i].y - data.terrain[i - 2].y) / (data.terrain[i].x - data.terrain[i - 2].x)))
+		return math.deg(math.atan(
+			(data.terrain[i].y - data.terrain[i - 2].y) / (data.terrain[i].x - data.terrain[i - 2].x)))
 	end
 end
 
--- Scale and pan coordinates. Accepts coordinate pair, returns scaled and panned coordinate pair.
+-- Scale and pan coordinates. Accepts a coordinate pair, returns a scaled and panned coordinate pair.
 function util.calcZoomCoords( x, y )
 	local zoomX = x * data.mapZoomGrp.xScale + data.mapZoomGrp.x
 	local zoomY = y * data.mapZoomGrp.yScale + data.mapZoomGrp.y
 	return zoomX, zoomY
 end
 
--- Set rover position
+-- Set rover position. Accepts coordinate pair.
 function util.setRoverPosition( x, y )
 	data.map.rover.x = x
 	data.map.rover.y = y
 end
 
--- Mark game.saveState craters for testing purposes
+-- Mark the craters recorded in game.saveState on the overhead view image for testing purposes.
 function util.markCraters()
 	for i = 1, #game.saveState.craters do
-		data.craterMarkers[i] = display.newCircle( data.mapZoomGrp, game.saveState.craters[i].x, game.saveState.craters[i].y, game.saveState.craters[i].r )
+		data.craterMarkers[i] = display.newCircle( 
+			data.mapZoomGrp, game.saveState.craters[i].x, game.saveState.craters[i].y, game.saveState.craters[i].r )
 	end
 end
 
