@@ -9,12 +9,11 @@
 -- Get local reference to the game globals
 local game = globalGame
 
--- Load rover data table
+-- Load utility functions and data table
 local data = require( "roverdata" )
-
--- Load rover utility functions
 local util = require( "roverutil" )
 
+-- Load non-convex shape separator class written by Antoan Angelov
 local bodySeparator = require( "bodySeparator" )
 
 local new = {}
@@ -44,46 +43,46 @@ function new.RemovalSensor()
 	data.removalSensor.gravityScale = 0
 end
 
--- Accepts x, y coordinates and radius; returns circle terrain physics object
+-- Accepts coordinate pair and radius; returns reference to circle terrain physics object
 function new.circle( x, y, r )
 	local yDev = math.random( r * 0.7, r * 0.9 ) -- randomly vary y coord w/radius
 	local circle = display.newCircle( data.dynamicGrp, x, y + yDev, r )
-	circle.isObstacle = true
+	circle.isObstacle = true -- not currently used
 	physics.addBody( circle, "static", { friction = 1.0, radius = r } )
 	circle.collision = onCollision
 	circle:addEventListener( "collision" )
 	return circle
 end
 
--- Accepts x, y coordinates and side length; returns square terrain physics object
+-- Accepts coordinate pair, side length, and rotation; returns reference to square terrain physics object
 function new.square( x, y, s, m )
 	local square = display.newRect( data.dynamicGrp, x, y + s/3, s, s )
 	square.rotation = math.random( 30, 60 ) + m
-	square.isObstacle = true
+	square.isObstacle = true -- not currently used
 	physics.addBody( square, "static", { friction = 1.0 } )
 	square.collision = onCollision
 	square:addEventListener( "collision" )
 	return square
 end
 
--- Accepts x, y coordinates and side length; returns rounded square terrain physics object
+-- Accepts coordinate pair, side length, and rotation; returns reference to rounded square terrain physics object
 function new.roundSquare( x, y, s, m )
 	local square = display.newRoundedRect( data.dynamicGrp, x, y + s/3, s, s, s/4 )
 	square.rotation = math.random( 30, 60 ) + m
-	square.isObstacle = true
+	square.isObstacle = true -- not currently used
 	physics.addBody( square, "static", { friction = 1.0 } )
 	square.collision = onCollision
 	square:addEventListener( "collision" )
 	return square
 end
 
--- Accepts x, y coordinates of bottom-left vertice, returns trapezoid terrain physics object
+-- Accepts coordinates for bottom-left vertex, side length, rotation; returns reference to trapezoid physics object
 function new.polygon( x, y, s, m )
 	local l = math.random( 3, 10 )
 	local vertices = { x, y, x + s, y - s, x + s + l, y - s, x + 2 * s + l, y }
 	local polygon = display.newPolygon( data.dynamicGrp, x, y + 1.5, vertices )
 	polygon.rotation = math.random( -20, 20 ) + m
-	polygon.isObstacle = true
+	polygon.isObstacle = true -- not currently used
 	physics.addBody( polygon, "static", { friction = 1.0 } )
 	polygon.collision = onCollision
 	polygon:addEventListener( "collision" )
@@ -91,7 +90,7 @@ function new.polygon( x, y, s, m )
 end
 
 -- Accepts table of parameters: group, objTable, x, y, width, height, anchorX, anchorY, isObstacle, isCrater
--- Returns a rectangular terrain display object
+-- Returns reference to a rectangular terrain display object
 function new.basicTerrainObj( params )
 	local rect = display.newRect( params.group, params.x, params.y, params.width, params.height )
 	rect:setFillColor( unpack(data.terrainColor) )
@@ -99,8 +98,8 @@ function new.basicTerrainObj( params )
 	rect.index = #rect.objTable + 1 -- table index of next available element
 	rect.x = params.x
 	rect.y = params.y
-	rect.isObstacle = params.isObstacle
-	rect.isCrater = params.isCrater
+	rect.isObstacle = params.isObstacle -- not currently used
+	rect.isCrater = params.isCrater -- not currently used
 	rect.objTable[rect.index] = rect -- save into table
 	return rect
 end
@@ -115,7 +114,7 @@ function new.basicTerrain( w, h, isObstacle, isCrater )
 		y = data.act.yMax - h/2,
 		width = w,		
 		height = h,
-		isObstacle = isObstacle,
+		isObstacle = isObstacle, -- not currently used
 		isCrater = isCrater
 	}
 
@@ -135,8 +134,8 @@ function new.craterTerrainObj( params )
 	polygon.index = #polygon.objTable + 1 -- table index of next available element
 	polygon.x = params.x
 	polygon.y = params.y
-	polygon.isObstacle = params.isObstacle
-	polygon.isCrater = params.isCrater
+	polygon.isObstacle = params.isObstacle -- not currently used
+	polygon.isCrater = params.isCrater -- not currently used
 	polygon.objTable[polygon.index] = polygon -- save into table
 	return polygon
 end
@@ -149,6 +148,7 @@ function new.craterTerrain( isObstacle, isCrater )
 		local vertices = {}
 		local minY = data.act.yMax
 
+		-- Get the top 2 polygon vertices
 		for i = 1, 2 do
 			vertices[#vertices + 1] = data.nextX
 			vertices[#vertices + 1] = data.act.yMax - data.courseHeightMap[data.courseHeightIndex]
@@ -170,6 +170,7 @@ function new.craterTerrain( isObstacle, isCrater )
 			end
 		end
 
+		-- Get the bottom 2 polygon vertices
 		vertices[#vertices + 1] = vertices[#vertices - 1]
 		vertices[#vertices + 1] = data.act.yMax
 		vertices[#vertices + 1] = vertices[1]
@@ -179,22 +180,26 @@ function new.craterTerrain( isObstacle, isCrater )
 		local maxX = vertices[#vertices - 1]
 		local maxY = data.act.yMax
 
+		-- Set new polygon parameters
 		params = {
 			group = data.dynamicGrp,
 			objTable = data.terrain,
 			x = minX + (maxX - minX) / 2,
 			y = minY + (maxY - minY) / 2,
 			vertices = vertices,
-			isObstacle = isObstacle,
-			isCrater = isCrater
+			isObstacle = isObstacle, -- not currently used
+			isCrater = isCrater -- not currently used
 		}
 
 		local polygon = new.craterTerrainObj( params )
+
+		-- Add polygon as physics object, first converting any nonconvex polygon into a multi-element body
+		-- THE BODYSEPARATOR STEP IS UNNECESSARY AS CURRENTLY WRITTEN SINCE ONLY POLYGONS OF 4 VERTICES ARE USED
+		-- NEED TO DETERMINE WHETHER ITS ADVANTAGEOUS TO USE A GREATER NUMBER OF VERTICES AND REWRITE ACCORDIINGLY
 		bodySeparator.addNonConvexBody( polygon, { shape = vertices, bodyType = "static", bounce = 0.2, friction = 1, density = 1 } )
 		polygon.collision = onCollision
 		polygon:addEventListener( "collision" )
 	end
-	print(data.rover.x)
 end
 
 -- Accepts an optional x-coordinate in lieu of a randomly-generated x-coordinate
@@ -208,7 +213,7 @@ function new.obstacle( newX )
 	local m = util.findTerrainSlope( x )
 	
 	-- THIS IS A HACK TO ALIGN OBSTACLE HEIGHT WITH CRATER SLOPES. 
-	-- NEED TO UPDATE util.findTerrainHeight AND util.findTerrainSlope TO WORK PROPERLY WITH THE CRATER POLYGONS.
+	-- NEED TO UPDATE util.findTerrainHeight AND util.findTerrainSlope TO WORK PROPERLY WITH CRATER POLYGONS.
 	if m < -1 then
 		y = y - m/2 + size/5
 	elseif m > 1 then
@@ -232,6 +237,7 @@ function onCollision( self, event )
 end
 
 -- Create the rover
+-- SHOULD BREAK OUT THE WHEEL CREATION AND SOUND LOADING
 function new.rover( roverX, roverY )
 
 	-- Tables to hold suspension joints
@@ -272,7 +278,7 @@ function new.rover( roverX, roverY )
 
 	local wheelSheet = graphics.newImageSheet( 'media/rover/tonka_wheel_sheet.png', options )
 
-	-- create 4 wheel sprites situated along rover body
+	-- Create 4 wheel sprites situated along rover body
 	local sequenceData = {
 		name = "wheelSequence",
 		start = 1,
@@ -285,9 +291,8 @@ function new.rover( roverX, roverY )
 		data.wheelSprite[i].y = data.rover.y + 4
 		data.wheelSprite[i]:scale( 0.12, 0.12 )
 
-		-- wheel physics
-		-- higher density increases translation & stability; 0.5-1.5 gives best results.
-		-- higher friction increases acceleration and decreases stability.
+		-- Higher density increases translation & stability; 0.5-1.5 gives best results.
+		-- Higher friction increases acceleration and decreases stability.
 		local wheelPhysicsData = {
 			density = 1.0, 
 			friction = 1.0, 
@@ -297,12 +302,11 @@ function new.rover( roverX, roverY )
 
 		physics.addBody( data.wheelSprite[i], "dynamic", wheelPhysicsData )
 
-		-- x-axis & y-axis values affect wheel translation in combination with wheel-to-wheel joints
-		-- per x-axis, a higher y-axis value decreases translation; 25-50 y-axis gives best results
+		-- X-axis & y-axis values affect wheel translation in combination with wheel-to-wheel joints
+		-- Per x-axis, a higher y-axis value decreases translation; 25-50 y-axis gives best results
 		suspension[i] = physics.newJoint( "wheel", data.rover, data.wheelSprite[i], 
 		data.wheelSprite[i].x, data.wheelSprite[i].y, 1, 30 )
 
-		-- load sound effects
 		data.rover.engineSound = data.act:loadSound( "rover_engine.wav" )
 		data.rover.startSound = data.act:loadSound( "rover_start.wav" )
 		data.rover.stage1Sound = data.act:loadSound( "rover_stage_1.wav" )
@@ -310,7 +314,7 @@ function new.rover( roverX, roverY )
 		data.rover.stopSound = data.act:loadSound( "rover_stop.wav" )	
 	end
 
-	-- wheel-to-wheel distance joints to limit lateral wheel translation 
+	-- Wheel-to-wheel distance joints to limit lateral wheel translation 
 	for i = 1, 2 do
 		wheelToWheelJoint[i] = physics.newJoint( "distance", data.wheelSprite[i], data.wheelSprite[i+1],
 		data.wheelSprite[i].x, data.wheelSprite[i].y, data.wheelSprite[i+1].x, data.wheelSprite[i+1].y )
