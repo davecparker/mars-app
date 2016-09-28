@@ -31,6 +31,7 @@ local debugActs = {
 	"stasis",
 	"spaceWalk",
 	"blankAct",
+	"sampleAct",
 	"layoutTool",
 	"about",
 }

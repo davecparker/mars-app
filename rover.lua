@@ -1,35 +1,174 @@
------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
 --
 -- rover.lua
 --
 -- The rover activity of the Mars App
 --
------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------
+-- Author: Mike Friebel
 -- 
--- The overhead map belongs to data.mapZoomGrp while the course and tracking dot display objects
--- belong to the data.mapGrp container. This allows the map to be scaled and panned without 
+---------------------------------------------------------------------------------------------------
+-- Overview
+---------------------------------------------------------------------------------------------------
+--
+-- This activity portrays a rover traversing the Sinai Planum of Mars. It features a physics-based,
+-- side-scrolling view and an accompanying overhead view. The side-scrolling movement is generated
+-- by directly rotating the rover's wheels and letting Corona's physics engine generate the
+-- resulting friction-based displacement, which yields a more realistic motion. The overhead view 
+-- depicts the rover's current location on the Sinai Planum and is interactive, allowing the user  
+-- to zoom in or out and to generate a new rover course at any time by touching any point of the 
+-- overhead image. The overhead view does not automatically follow the rover's movement. It instead
+-- remains static until the user zooms in or out, at which point it will pan towards the rover's 
+-- current position to the extent allowed by the Sinai Planum image bounds.
+--
+---------------------------------------------------------------------------------------------------
+-- The Terrain
+---------------------------------------------------------------------------------------------------
+-- 
+-- The default side view terrain is generic with randomly generated physics objects to simulate 
+-- rocks and is not based on any specific actual terrain. However, the major craters viewable in 
+-- the overhead Sinai Planum image are generated as terrain in the side view when approached by 
+-- the rover.
+--
+-- The crater terrain generated is based on a rough estimation of the profiles of actual craters 
+-- in reference to their radii. They could be much more accurately modeled by a Chebyshev 
+-- polynomial function and this may be something to consider adding in the future. The scale of the
+-- craters relative to each other is roughly accurate, however, their scale relative to the rover 
+-- is much smaller than actual for the sake of playability. Furthermore, although overall crater 
+-- scale has been decreased, crater height has been independently increased for playability while 
+-- also being capped to ensure all terrain remains sufficiently within view. This arrangement was 
+-- developed in an attempt to adapt realistic crater profiles to the side view's limited dimensions
+-- while keeping them recognizable and exciting. Unscaled craters would often exceed the viewing 
+-- area while simply decreasing the scale of all craters would make the smaller craters 
+-- insignificant.
+--
+-- One solution to representing larger terrain features in the side view might be to scale the 
+-- entire contents of the side view as needed, in a zoom-out effect. This may work for any of the 
+-- features in the sedate Sinai Planum but it would likely not work for the even larger features 
+-- found elsewhere on Mars. Another solution might be to scroll vertically as well as horizontally 
+-- while including an inset that would provide a macroscopic view of the rover's location relative 
+-- to the terrain feature being traversed. An indication of elevation could also be provided. Some 
+-- combination of these could probably be used.
+--
+---------------------------------------------------------------------------------------------------
+-- Important Terrain Variables
+---------------------------------------------------------------------------------------------------
+--
+-- data.marsToMapScale: actual Mars scale relative to the scale of the overhead view. The current 
+-- value is calculated by dividing the estimated actual length of the area depicted in the Sinai 
+-- Planum image in meters by the length of the image itself in corona units. This value affects the
+-- scale of the crater features generated in the side view. 
+--
+-- data.mapScaleFactor: scales the terrain features generated in the side view. The scale of the 
+-- terrain will be realistic (in accordance with data.marsToMapScale) if this value is 1.
+--
+-- data.craterHeightScale: scales the height of the crater terrain generated in the side view. 
+--
+---------------------------------------------------------------------------------------------------
+-- Rover Speed
+---------------------------------------------------------------------------------------------------
+--
+-- The speed of the rover in the side view is based on an actual rover length of 5.39 meters. The
+-- speed of the rover in the overhead view is much greater than that of the side view relative to
+-- the actual dimensions of the area depicted in the Sinai Planum image. This was done for 
+-- playability. If the speed relationship was one-to-one, it would take several hours for the rover 
+-- to traverse the overhead image. A slower speed would be preferable if the density of interesting
+-- terrain features to be encountered in the overhead view and generated in the side view were 
+-- greater.
+--
+---------------------------------------------------------------------------------------------------
+-- Important Rover Speed Variables
+---------------------------------------------------------------------------------------------------
+--
+-- data.sideToMarsScale: scale of the side view relative to actual Mars scale. The current value is
+-- calculated by dividing the representative length of the side view based on a rover length of 
+-- 5.39 meters by the estimated actual length of the area depicted in the Sinai Planum image in 
+-- meters. This value affects the speed of the tracking dot in the overhead view.
+--
+-- data.mapSpeedFactor: scales the speed of the tracking dot across the overhead view. The tracking
+-- dot's speed will be realistic (in accordance with data.sideToMarsScale) if this value is 1.
+--
+---------------------------------------------------------------------------------------------------
+-- Overhead View Scaling and Panning
+---------------------------------------------------------------------------------------------------
+--
+-- The overhead map image belongs to data.mapZoomGrp while the course and tracking dot display
+-- objects belong to the data.mapGrp container. This allows the map to be scaled and panned without
 -- affecting the appearance of the tracking dot or the course. data.mapZoomGrp scales and pans via
--- a transition and the tracking dot is coordinated with data.mapZoomGrp via its own transition. 
+-- a transition and the tracking dot is coordinated with data.mapZoomGrp via its own transition.
 -- data.mapGrp remains static. When determining spatial relationships, the features of interest
 -- must be in reference to the same coordinate system. Coordinates may be converted between the
 -- systems by applying or removing data.mapZoomGrp scaling and panning as appropriate. A distance
 -- may be converted by applying or removing data.mapZoomGrp scaling as appropriate. data.mapZoomGrp
--- scaling is contained by the data.mapZoomGrp.xScale and data.mapZoomGrp.yScale fields. Their 
+-- scaling is contained by the data.mapZoomGrp.xScale and data.mapZoomGrp.yScale fields. Their
 -- values are always identical as currently implemented. data.mapZoomGrp panning is contained by
--- the data.mapZoomGrp.x and data.mapZoomGrp.y fields, which are also inherently scaled. Touch 
+-- the data.mapZoomGrp.x and data.mapZoomGrp.y fields, which are also inherently scaled. Touch
 -- events are of the data.mapZoomGrp coordinate system. Coordinates may be converted by applying or
 -- removing scaling and panning as follows:
 --
--- 		To apply scaling/panning and convert to data.mapZoomGrp: 	
+--         To apply scaling/panning and convert to data.mapZoomGrp:
 --
--- 			newX = oldX * data.mapZoomGrp.xScale + data.mapZoomGrp.x 
+--             newX = oldX * data.mapZoomGrp.xScale + data.mapZoomGrp.x
 --
--- 		To remove map scaling/panning and convert to data.mapGrp: 	
+--         To remove map scaling/panning and convert to data.mapGrp:
 --
--- 			newX = (oldX - data.mapZoomGrp.x) / data.mapZoomGrp.xScale
+--             newX = (oldX - data.mapZoomGrp.x) / data.mapZoomGrp.xScale
 --
------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+-- Known issues
+---------------------------------------------------------------------------------------------------
+--
+-- There is a slight and momentary irregularity in the distance-from-ship calculation during the 
+-- simultaneous map scaling and tracking dot movement transitions that occur when the map is both 
+-- scaled and panned. It affects return-to-ship functionality when the rover is located 2.000-2.015
+-- corona units from the ship and the user zooms to the original map scale, or when the rover is 
+-- located 1.985-2.000 corona units from the ship and the user zooms from the original map scale. 
+-- This is likely due to the dependency on simultaneous transitions. The easiest fix is probably to
+-- avoid performing the calculation during the transitions. 
+--
+-- There is jitter in the course pointer along its parallel that appeared with changes made in 
+-- pull request #187. It is likely due to the calculation in util.calcCourseCoords that ensures 
+-- the pointer doesn't exceed the map's boundaries.
+--
+-- The vertical placement of obstacles on crater terrain is often inconsistent, with some obstacles
+-- placed too low and others too high relative to the base terrain's height. This is due to a 
+-- temporary hack in new.obstacle() pending the changes needed in util.findTerrainHeight() and 
+-- util.findTerrainSlope() to properly handle crater terrain polygons.
+--
+-- Terrain is incorrectly generated in the side view when a new course is selected while the 
+-- rover is located within a crater. The entire crater is generated rather than the fraction 
+-- required for display. Only the portion of the crater that lies within rover.x +/- act.width 
+-- should be generated. See mapTouched() and newCourseHeightMap() in rover.lua.
+--
+-- The rover in the side view is too stable and will usually land upright after flipping. This
+-- is due to the physics parameters used for the rover body and rover wheels. Stability may be
+-- decreased by increasing the density of the body and/or decreasing the density of the wheels.
+-- Increasing wheel friction will also decrease stability. The rover also tends to roll too easily
+-- over its body when overturned. Decreasing body friction and/or bounce may reduce this. If this 
+-- is insufficient, then a procedure to orchestrate a digging-in or sliding stop in the soft 
+-- Martian soil when overturned would be necessary. 
+--
+-- The recover function is currently broken. It sometimes results in a runtime error or the failure 
+-- to generate terrain following recovery. This issue appeared following the latest changes made to
+-- terrain generation. Check onRecoverPress(), new.Rover(), and moveTerrain().
+--
+---------------------------------------------------------------------------------------------------
+-- Ideas for Additional Features
+---------------------------------------------------------------------------------------------------
+--
+-- Things to see and do while exploring Mars
+-- Side view foreground and background elements
+-- A greater number of terrain features
+-- Larger terrain features
+-- Irregular terrain features
+-- Pitch-modulated rover sound
+-- Additional sound effects (tires, sand, thumps, bangs, etc)
+-- Rover track generation on overhead view image
+-- Ability for the rover to sustain damage
+-- Dust effects generated by the rover's wheels
+-- Subversive Martians
+-- 
+---------------------------------------------------------------------------------------------------
+
 -- Load the Corona widget module
 local widget = require "widget" 
 
@@ -45,19 +184,18 @@ local data = require( "roverdata" )
 -- Assign reference in roverdata.lua to act object
 data.act = act
 
--- Load rover utility functions
+-- Load rover utility functions and new display object functions
 local util = require( "roverutil" )
-
--- Load rover new display object functions
 local new = require( "rovernew" )
 
-------------------------- Start of Activity --------------------------------
+------------------------------- Start of Activity -------------------------------
 
 -- Create new crater height map by filling data.craterHeightMap[] with crater height values
 -- Requires a data.cratersOnCourse index. Calculations are based on the following approximations: 
 -- Peak-to-floor of 4/3r, slope horizontal extent of 0.3r, floor diameter of 0.6r, rim peak of 0.1r
+-- (data.marsToMapScale * data.mapScaleFactor) SHOULD BE MOVED TO roverdata.lua TO AVOID RECALCULATION
 local function newCraterHeightMap( craterIndex )
-	local craterRadius = data.cratersOnCourse[craterIndex].r * data.mapToMarsScale * data.mapScaleFactor
+	local craterRadius = data.cratersOnCourse[craterIndex].r * data.marsToMapScale * data.mapScaleFactor
 	local totalHeight = 4/3 * craterRadius * data.craterHeightScale
 
 	if totalHeight > data.maxCraterHeight then
@@ -106,8 +244,8 @@ local function newCourseHeightMap( craterIndex )
 	local craterY = data.cratersOnCourse[craterIndex].y
 	local currentX = data.cratersOnCourse[craterIndex].interceptX
 	local currentY = data.cratersOnCourse[craterIndex].interceptY
-	local craterR = data.cratersOnCourse[craterIndex].r * data.mapToMarsScale * data.mapScaleFactor
-	local craterD = math.round(util.calcDistance( currentX, currentY, craterX, craterY ) * data.mapToMarsScale * data.mapScaleFactor)
+	local craterR = data.cratersOnCourse[craterIndex].r * data.marsToMapScale * data.mapScaleFactor
+	local craterD = math.round(util.calcDistance( currentX, currentY, craterX, craterY ) * data.marsToMapScale * data.mapScaleFactor)
 
 	-- Correct distance-from-crater-center in the case that it is rounded to exceed craterR
 	if craterD > craterR then
@@ -116,13 +254,17 @@ local function newCourseHeightMap( craterIndex )
 
 	local i = 1
 	while craterD <= craterR do
+
+		-- Avoid indexing by 0
 		if craterD == 0 then
 			craterD = 1
 		end
+
+		-- Get height for the current distance from crater center, then get the distance for the next point along the course
 		data.courseHeightMap[i] = data.craterHeightMap[craterD]
-		currentX = currentX + data.map.courseVX / (data.mapToMarsScale * data.mapScaleFactor)
-		currentY = currentY + data.map.courseVY / (data.mapToMarsScale * data.mapScaleFactor)
-		craterD = math.round(util.calcDistance( currentX, currentY, craterX, craterY ) * data.mapToMarsScale * data.mapScaleFactor)
+		currentX = currentX + data.map.courseVX / (data.marsToMapScale * data.mapScaleFactor)
+		currentY = currentY + data.map.courseVY / (data.marsToMapScale * data.mapScaleFactor)
+		craterD = math.round(util.calcDistance( currentX, currentY, craterX, craterY ) * data.marsToMapScale * data.mapScaleFactor)
 		i = i + 1
 	end 
 end
@@ -134,12 +276,15 @@ local function checkCraters()
 	local cratersToRemove = {}
 
 	for i = 1, #data.cratersOnCourse do
+
+		-- Convert crater coordinates to data.mapZoomGrp, then get crater distance and scaled radius
 		local craterX, craterY
 		craterX, craterY = util.calcZoomCoords( data.cratersOnCourse[i].x, data.cratersOnCourse[i].y )
 		local craterR = data.cratersOnCourse[i].r * data.mapZoomGrp.xScale
 		local craterD = util.calcDistance( roverX, roverY, craterX, craterY )
 
-		if craterD <= craterR then
+		-- If rover has intercepted a crater: get course height map, flag for drawing, and remove from data.cratersOnCourse
+		if craterD <= craterR then 
 			util.calcCraterIntercept( i )
 			newCraterHeightMap( i )
 			newCourseHeightMap( i )	
@@ -156,6 +301,7 @@ end
 -- Map touch event handler
 local function mapTouched( event )
 
+	-- If map touch is initiated or moved, then draw a new course
 	if event.phase == "began" or event.phase == "moved" then
 		local roverX = data.map.rover.x
 		local roverY = data.map.rover.y
@@ -170,6 +316,8 @@ local function mapTouched( event )
 			game.saveState.rover.x2 = (courseX - data.mapZoomGrp.x) / data.mapZoomGrp.xScale
 			game.saveState.rover.y2 = (courseY - data.mapZoomGrp.y) / data.mapZoomGrp.yScale
 		end
+	-- If touch ended, get craters on course, check for intercept, and redraw side view terrain, if necessary
+	-- CRATER REDERAW NEEDS WORK! 
 	elseif event.phase == "ended" then
 		data.nextX = data.rover.x - 100
 		util.findCratersOnCourse()
@@ -180,19 +328,18 @@ local function mapTouched( event )
 			local x = data.rover.x
 			local y = data.rover.y - 20  -- DETERMINE TERRAIN HEIGHT INSTEAD
 
-			-- Remove rover body
+			-- Replace the rover
 			data.rover:removeSelf()
 			data.rover = nil
 
-			-- Remove rover wheels
 			for i = 1, #data.wheelSprite do
 				data.wheelSprite[i]:removeSelf()
 				data.wheelSprite[i] = nil
 			end
 
-			-- Create new rover
 			new.rover( x, y )
 
+			-- Replace the terrain
 			for i = 1, #data.terrain do
 				if data.terrain[i] then
 					display.remove(data.terrain[i])
@@ -205,15 +352,12 @@ local function mapTouched( event )
 				data.courseHeightIndex = i
 			end
 
-			data.craterEndX = data.nextX + 200
 			data.courseHeightIndex = data.courseHeightIndex + 1
 			data.drawingCrater = false
 		end
 
-		-- Record the current x-axis position of the side scrolling rover
+		-- Record rover position and enable rover
 		data.rover.distOldX = data.rover.x
-
-		-- Make rover active to allow for position updating and to enable the accelerator
 		data.rover.isActive = true
 	end
 
@@ -259,30 +403,29 @@ local function mapZoom( event )
 end
 
 -- Create new map
+-- NEED TO BREAK UP INTO MULTIPLE FUNCTIONS AND MOVE TO rovernew.lua
 local function newMap()
 
-	-- variables for map position
+	-- Create map background
 	local mapX = act.xMin + act.height/6 + 5
 	local mapY = act.yMin + act.height/6 + 5 
-
-	-- create map background
 	local mapBgRect = {}
 	for i = 1, 5 do
 		mapBgRect[i] = display.newRect( data.displayPanelGrp, mapX, mapY, data.mapLength + 6 - i, data.mapLength + 6 - i )
 		mapBgRect[i]:setFillColor( 0.5 - i/10, 0.5 - i/10, 0.5 - i/10 )
 	end
 
-	-- create map display container
+	-- Create map display container
 	data.mapGrp = display.newContainer( data.displayPanelGrp, data.mapLength, data.mapLength )
 	data.mapGrp:translate( mapX, mapY )
 
-	-- initialize rover map starting coordinates to map center
+	-- Initialize rover map starting coordinates to map center
 	game.saveState.rover.x1 = 0
 	game.saveState.rover.y1 = 0
 
 	data.mapZoomGrp = act:newGroup( data.mapGrp )
 
-	-- create map
+	-- Create map
 	local mapData = { 
 		parent = data.mapZoomGrp, 
 		x = 0, 
@@ -291,7 +434,6 @@ local function newMap()
 		height = data.mapLength
 	} 
 
-	-- Create map image
 	data.map = act:newImage( "sinai_planum.png", mapData )
 	data.map.scale = 1
 
@@ -300,7 +442,7 @@ local function newMap()
 	data.mapGrp.top = -data.map.width/2
 	data.mapGrp.bottom = data.map.width/2
 
-	-- Add touch event listener to background image
+	-- Add touch event listener to map image
 	data.map:addEventListener( "touch", mapTouched )
 
 	-- Create spaceship
@@ -317,6 +459,7 @@ local function newMap()
 	-- Add tracking dot to the map
 	new.mapDot()
 	
+	-- Add pseudorandomly-generated initial course
 	local x1 = data.map.rover.x
 	local y1 = data.map.rover.y
 	local x2 = x1
@@ -327,16 +470,13 @@ local function newMap()
 		y2 = math.random(-data.map.width/2, data.map.width/2)
 	end
 
-	-- Calculate course coordinates
 	util.calcUnitVectors( x1, y1, x2, y2 )
 	x2, y2 = util.calcCourseCoords( data.mapGrp, x1, y1, x2, y2 )
 	game.saveState.rover.x2 = x2
 	game.saveState.rover.y2 = y2
 
-	-- Find the craters that lie on the course
 	util.findCratersOnCourse()
 
-	-- Draw the initial course
 	data.map.course = util.newCourse( data.mapGrp, x1, y1, x2, y2 )
 	data.map.courseArrow = util.newArrow( act, data.mapGrp, x1, y1, x2 - 2 * data.map.courseVX, y2 - 2 * data.map.courseVY )
 	data.map.rover:toFront()	
@@ -345,7 +485,8 @@ local function newMap()
 	data.rover.distOldX = data.rover.x
 end
 
--- Create new battery indicator. Accepts x,y coordinates.
+-- Create new battery indicator. Accepts coordinate pair.
+-- MOVE TO rovernew.lua
 local function newBattIndicator( x, y )
 
 	-- Create new battery indicator display object
@@ -368,7 +509,7 @@ local function newBattIndicator( x, y )
 		parent = data.displayPanelGrp,
 		text = string.format( format, game.energy(), "%" ),
 		x = x + 2,
-		y = y + 25.5, --act.yMin + data.mapLength + 5.5,
+		y = y + 25.5,
 		font = native.systemFontBold,
 		fontSize = 8,
 	}
@@ -381,9 +522,10 @@ local function newBattIndicator( x, y )
 end
 
 -- Create new energy gauge
+-- BREAK UP AND MOVE TO rovernew.lua
 local function newEnergyGauge( x, y )
 
-	-- Create an energy gauge image sheet 
+	-- Options table for energy gauge image sheet 
 	local options = {
 		width = 60,
 		height = 2,
@@ -397,13 +539,14 @@ local function newEnergyGauge( x, y )
 	local nElements = 50
 	local hScale = 1.0
 	local height = options.height
-	local spacing = 1.25 --math.round(10 * (length - nElements * height * hScale) / (nElements)) / 10
+	local spacing = 1.25
 
-	-- Create an energy gauge background
+	-- Create an energy gauge background with attempt to create some shading for apparent recessed depth
 	local energyGaugeBg = {}
 	for i = 1, length + 5 do
 		for j = 1, 6 do
 			energyGaugeBg[i] = {}
+			-- This adapts the function that produces the gauge's foreground curve to the background (see gauge sprite creation below)
 			local width = options.width * math.pow( 2, (i*(nElements/(length + 5))*i*(nElements/(length + 5))/3000)) - (33 - i/100) - j
 			energyGaugeBg[i][j] = display.newRect( data.displayPanelGrp, act.xCenter, act.yCenter, width, 1 )
 			energyGaugeBg[i][j].anchorX = 1
@@ -414,10 +557,11 @@ local function newEnergyGauge( x, y )
 		end
 	end
 
-	-- Create top background border
+	-- Create top background border with attempt to create some shading for apparent recessed depth
 	local energyGaugeBgTopBorder = {}
 	for i = 1, 6 do
 		energyGaugeBgTopBorder[i] = {}
+		-- This fits each background element to the top gauge element width using the function the produces the gauge curve.
 		local width = options.width * math.pow( 2, (50-(i-1)/2*50/(length + 5))*(50-(i-1)/2*50/(length + 5))/3000 ) - 33 - i
 		energyGaugeBgTopBorder[i] = display.newRect( data.displayPanelGrp, act.xCenter, act.yCenter, width, 1 )
 		energyGaugeBgTopBorder[i].anchorX = 1
@@ -427,10 +571,11 @@ local function newEnergyGauge( x, y )
 		energyGaugeBgTopBorder[i]:setFillColor( 0.4 - i/15, 0.4 - i/15, 0.4 - i/15 )
 	end
 
-	-- Create bottom background border
+	-- Create bottom background border with attempt to create some shading for apparent recessed depth
 	local energyGaugeBgBtmBorder = {}
 	for i = 1, 6 do
 		energyGaugeBgBtmBorder[i] = {}
+		-- This fits each background element to the bottom gauge element width using the function the produces the gauge curve.
 		local width = options.width * math.pow( 2, (1*(nElements/(length + 5))*1*(nElements/(length + 5))/3000)) - 33 - i
 		energyGaugeBgBtmBorder[i] = display.newRect( data.displayPanelGrp, act.xCenter, act.yCenter, width, 1 )
 		energyGaugeBgBtmBorder[i].anchorX = 1
@@ -455,8 +600,7 @@ local function newEnergyGauge( x, y )
 		data.energyGaugeSprite[i].anchorY = 1
 		data.energyGaugeSprite[i].x = x + 1
 		data.energyGaugeSprite[i].y = y - (height * hScale + spacing) * (i - 1) - 1.51
-		-- This is a hack to produce an attractive gauge curve. The exponential function produces the curve while '0.7' 
-		-- reduces the width of each gauge element for aesthetics. Each gauge background block above employs this as well.
+		-- This is a hack to produce the gauge curve. The exponential function produces the curve while '0.7' adjusts element width
 		data.energyGaugeSprite[i]:scale( math.pow( 2, i*i/3000 ) - 0.7, hScale )
 		data.energyGaugeSprite[i]:setFrame( 5 )
 		data.energyGaugeSprite[i].bright = true
@@ -481,7 +625,8 @@ local function onZoomOutRelease( event )
 	end
 end
 
-	-- Create the speed display text
+-- Create the display panel
+-- BREAK UP AND MOVE TO rovernew.lua
 local function newDisplayPanel()
 
 	-- Create display panel background image
@@ -495,7 +640,6 @@ local function newDisplayPanel()
 
 	displayPanel = act:newImage( "panel.png", dispPanelData )
 
-	-- Create map
 	newMap()
 
 	-- Create zoom-in button
@@ -566,7 +710,7 @@ local function newDisplayPanel()
 	newBattIndicator( act.xMax - 6, speedBgRect[1].y + speedBgRect[1].height/2 - 27 )
 end
 
--- Set energy gauge color
+-- Set energy gauge color based on energy quintile
 local function setEnergyGaugeColor()
 	local spriteFrame
 	if game.energy() > 80 then
@@ -588,7 +732,7 @@ local function setEnergyGaugeColor()
 	end
 end
 
--- Reset energy gauge
+-- Reset energy gauge IAW current energy level
 local function resetEnergyGauge()
 	setEnergyGaugeColor()
 
@@ -620,7 +764,7 @@ local function updateEnergyDisplay()
 			setEnergyGaugeColor()
 			resetEnergyGauge()
 		end
-	else -- If game.energy() integer has diminished from even to odd then set top gauge element visibility and color, update index
+	else -- If game.energy() has diminished from even to odd, set top gauge element visibility & color, update index
 		if data.energyGaugeIndex - math.ceil( game.energy()/2 ) == 1 then
 			data.energyGaugeSprite[data.energyGaugeIndex].isVisible = false
 			data.energyGaugeIndex = math.ceil( game.energy()/2 ) -- Could simply decrement the index?
@@ -636,20 +780,19 @@ local function updateEnergyDisplay()
 	end
 end
 
--- Accelerate the rover up to angular velocity of 8000 w/higher initial acceleration
+-- Accelerate the rover up to an angular velocity of 8000 with higher initial acceleration
 local function accelRover()
-	if data.rover.angularV <= 150 then -- higher initial acceleration
+	if data.rover.angularV <= 150 then
 		data.rover.angularV = data.rover.angularV + 50 
-	--elseif data.rover.angularV > 700 and data.rover.angularV < 2000 then
-	--	data.rover.angularV = data.rover.angularV + 100
 	elseif data.rover.isAutoNav and data.rover.angularV + 20 > 2000 then
 		data.rover.angularV = 2000
-	elseif data.rover.angularV + 20 > 8000 then -- top speed
-		data.rover.angularV = 8000
+	elseif data.rover.angularV + 20 > 8000 then
+		data.rover.angularV = 8000 -- top speed
 	else
 		data.rover.angularV = data.rover.angularV + 20 -- typical acceleration
 	end
 
+	-- Apply energy use
 	game.addEnergy( -0.001 )
 	updateEnergyDisplay()
 end
@@ -663,10 +806,9 @@ local function brakeRover()
 	end
 end
 
--- Let the rover coast, with increased deceleration during high AOA (wheelie) instances
+-- Let the rover coast, with increased deceleration during high angle-of-attack instances for stability
 local function coastRover()
-	-- if high angle-of-attack, then greater deceleration for stability
-	if (data.rover.rotation % 360 > 260 and data.rover.rotation % 360 < 300) then
+	if (data.rover.rotation % 360 > 260 and data.rover.rotation % 360 < 300) then -- If high AOA
 		data.wheelSprite[1].linearDampening = 1000
 		if data.rover.kph < 10 then
 			data.rover.angularV = 0
@@ -674,9 +816,9 @@ local function coastRover()
 			data.rover.angularV = data.rover.angularV * 0.9 
 		end
 	elseif data.rover.angularV > 100 then
-		data.rover.angularV = data.rover.angularV * 0.99 -- normal deceleration
+		data.rover.angularV = data.rover.angularV * 0.99 -- Normal deceleration
 	elseif data.rover.angularV - 1 > 0 then
-		data.rover.angularV = data.rover.angularV - 1 -- final deceleration to 0
+		data.rover.angularV = data.rover.angularV - 1 -- Final deceleration to 0
 	else
 		data.rover.angularV = 0
 	end
@@ -685,9 +827,7 @@ end
 -- Decelerate rover
 local function decelerate()
 
-	-- Set button image
 	data.ctrlPanelGrp.accelButton:setFrame( 1 ) 
-
 	data.rover.accelerate = false
 
 	-- Play rover deceleration sound followed by idle engine sound, first halting any other sounds
@@ -746,18 +886,15 @@ local function checkIfRoverAtShip()
 	end
 end
 
--- Engage auto navigation back to the ship (mandatory course, governed speed, disabled water scan) --ADD UNZOOMING
+-- Engage auto navigation back to the ship (mandatory course, governed speed, hidden water scan button)
+-- NEED TO ADD UNZOOMING OF MAP
 local function engageAutoNav()
 	game.saveState.rover.x2 = 0
 	game.saveState.rover.y2 = 0
-
-	-- Set auto navigation flag
 	data.rover.isAutoNav = true
-
-	-- Hide the water button and set the course to the ship
 	data.ctrlPanelGrp.waterButton.isVisible = false
 
-	-- Remover map touch listener to prevent course changes
+	-- Remove map touch listener to prevent course changes
 	data.map:removeEventListener( "touch", mapTouched )
 
 	-- Display message to user 
@@ -771,11 +908,13 @@ local function engageAutoNav()
 	game.messageBox( "ON RESERVE POWER!\n\nAuto navigation engaged.", options )
 end
 
+-- Update the rover's position on the overhead view
+-- SHOULD BREAK UP
 local function updatePosition()
 	if data.rover.isActive then 
 
 		updateCoordinates()
-		checkIfRoverAtShip() -- DISALLOW THIS DURING THE ZOOMING TRANSITIONS
+		checkIfRoverAtShip() -- NEED TO NOT DO THIS DURING THE ZOOMING TRANSITIONS
 		checkCraters()
 
 		local roverX = data.map.rover.x 
@@ -783,20 +922,18 @@ local function updatePosition()
 		local courseX = game.saveState.rover.x2 * data.mapZoomGrp.xScale + data.mapZoomGrp.x
 		local courseY = game.saveState.rover.y2 * data.mapZoomGrp.yScale + data.mapZoomGrp.y
 
-		if not data.rover.isAutoNav then -- CONSIDER USING A DIFFERENT VARIABLE
-			-- Calculate course coordinates
+		-- If autonav not engaged, then calculate course coords in case of map panning & engage autonav if needed
+		if not data.rover.isAutoNav then -- CONSIDER USING A DIFFERENT VARIABLE NAME
 			courseX, courseY = util.calcCourseCoords( data.mapGrp, roverX, roverY, courseX, courseY ) -- MAKE THIS ONLY RUN DURING PANNING
-			-- If the rover has just run out of food or energy then mandate course back to ship
 			if ( game.energy() <= 0 or game.food() <= 0 ) then
 				engageAutoNav()
 			end
 		end
 
-		-- If the rover is within the map's boundaries
+		-- If the rover is within the map's boundaries, replace the course, else deactivate the rover
 		if game.xyInRect( roverX, roverY, data.mapGrp ) and data.map.courseLength > 0 then	-- ARE BOTH CONDITIONS NECESSARY?
 			util.replaceCourse( act, data.mapGrp, roverX, roverY, courseX, courseY )	
-		else -- If map boundary has been reached
-
+		else
 			-- Deactivate rover, cease acceleration, and initiate braking
 			data.rover.isActive = false
 			data.rover.accelerate = false
@@ -824,6 +961,7 @@ local function updatePosition()
 end
 
 -- Adjust and apply rover wheel angular velocity
+-- BREAK UP INTO MULTIPLE FUNCTIONS
 local function moveRover()
 
 	-- Accelerate, brake, or coast rover
@@ -836,20 +974,16 @@ local function moveRover()
 		coastRover()
 	end
 
-	-- Apply wheel angular velocity & sprite frame to the wheel sprites
-	-- Rear wheel at half speed for stability
+	-- Apply wheel angular velocity to the wheel sprites with the rear wheel at half speed for stability
 	data.wheelSprite[1].angularVelocity = data.rover.angularV/2
-
 	for i = 2, 3 do
 		data.wheelSprite[i].angularVelocity = data.rover.angularV
 	end
 
-	-- Update map position
 	updatePosition()
 
-	-- Determine wheel sprite frame
+	-- Determine and set wheel sprite frame
 	local wheelFrame
-
 	if data.rover.angularV > 700 then 
 		wheelFrame = 7
 	elseif data.rover.angularV < 200 then 
@@ -858,12 +992,12 @@ local function moveRover()
 		wheelFrame = math.floor( data.rover.angularV/100 )
 	end
 
-	-- Set wheel sprite frame
 	for i = 1, 3 do
 		data.wheelSprite[i]:setFrame( wheelFrame )
 	end
 
-	-- If rover is upturned, then reveal the reset button
+	-- If the rover has stopped overturned, then replace the accelerate button with the recover button after some delay
+	-- Otherwise, if the rover has stopped upright, then display the water scan button
 	if (data.rover.rotation % 360 > 80 and data.rover.rotation % 360 < 270) and data.rover.kph == 0 then
 
 		data.ctrlPanelGrp.waterButton.isVisible = false
@@ -899,15 +1033,11 @@ local function handleAccelButton( event )
 
 	if data.rover.isActive then	
 
+		-- If accelerator touch began, then set accelerator image, set flag for acceleration, & play appropriate sound
 		if ( event.phase == "began" ) then
 
-			-- Set button image
 			data.ctrlPanelGrp.accelButton:setFrame( 2 ) 
-
-			-- Accelerate rover
 			data.rover.accelerate = true
-
-			-- Halt engine or stop sounds
 			game.stopSound( data.rover.engineChannel )
 			game.stopSound( data.rover.stopChannel )
 
@@ -942,7 +1072,7 @@ local function handleAccelButton( event )
 				onComplete = playStage1Sound
 			}
 
-			-- Play start sound, then stage1 sound, then stage2 sound, in order, based on wheel angular velocity
+			-- Play start sound, then stage1 sound, then stage2 sound, depending on wheel angular velocity
 			if data.rover.angularV > 3500 then
 				data.rover.stage2Channel = game.playSound(data.rover.stage2Sound, options3)
 			elseif data.rover.angularV > 1750 then
@@ -952,8 +1082,6 @@ local function handleAccelButton( event )
 			end
 
 		elseif ( (event.phase == "ended" or event.phase == "cancelled") and data.rover.accelerate == true ) then
-
-			-- Decelerate rover. Allow to coast and play deceration sound
 			decelerate()
 		end 
 	end
@@ -974,15 +1102,11 @@ local function onBrakeRelease( event )
 	return true
 end
 
--- Water scan button event handler
+-- Water scan button event handler: initiate braking, stop all audio, then go to drillScan act.
 local function onWaterRelease( event )
-	-- Initiate braking
 	data.rover.brake = true
-
-	-- Stop all audio
 	audio.stop()
 	game.gotoAct ( "drillScan", { effect = "zoomInOutFade", time = 1000 } )
-
 	return true
 end
 
@@ -992,29 +1116,25 @@ local function onRecoverPress( event )
 	local x = data.rover.x
 	local y = data.rover.y
 
-	-- remove rover body
+	-- Replace side view rover
 	data.rover:removeSelf()
 	data.rover = nil
-
-	-- remove rover wheels
 	for i = 1, #data.wheelSprite do
 		data.wheelSprite[i]:removeSelf()
 		data.wheelSprite[i] = nil
 	end
-
-	-- create new rover
 	new.rover( x, y )
 
-	-- reset speed display
+	-- Reset speed display
 	data.rover.speedOldX = data.rover.x
 	data.speedText.text = string.format( data.speedText.format, 0, "kph" )
 
-	-- display accelerator, hide recover button
+	-- Replace recover button with accelerator button
 	data.ctrlPanelGrp.accelButton.isVisible = true
 	data.ctrlPanelGrp.waterButton.isVisible = true
 	data.ctrlPanelGrp.recoverButton.isVisible = false
 
-	-- deduct energy cost
+	-- Deduct energy cost
 	game.addEnergy( -5.0 )
 	updateEnergyDisplay()
 
@@ -1023,17 +1143,13 @@ end
 
 -- Handle accelerator button slide-off
 local function handleSlideOff( event )
-
 	if ( event.phase == "moved" and data.rover.accelerate == true ) then
-
-		-- discontinue acceleration
 		decelerate()
 	end
-
 	return true
 end
 
--- Create control panel
+-- Create control panel. BREAK UP AND MOVE TO rovernew.lua
 local function newControlPanel()
 
 	-- Set panel backgroud image
@@ -1044,7 +1160,6 @@ local function newControlPanel()
 		width = act.width, 
 		height = act.height/3,
 	} 
-
 	displayPanel = act:newImage( "panel.png", ctrlPanelData )
 
 	-- Create invisible circle object as slide-off sensor for the accelerator button
@@ -1053,29 +1168,26 @@ local function newControlPanel()
 	slideOffSensor.isHitTestable = true
 	slideOffSensor:addEventListener( "touch", handleSlideOff )
 
-	-- Create an image sheet for accelerator button
+	-- Create the accelerator button sprite
 	local options = {
 		width = 128,
 		height = 128,
 		numFrames = 2
 	}
-
 	local accelButtonSheet = graphics.newImageSheet( 'media/rover/accel_button.png', options )
 
-	-- Create accelerator button sprite
 	local sequenceData = {
 		name = "accelButtoonSequence",
 		start = 1,
 		count = 2,
 	}
-
 	data.ctrlPanelGrp.accelButton = display.newSprite( data.ctrlPanelGrp, accelButtonSheet, sequenceData )
 	data.ctrlPanelGrp.accelButton.x = act.xCenter + 35
 	data.ctrlPanelGrp.accelButton.y = act.yMax - 22
 	data.ctrlPanelGrp.accelButton:scale( act.height/1707, act.height/1707 )
 	data.ctrlPanelGrp.accelButton:addEventListener( "touch", handleAccelButton )
 
-	-- create the stop button
+	-- Create the stop button
 	local brakeButton = widget.newButton
 	{
 		x = act.xCenter - 35,
@@ -1088,7 +1200,7 @@ local function newControlPanel()
 		onRelease = onBrakeRelease
 	}
 
-	-- create the water scan button
+	-- Create the water scan button
 	data.ctrlPanelGrp.waterButton = widget.newButton
 	{
 		x = act.xMax - 28,
@@ -1100,7 +1212,7 @@ local function newControlPanel()
 		onRelease = onWaterRelease
 	}
 
-	-- create the reset button
+	-- Create the reset button
 	data.ctrlPanelGrp.recoverButton = widget.newButton
 	{
 		x = act.xCenter + 35,
@@ -1120,7 +1232,7 @@ end
 
 -- Update the speed display
 local function updateSpeedDisplay()
-	local kmPerCoronaUnit = 0.00006838462 -- based on estimated rover length
+	local kmPerCoronaUnit = 0.00006838462 -- based on estimated rover length of 4.66 meters
 	local elapsedTimePerHr = 7200 -- every 0.5 seconds
 	data.rover.kph = ( data.rover.x - data.rover.speedOldX ) * kmPerCoronaUnit * elapsedTimePerHr
 		
@@ -1147,17 +1259,12 @@ function act:stop()
 	physics.pause()
 end
 
--- Init the act
+-- Initiate the act
 function act:init()
-	-- Include Corona's physics library
 	local physics = require "physics"
-	
-	-- Start physics and set gravity 
 	physics.start()
 	physics.setGravity( 0, 3.3 )
 	-- physics.setDrawMode( "hybrid" )
-
-	-- Seed math.random()
 	math.randomseed( os.time() )
 
 	-- Fill data.shape table with terrain obstacle shape functions
@@ -1199,10 +1306,6 @@ function act:init()
 
 	-- Start rover speed display updating
 	timer.performWithDelay( 500, updateSpeedDisplay, 0 )
-
-	-- For testing purposes
-	-- util.setRoverPosition( 5, 50 )
-	-- util.markCraters()
 end
 
 -- Handle enterFrame events
@@ -1223,8 +1326,7 @@ function act:enterFrame( event )
 	data.staticFgGrp:toFront()
 end
 
-------------------------- End of Activity --------------------------------
-
+-------------------------------- End of Activity --------------------------------
 
 -- Corona needs the scene object returned from the act file
 return act.scene
