@@ -57,8 +57,8 @@ function act:init()
 
 	-- Touch location text display objects
 	local yText = act.yMin + 15   -- relative to actual top of screen
-	xyText = display.newText( act.group, "", act.width / 3, yText, native.systemFont, 14 )
-	xyCenterText = display.newText( act.group, "", act.width * 2 / 3, yText, native.systemFont, 14 )
+	xyText = act:newText( "", act.xMin + act.width / 3, yText )
+	xyCenterText = act:newText( "", act.xMin + act.width * 2/3, yText )
 
 	-- Flying UFO
 	local xStart = act.xMin - 100       -- start off screen to the left

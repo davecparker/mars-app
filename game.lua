@@ -19,7 +19,7 @@ local game = {
     allGems = false,      -- true to always show all gems (debug)
     actParam = nil,       -- act parameter data from a gem
     actGemName = nil,     -- gem name that triggered the act
-    openDoc = nil,        -- name of the currently open doc in Documents view or nil if none
+    openDoc = nil,        -- { baseName, ext } of the currently open doc in Documents view or nil if none
     lockedRoom = nil,     -- locked room that user is trying to enter or nil if none
     doorCode = nil,       -- door code for locked room or nil if none
     doorUnlocked = nil,   -- set to true when a locked door is successfully unlocked
@@ -196,7 +196,7 @@ local game = {
             --            3=finished second play
         },
             
-        -- List of document filenames that user has found
+        -- List of documents { baseName, ext } that user has found
         docs = {},
     },     
 }
@@ -250,6 +250,7 @@ end
 -- Do nothing
 function game.emptyFunction()
 end
+
 
 -------------------------- Resource use   ---------------------------------
 
