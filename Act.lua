@@ -88,6 +88,12 @@ function Act:newImage( filename, options )
     return image
 end
 
+-- Make a new text object in the Act at the given position and font size
+-- The font is always system font and the fontSize defaults to 14.
+function Act:newText( text, x, y, fontSize )
+    return display.newText( self.group, text, x, y, native.systemFont, (fontSize or 14) )
+end
+
 -- Make and return a display sub-group with the given parent (default act.group)
 function Act:newGroup( parent )
 	parent = parent or self.group

@@ -231,7 +231,7 @@ local function gemTouched( event )
 			game.gotoAct( gem.act, { effect = "crossFade", time = 500 }  )
 		elseif gem.t == "doc" then
 			-- Get the document
-			game.foundDocument( gem.file )
+			game.foundDocument( gem.file, gem.ext )
 			gems.grabGemIcon( icon )
 		elseif gem.t == "res" then
 			-- Add the resource

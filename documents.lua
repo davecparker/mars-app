@@ -30,7 +30,7 @@ local function onRowRender( event )
 
     -- Display the text
 	local docs = game.saveState.docs
-    local rowTitle = display.newText( row, docs[row.index], 0, 0, native.systemFont, 18 )
+    local rowTitle = display.newText( row, docs[row.index].baseName, 0, 0, native.systemFont, 18 )
     rowTitle:setFillColor( 0 )     -- black text
     rowTitle.anchorX = 0           -- left aligned
     rowTitle.x = 15
@@ -75,18 +75,20 @@ function act:prepare()
 	end
 end
 
--- Add the document with the given filename to the user's found documents
-function game.foundDocument( filename )
+-- Add the document with the given base filename and extension to the user's found documents
+function game.foundDocument( baseName, ext )
     -- Do nothing if the user already has this document
     local docs = game.saveState.docs
     for i = 1, #docs do
-        if docs[i] == filename then
+    	local doc = docs[i]
+        if doc.baseName == baseName and doc.ext == ext then
             return
         end
     end
 
     -- Add the new document to the end of the list
-    docs[#docs + 1] = filename
+    print("Found document: ", baseName, ext )
+    docs[#docs + 1] = { baseName = baseName, ext = ext }
 end
 
 
