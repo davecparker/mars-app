@@ -21,6 +21,8 @@ local debugActs = {
 	"mainAct",
 	"thrustNav",
 	"doorLock",
+	"cipher",
+	"hack",
 	"circuit",
 	"wireCut",
 	"greenhouse",
@@ -31,6 +33,7 @@ local debugActs = {
 	"stasis",
 	"spaceWalk",
 	"blankAct",
+	"sampleAct",
 	"layoutTool",
 	"about",
 }

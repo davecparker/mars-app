@@ -58,7 +58,7 @@ game.sendMessage( id )                -- Add message to messages view
 game.sendMessages( id1, id2, ... )    -- Add multiple messages to messages view
 
 -- Game functions in documents.lua:
-game.foundDocument( filename )        -- Add document to user's list of found docs
+game.foundDocument( baseName, ext )   -- Add document to user's list of found docs
 
 -- Activity functions in Act.lua
 game.gotoScene( scene, options )      -- Go directly to a scene (see composer.gotoScene)
@@ -82,6 +82,7 @@ act.name     -- act module name
 
 -- Methods in the act table you can use (see Act.lua for details):
 act:newImage( filename, options )        -- make a new imageRect display object
+act:newText( text, x, y, fontSize )      -- make a new text display object
 act:newGroup( parent )                   -- make a new display (sub-)group
 act:whiteBackground()                    -- make a solid white background
 act:grayBackground( gray )               -- make a solid grayscale background

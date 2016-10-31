@@ -1,6 +1,4 @@
 *.db
-*.db
-media/thrustNav/Thumbs.db
-media/thrustNav/Thumbs.db
-*.db
-media/thrustNav/Thumbs.db
+.DS_Store
+media/.DS_Store
+media/.DS_Store
