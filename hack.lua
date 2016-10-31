@@ -15,6 +15,7 @@ local widget = require("widget")
 
 local passBtns
 local password
+local terminalText
 
 
 ------------------------- Start of Activity --------------------------------
@@ -91,39 +92,7 @@ function act:init()
 	terminalDisplay.stroke = {0.5, 0.5, 0.5}
 	terminalDisplay.strokeWidth = 28
 
-	-- Create text 
-	local terminalTitleText = display.newText(act.group, "", act.xMin + act.xCenter, act.yMin + 263, native.systemFont)
-	terminalTitleText.text = [[
-
-	SIERRA TERMLINK PROTOCOL
-	ENTER PASSWORD NOW
-	4 ATTEMPTS LEFT
-	SELECT A PASSWORD:
-
-
-
-	0xF610 PLANE
-
-
-	0xF614 CRANE
-
-
-	0xF618 PLANT
-
-
-	0xF61C BLUNT
-
-
-	0xF620 PLUMP
-
-
-	0xF624 DRAIN
-
-
-	0xF628 FLINT
-	]]
-	terminalTitleText:setFillColor(0,1,0)
-
+	-- Create buttons for inputting passwords
 	passBtns = {}
 	for i=1,7 do
 		passBtns[i] = widget.newButton(
@@ -140,6 +109,30 @@ function act:init()
 		})
 		act.group:insert(passBtns[i])
 	end
+
+	-- Create text 
+	terminalText = {}
+	for i=1,11 do
+		terminalText[i] = display.newText(act.group, "test", act.xMin + act.xCenter, act.yMin + 30 * i, native.systemFont)
+		if(i>=5) then
+			terminalText[i].x = act.xMin + 90
+			terminalText[i].y = 60 + (i-4) * 55 --passBtns[i-3].y
+		end
+		terminalText[i]:setFillColor(0,1,0)
+	end
+
+	-- Set text for each line
+	terminalText[1].text = "SIERRA TERMLINK PROTOCOL"
+	terminalText[2].text = "ENTER PASSWORD NOW"
+	terminalText[3].text = "4 ATTEMPTS LEFT"
+	terminalText[4].text = "SELECT A PASSWORD:"
+	terminalText[5].text = "0xF610 PLANE"
+	terminalText[6].text = "0xF614 CRANE"
+	terminalText[7].text = "0xF618 PLANT"
+	terminalText[8].text = "0xF61C BLUNT"
+	terminalText[9].text = "0xF620 PLUMP"
+	terminalText[10].text = "0xF624 DRAIN"
+	terminalText[11].text = "0xF628 FLINT"
 
 
 	-- Start with console
