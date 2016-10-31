@@ -29,10 +29,12 @@ local debugActs = {
 	"drillScan",
 	"drill",
 	"rover",
+	"rover2",
 	"shipLanding",
 	"stasis",
 	"spaceWalk",
 	"blankAct",
+	"sampleAct",
 	"layoutTool",
 	"about",
 }
