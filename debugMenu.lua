@@ -21,6 +21,8 @@ local debugActs = {
 	"mainAct",
 	"thrustNav",
 	"doorLock",
+	"cipher",
+	"hack",
 	"circuit",
 	"wireCut",
 	"greenhouse",

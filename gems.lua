@@ -13,7 +13,7 @@ local game = globalGame
 --    { x = xCoord, y = yCoord, enabled = true/nil }
 -- plus additional data depending on the type of the gem:
 --    Act link: { t = "act", act = actName, param = optionalData }
---    Document: { t = "doc", file = fileName }
+--    Document: { t = "doc", file = baseName, ext = fileExt (default "txt") }
 --    Resource: { t = "res", res = "h2o"/"kWh"/"food", amount = n }
 
 -- All gems in the game
@@ -39,6 +39,7 @@ local gems = {
 
         -- In Lounge
         panel3 =    { x = 128, y = -116, t = "act", act = "circuit", param = 3  },
+        map =       { x = 91, y = -124, t = "doc", file = "Ship Map", ext = "png", enabled = true  },
 
         -- In Greenhouse
         h2oG1 =     { x = -65,  y = -110, t = "res", res = "h2o", amount = 20, enabled = true  },
@@ -96,7 +97,7 @@ local function touchGemMessageBox( event )
         if gemGrabbed then
             if gemGrabbed.t == "doc" then
                 -- Open the gem's document 
-                game.openDoc = gemGrabbed.file
+                game.openDoc = { baseName = gemGrabbed.file, ext = gemGrabbed.ext }
                 game.gotoTab( "documents" )
             end
         end
