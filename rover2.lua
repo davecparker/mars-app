@@ -96,7 +96,7 @@ function act:init()
 
 
 
-	rover = display.newImageRect("rover2/images/roverRight.png", 119, 63)
+	rover = display.newImageRect("media/rover2/images/roverRight.png", 119, 63)
 	dynamicGroup:insert(rover)
 	local roverShape = {-59, -20, 59, -20, 38, 25, -59, 25}
 	physics.addBody(rover, {shape = roverShape, friction = 1})
@@ -108,7 +108,7 @@ function act:init()
 		x = rover.x + x
 		local y = rover.y + 28
 
-		local wheel = display.newImageRect("rover2/images/wheel.png", 24, 24)
+		local wheel = display.newImageRect("media/rover2/images/wheel.png", 24, 24)
 		wheel.x, wheel.y = x, y
 		physics.addBody(wheel, {radius = 12, bounce = 0, friction = 1000000})
 		physics.newJoint("pivot", rover, wheel, wheel.x, wheel.y)

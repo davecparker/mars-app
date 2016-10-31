@@ -21,9 +21,14 @@ function terrain.create(act, group, level)
 			group:insert(r)
 		end
 
-		r = display.newRect(act.xCenter + 1000, act.yCenter + 100, 100, 15)
+		r = display.newRect(act.xCenter + 1000, act.yCenter + 100, 400, 15)
 		physics.addBody(r, "static", {bounce = 0, friction = 1000000})
-		r.rotation = -30
+		r.rotation = -40
+		group:insert(r)
+
+		r = display.newRect(act.xCenter + 1300, act.yCenter + 100, 400, 15)
+		physics.addBody(r, "static", {bounce = 0, friction = 1000000})
+		r.rotation = 40
 		group:insert(r)
 
 		r = display.newRect(act.xCenter + 1500, act.yCenter + 100, 100, 15)
