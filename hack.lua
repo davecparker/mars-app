@@ -16,27 +16,60 @@ local widget = require("widget")
 local passBtns
 local password
 local terminalText
+local numAttempts
 
 
 ------------------------- Start of Activity --------------------------------
 
+-- Check how many letters in each string are the same
+local function compareStrings(str1, str2)
+
+	local numSame = 0
+
+	if(#str1 == #str2) then
+		for i=1,#str1 do
+
+			local c1 = str1:sub(i,i)
+			local c2 = str2:sub(i,i)
+
+			if(c1 == c2) then
+				numSame = numSame + 1
+			end
+		end
+	end
+
+	return numSame
+end
+
+-- Listener called when user pressed a button for a password
 local function passListener(event)
 	local target = event.target
 
-	if(target == passBtns[1]) then
-		print("2 letters are correct")
-	elseif(target == passBtns[2]) then
-		print("1 letter is correct")
-	elseif(target == passBtns[3]) then
-		print("3 letters are correct")
-	elseif(target == passBtns[4]) then
-		print("All letters are correct")
-	elseif(target == passBtns[5]) then
-		print("2 letters are correct")
-	elseif(target == passBtns[6]) then
-		print("0 letters are correct")
-	elseif(target == passBtns[7]) then
-		print("3 letters are correct")
+	if(passBtns ~= nil and numAttempts > 0) then
+		for i=1,7 do
+			if(target == passBtns[i]) then
+
+				local numCorrect = compareStrings(passBtns[i].word, password)
+				if(numCorrect < string.len(password)) then
+					numAttempts = numAttempts - 1
+					terminalText[3].text = numAttempts .. " ATTEMPTS LEFT"
+					terminalText[4].text = compareStrings(passBtns[i].word, password) .. " LETTER(S) IS/ARE CORRECT"
+					passBtns[i]:setLabel(numCorrect)
+					passBtns[i]:setEnabled(false)
+				elseif(numCorrect >= string.len(password)) then
+					terminalText[2].text = ""
+					terminalText[3].text = "CORRECT PASSWORD"
+					terminalText[4].text = string.upper(password)
+					for j=1,7 do
+						passBtns[j]:removeSelf()
+						passBtns[j] = nil
+						terminalText[j+4].text = ""
+					end
+					passBtns = nil
+					break
+				end
+			end
+		end
 	end
 end
 
@@ -80,11 +113,96 @@ local function encryptString(decryText)
 	return encryText
 end
 
+-- Function to generate a real password randomly for a given length
+local function generateRealPassword(length)
+	local pass = ""
+	for i=1,length do
+		pass = pass .. string.char(math.random(97, 97 + 25))
+	end
+	return pass
+end
+
+-- Function to generate a fake password based on a real password
+-- and the number of letters that need to be the same
+local function generateFakePassword(realPass, numSame)
+	--Create a temporary real password to work with
+	local tempPass = realPass
+
+	local fakePass = ""
+
+	-- For the number of letters that need to be the same
+	for i=1,numSame do
+
+		--Select a letter from the temp password
+		local n = math.random(1,string.len(tempPass))
+		local c = tempPass:sub(n,n)
+
+		--Add the letter onto a fake password
+		fakePass = fakePass .. c
+
+		--Split the temp password up so that the selected
+		--leter is gone
+		local str1 = string.sub(tempPass, 1, n-1)
+		local str2 = string.sub(tempPass, n+1)
+
+		--Construct the new temp password from the split parts
+		tempPass = str1 .. str2
+	end
+
+	-- After building the fake password with parts of the real
+	-- password, finish furnishing the fake password with bogus
+	-- letters until its the same length as the real password
+
+	-- Add a letter, then check if it already exists in the real
+	-- password. If it does, repeat until it doesn't
+
+	--while()
+
+	local r
+
+	local isSame = true
+
+	while(isSame) do
+
+		-- Select a letter randomly in the alphabet (using lowercase ASCII)
+		r = math.random(97, 97+25)
+
+		-- Set isSame bool to false until letter checking is done
+		isSame = false
+
+		-- Cycle through the real password and check the randomly chosen
+		-- letter against each letter in the real password
+		-- If the letter doesn't exist in the real password, append it
+		-- to the fake password. If it does, throw it out and retry
+
+		for i=1, string.len(realPass) do
+
+			-- Check the selected letter against each letter of the real
+			-- password (using lowercase ASCII)
+
+			local c = tonumber(realPass:sub(i,i))
+			if(r == c) then
+				isSame = true
+			end
+
+		end
+
+	end
+
+	r = string.char(r)
+
+	fakePass = fakePass .. r
+
+
+
+	--print("Real password is " .. realPass)
+	--print("Fake password is " .. fakePass)
+	--print("# of same letters is " .. numSame)
+end
+
 -- Init the act
 function act:init()
 	-- Remember to put all display objects in act.group
-
-	-- Create document (image) for encrypted message
 
 	-- Create image for the terminal display
 	local terminalDisplay = display.newRect(act.group, act.xCenter, act.yCenter, act.width, act.height)
@@ -110,7 +228,25 @@ function act:init()
 		act.group:insert(passBtns[i])
 	end
 
-	-- Create text 
+	-- Table listing all possible passwords
+	possPasswords = {"plane", "crane", "plant", "blunt", "plump", "drain", "flint"}
+
+	-- Initialize the real password randomly
+	password = possPasswords[math.random(#possPasswords)]
+
+	--generateRealPassword(7)
+
+	generateFakePassword("abcdefgh", 3)
+
+	-- Temporarily print the real password for testing
+	--print("Password is " .. password)
+
+	-- Set the possible password for each button randomly
+	for i=1,7 do
+		passBtns[i].word = table.remove(possPasswords, math.random(#possPasswords)) 
+	end
+
+	-- Create the text display 
 	terminalText = {}
 	for i=1,11 do
 		terminalText[i] = display.newText(act.group, "test", act.xMin + act.xCenter, act.yMin + 30 * i, native.systemFont)
@@ -121,27 +257,24 @@ function act:init()
 		terminalText[i]:setFillColor(0,1,0)
 	end
 
+	-- Initialize the number of attempts left
+	numAttempts = 4
+
 	-- Set text for each line
-	terminalText[1].text = "SIERRA TERMLINK PROTOCOL"
-	terminalText[2].text = "ENTER PASSWORD NOW"
-	terminalText[3].text = "4 ATTEMPTS LEFT"
-	terminalText[4].text = "SELECT A PASSWORD:"
-	terminalText[5].text = "0xF610 PLANE"
-	terminalText[6].text = "0xF614 CRANE"
-	terminalText[7].text = "0xF618 PLANT"
-	terminalText[8].text = "0xF61C BLUNT"
-	terminalText[9].text = "0xF620 PLUMP"
-	terminalText[10].text = "0xF624 DRAIN"
-	terminalText[11].text = "0xF628 FLINT"
+	local terminalTexts = {
+	"SIERRA TERMLINK PROTOCOL",
+	"ENTER PASSWORD NOW",
+	numAttempts .. " ATTEMPTS LEFT",
+	"SELECT A PASSWORD:"
+	}
 
+	for i=1,4 do
+		terminalText[i].text = terminalTexts[i]
+	end
 
-	-- Start with console
-	-- Create an encrypted message example using a string and an encryption method (Rot 13)
-	--[[local decryptedText = "sample text"
-	local encryptedText = encryptString(decryptedText)
-	print("Sample decrypted text is " .. decryptedText)
-	print("Sample encrypted text is " .. encryptedText)]]
-
+	for i=1,7 do
+		terminalText[i+4].text = string.upper(passBtns[i].word)
+	end
 end
 
 
