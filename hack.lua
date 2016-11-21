@@ -18,37 +18,70 @@ local password
 local terminalText
 local numAttempts
 
+local possPasswords
+local NUM_OF_PASSWORDS = 7
+local PASS_LEN = 7
+local MAX_NUM_ATTEMPTS = 4
+
+-- Set the random generator seed
+math.randomseed( os.time() )
+
 
 ------------------------- Start of Activity --------------------------------
 
 -- Check how many letters in each string are the same
 local function compareStrings(str1, str2)
 
+	-- Initialize the number of same letters to zero
 	local numSame = 0
 
+	-- Check and make sure the strings have the same length
 	if(#str1 == #str2) then
+
+		-- For the length of the strings
 		for i=1,#str1 do
 
+			-- Extract each character from each string and place
+			-- them into local variables
 			local c1 = str1:sub(i,i)
 			local c2 = str2:sub(i,i)
 
+			-- Check if the characters match
 			if(c1 == c2) then
+
+				-- Increment the variable that records how many
+				-- characters of each string are identical and
+				-- in identical positions
 				numSame = numSame + 1
 			end
 		end
 	end
 
+	-- Return the number of characters that are the same and
+	-- in the same positions for each string
 	return numSame
 end
 
 -- Listener called when user pressed a button for a password
 local function passListener(event)
+
+	-- Identify which button has been pressed
 	local target = event.target
 
+	-- Check to make sure the passwords buttons array exists
+	-- and that the user still has attempts left
 	if(passBtns ~= nil and numAttempts > 0) then
-		for i=1,7 do
+
+		-- For the number of passwords
+		for i=1,NUM_OF_PASSWORDS do
+
+			-- Check if the target was a particular button in
+			-- the array
 			if(target == passBtns[i]) then
 
+				-- Set a local variable to record how many letters of the
+				-- selected password are the same and in the same positions
+				-- as the password
 				local numCorrect = compareStrings(passBtns[i].word, password)
 				if(numCorrect < string.len(password)) then
 					numAttempts = numAttempts - 1
@@ -56,6 +89,7 @@ local function passListener(event)
 					terminalText[4].text = compareStrings(passBtns[i].word, password) .. " LETTER(S) IS/ARE CORRECT"
 					passBtns[i]:setLabel(numCorrect)
 					passBtns[i]:setEnabled(false)
+
 				elseif(numCorrect >= string.len(password)) then
 					terminalText[2].text = ""
 					terminalText[3].text = "CORRECT PASSWORD"
@@ -125,28 +159,47 @@ end
 -- Function to generate a fake password based on a real password
 -- and the number of letters that need to be the same
 local function generateFakePassword(realPass, numSame)
-	--Create a temporary real password to work with
-	local tempPass = realPass
+	
+	-- Array to mark selected letter positions from the real password
+	local selectPos = {}
 
+	-- Array of characters for building a fake password
+	local fakePassArray = {}
+
+	for i=1,string.len(realPass) do
+
+		-- Populate an array to mark which letters have been picked already
+		-- based on position in the word
+		table.insert(selectPos, false)
+
+		-- Populate an array to build an array of fake characters to
+		-- construct into the fake password later
+		table.insert(fakePassArray, "")
+	end
+
+	-- Variable to hold the fake password
 	local fakePass = ""
 
 	-- For the number of letters that need to be the same
 	for i=1,numSame do
 
-		--Select a letter from the temp password
-		local n = math.random(1,string.len(tempPass))
-		local c = tempPass:sub(n,n)
+		--Select a letter position randomly
+		local n = math.random(1,string.len(realPass))
 
-		--Add the letter onto a fake password
-		fakePass = fakePass .. c
+		-- Keep randomly selecting letters until the selected position
+		-- hasn't been chosen before
+		while(selectPos[n] == true) do
+			n = math.random(1,string.len(realPass))
+		end
 
-		--Split the temp password up so that the selected
-		--leter is gone
-		local str1 = string.sub(tempPass, 1, n-1)
-		local str2 = string.sub(tempPass, n+1)
+		-- Extract the character that was randomly selected
+		local c = realPass:sub(n,n)
 
-		--Construct the new temp password from the split parts
-		tempPass = str1 .. str2
+		-- Mark the selected position as having been picked
+		selectPos[n] = true
+
+		-- Add it to the fake pass array at the given index
+		fakePassArray[n] = c
 	end
 
 	-- After building the fake password with parts of the real
@@ -156,44 +209,58 @@ local function generateFakePassword(realPass, numSame)
 	-- Add a letter, then check if it already exists in the real
 	-- password. If it does, repeat until it doesn't
 
-	--while()
+	for i=1,(string.len(realPass) - numSame) do
 
-	local r
+		local r
 
-	local isSame = true
+		local isSame = true
 
-	while(isSame) do
+		while(isSame) do
 
-		-- Select a letter randomly in the alphabet (using lowercase ASCII)
-		r = math.random(97, 97+25)
+			-- Select a letter randomly in the alphabet (using lowercase ASCII)
+			r = math.random(97, 97+25)
 
-		-- Set isSame bool to false until letter checking is done
-		isSame = false
+			-- Set isSame bool to false until letter checking is done
+			isSame = false
 
-		-- Cycle through the real password and check the randomly chosen
-		-- letter against each letter in the real password
-		-- If the letter doesn't exist in the real password, append it
-		-- to the fake password. If it does, throw it out and retry
+			-- Cycle through the real password and check the randomly chosen
+			-- letter against each letter in the real password
+			-- If the letter doesn't exist in the real password, append it
+			-- to the fake password. If it does, throw it out and retry
 
-		for i=1, string.len(realPass) do
+			for i=1, string.len(realPass) do
 
-			-- Check the selected letter against each letter of the real
-			-- password (using lowercase ASCII)
+				-- Check the selected letter against each letter of the real
+				-- password (using lowercase ASCII)
 
-			local c = tonumber(realPass:sub(i,i))
-			if(r == c) then
-				isSame = true
+				local c = string.byte(realPass:sub(i,i))
+				
+				if(r == c) then
+					isSame = true
+					break
+				end
+
 			end
 
 		end
 
+		r = string.char(r)
+
+		-- Insert the bogus letter in the first free position
+		for i=1,string.len(realPass) do
+			if(fakePassArray[i] == "") then
+				fakePassArray[i] = r
+				break
+			end
+		end
 	end
 
-	r = string.char(r)
+	-- Create the fake password from the fake pass array
+	for i=1,string.len(realPass) do
+		fakePass = fakePass .. fakePassArray[i]
+	end
 
-	fakePass = fakePass .. r
-
-
+	return fakePass
 
 	--print("Real password is " .. realPass)
 	--print("Fake password is " .. fakePass)
@@ -212,7 +279,7 @@ function act:init()
 
 	-- Create buttons for inputting passwords
 	passBtns = {}
-	for i=1,7 do
+	for i=1,NUM_OF_PASSWORDS do
 		passBtns[i] = widget.newButton(
 		{
 			x = 230,
@@ -228,21 +295,24 @@ function act:init()
 		act.group:insert(passBtns[i])
 	end
 
-	-- Table listing all possible passwords
-	possPasswords = {"plane", "crane", "plant", "blunt", "plump", "drain", "flint"}
+	-- Initialize the array of possible passwords
+	possPasswords = {}
+	
+	-- Initialize the real password with n characters
+	password = generateRealPassword(PASS_LEN)
 
-	-- Initialize the real password randomly
-	password = possPasswords[math.random(#possPasswords)]
+	-- Randomly insert the real password into the pool of possible passwords
+	possPasswords[math.random(1, NUM_OF_PASSWORDS)] = password
 
-	--generateRealPassword(7)
-
-	generateFakePassword("abcdefgh", 3)
-
-	-- Temporarily print the real password for testing
-	--print("Password is " .. password)
+	-- Fill the remaining password slots with fake passwords
+	for i=1,NUM_OF_PASSWORDS do
+		if(possPasswords[i] == nil) then
+			possPasswords[i] = generateFakePassword(password, math.random(1,PASS_LEN / 2))
+		end
+	end
 
 	-- Set the possible password for each button randomly
-	for i=1,7 do
+	for i=1,NUM_OF_PASSWORDS do
 		passBtns[i].word = table.remove(possPasswords, math.random(#possPasswords)) 
 	end
 
@@ -258,21 +328,21 @@ function act:init()
 	end
 
 	-- Initialize the number of attempts left
-	numAttempts = 4
+	numAttempts = MAX_NUM_ATTEMPTS
 
 	-- Set text for each line
 	local terminalTexts = {
-	"SIERRA TERMLINK PROTOCOL",
-	"ENTER PASSWORD NOW",
-	numAttempts .. " ATTEMPTS LEFT",
-	"SELECT A PASSWORD:"
+		"SIERRA TERMLINK PROTOCOL",
+		"ENTER PASSWORD NOW",
+		numAttempts .. " ATTEMPTS LEFT",
+		"SELECT A PASSWORD:"
 	}
 
 	for i=1,4 do
 		terminalText[i].text = terminalTexts[i]
 	end
 
-	for i=1,7 do
+	for i=1,NUM_OF_PASSWORDS do
 		terminalText[i+4].text = string.upper(passBtns[i].word)
 	end
 end
