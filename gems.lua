@@ -47,7 +47,9 @@ local gems = {
         plants =    { x = -87,  y = -141, t = "act", act = "greenhouse" },
  
 		-- In Engineering room 
-		panel1 =	{ x = 26, y = 247, t = "act", act = "circuit", param = 1 },
+        panel1 =    { x = 26, y = 247, t = "act", act = "circuit", param = 1 },
+        bugs   =    { x = -26, y = 247, t = "act", act = "scottAct", param = 1 },
+
 
         -- In Captain Jordan's Quarters
         jordan1 =   { x = -69, y = -44, t = "doc", file = "Jordan - personal log" },

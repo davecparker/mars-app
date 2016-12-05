@@ -521,6 +521,11 @@ function game.landShip()
 	gems.enableShipGem( "rover" )
 	gems.enableShipGem( "recharge" )
 	gems.enableShipGem( "plants" )
+	gems.enableShipGem( "bugs")
+	
+	game.sendMessage( "mars2", 11000 )
+							
+
 end
 
 -- Select the proper background image
