@@ -105,6 +105,9 @@ local msgText = {
 				"1. Explore surface and drill for water. \n" ..
 				"2. Manage greenhouse food production. \n" ..
 				"3. Investigate artifacts.",
+	
+	mars2 = 	"SAS - Hostile bugs attacking food supply. \n" .. 
+				"Report to Engineering to access Cargo Bay",
 
 	foodOut =	"SAS - CRITICAL ALERT: Food supplies exhausted. Replenish immediately. \n" ..
 				"Rover use disabled.",
