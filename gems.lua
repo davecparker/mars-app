@@ -62,6 +62,7 @@ local gems = {
         ellis =     { x = -130, y = 35, t = "doc", file = "Ellis - personal log" },
         shaw1 =     { x = -68, y = 18, t = "doc", file = "Shaw - personal log" },
         shaw2 =     { x = -68, y = 35, t = "doc", file = "Shaw - personal log 2" },
+        hack =      { x = -28,  y = 27, t = "act", act = "hack" },
         webb =      { x = 65, y = 35, t = "doc", file = "Webb - personal log" },
         maxwell =   { x = 67, y = -44, t = "doc", file = "Maxwell - personal log" },
 	},

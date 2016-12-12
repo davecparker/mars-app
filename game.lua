@@ -25,6 +25,7 @@ local game = {
     doorUnlocked = nil,   -- set to true when a locked door is successfully unlocked
     panelFixed = nil,     -- set to true when a circuit panel is successfully fixed
     shipLanded = nil,     -- set to true when landing game succeeds
+    terminalHacked = nil, -- set to true when the terminal has been hacked
 
     -- Game state tracking
     paused = false,         -- true when the game is paused
