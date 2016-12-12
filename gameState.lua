@@ -67,10 +67,19 @@ local shipStateData = {
         					return true
         				end
         			end },
+    { moves = 3, action =  -- Unlock terminal minigame
+					function ()
+	        			game.sendMessage( "hack" )
+	        			gems.enableShipGem( "hack" )
+	        			game.terminalHacked = false
+        				return true
+        			end },
 	{ moves = 3, action =  -- Reveal Engineering door code
 					function ()
-	        			game.sendMessage( "codes" )
-        				return true
+						if game.terminalHacked then
+	        				game.sendMessage( "codes" )
+	        				return true
+	        			end
         			end },
     { delay = 5, action =  -- Notify to fix panel #1 (Engineering)
 					function ()

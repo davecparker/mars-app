@@ -30,6 +30,10 @@ local msgText = {
 -- Triggers for docs and SAS message notifications including time delays:
 	fileS1 = "SAS - Partial file retrieval. Document on Shaw's terminal.",
 
+-- Trigger for hacking terminal minigame
+	hack =  "SAS - Access to Engineering room restricted. \n" ..
+			"Use the terminal in Shaw's room to obtain access.",
+
 -- Insert trigger
 	fileJ1 = "SAS - Partial file retrieval. Document on Jordan's terminal.",
 
@@ -37,7 +41,6 @@ local msgText = {
 			"Protocol trigger: command change \n" ..
 			"Authorized personnel: ranking officer \n" ..
 			"Medium security access code: 1010",
-
 	
 	panel1 = "SAS - Power generator failure. Panel 22A reconfiguration required. Report to Engineering.",
 
@@ -105,6 +108,9 @@ local msgText = {
 				"1. Explore surface and drill for water. \n" ..
 				"2. Manage greenhouse food production. \n" ..
 				"3. Investigate artifacts.",
+	
+	mars2 = 	"SAS - Hostile bugs attacking food supply. \n" .. 
+				"Report to Engineering to access Cargo Bay",
 
 	foodOut =	"SAS - CRITICAL ALERT: Food supplies exhausted. Replenish immediately. \n" ..
 				"Rover use disabled.",
