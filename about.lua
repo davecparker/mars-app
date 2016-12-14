@@ -26,10 +26,12 @@ the Computer Science department at
 Sierra College in Rocklin, California
 
 Programming:
+Scott Alesci
 Ryan Bains-Jordan
 Joe Cracchiolo
 Mike Friebel
 Cord Lamphere
+Elias Mote
 Dave Parker
 Matt Taurone
 
@@ -77,11 +79,23 @@ function act:init()
 	}
 	title.anchorY = 0
 
-		-- Credits text
+	-- Version number
+	local version = display.newText{
+		parent = creditsGroup,
+		x = 0,
+		y = 45,
+		font = native.systemFontBold,
+		fontSize = 16,
+		align = "center",
+		text = "Version 0.2",
+	}
+	version.anchorY = 0
+
+	-- Credits text
 	creditsText = display.newText{
 		parent = creditsGroup,
 		x = 0,
-		y = 60,
+		y = 80,
 		width = act.width * 0.8,
 		height = 0,   -- auto size
 		fontSize = 14,
