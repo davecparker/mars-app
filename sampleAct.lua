@@ -56,7 +56,7 @@ function act:init()
 	makeBlueCircle( act.xMax, act.yMax )
 
 	-- Touch location text display objects
-	local yText = act.yMin + 15   -- relative to actual top of screen
+	local yText = act.yMin + 100   -- relative to actual top of screen
 	xyText = act:newText( "", act.xMin + act.width / 3, yText )
 	xyCenterText = act:newText( "", act.xMin + act.width * 2/3, yText )
 
