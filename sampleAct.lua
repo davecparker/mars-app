@@ -20,7 +20,7 @@ local xyCenterText	-- text display object for touch location relative to center
 local ufos = {}		-- array of UFO objects
 
 
--- Make a blue circle centered at the given location
+-- Make a blue circle centered at the given position
 local function makeBlueCircle( x, y )
 	local c = display.newCircle( act.group, x, y, 20 )
 	c:setFillColor( 0, 0, 1 )  -- blue
