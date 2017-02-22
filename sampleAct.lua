@@ -20,10 +20,10 @@ local xyCenterText	-- text display object for touch location relative to center
 local ufo       	-- flying UFO object
 
 
--- Make a small green circle centered at the given location
-local function makeGreenCircle( x, y )
+-- Make a small blue circle centered at the given location
+local function makeBlueCircle( x, y )
 	local c = display.newCircle( act.group, x, y, 20 )
-	c:setFillColor( 0, 1, 0 )  -- green
+	c:setFillColor( 0, 0, 1 )  -- blue
 	return c
 end
 
@@ -50,10 +50,10 @@ function act:init()
 	display.newLine( act.group, act.xCenter, act.yCenter - dxy, act.xCenter, act.yCenter + dxy )
 	
 	-- Small green circles at the corners
-	makeGreenCircle( act.xMin, act.yMin )
-	makeGreenCircle( act.xMin, act.yMax )
-	makeGreenCircle( act.xMax, act.yMin )
-	makeGreenCircle( act.xMax, act.yMax )
+	makeBlueCircle( act.xMin, act.yMin )
+	makeBlueCircle( act.xMin, act.yMax )
+	makeBlueCircle( act.xMax, act.yMin )
+	makeBlueCircle( act.xMax, act.yMax )
 
 	-- Touch location text display objects
 	local yText = act.yMin + 15   -- relative to actual top of screen
