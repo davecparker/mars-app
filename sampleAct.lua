@@ -17,13 +17,13 @@ local act = game.newAct()
 -- File local variables
 local xyText		-- text display object for touch location 
 local xyCenterText	-- text display object for touch location relative to center
-local ufo       	-- flying UFO object
+local ufos = {}		-- array of UFO objects
 
 
--- Make a small green circle centered at the given location
-local function makeGreenCircle( x, y )
+-- Make a blue circle centered at the given position
+local function makeBlueCircle( x, y )
 	local c = display.newCircle( act.group, x, y, 20 )
-	c:setFillColor( 0, 1, 0 )  -- green
+	c:setFillColor( 0, 0, 1 )  -- blue
 	return c
 end
 
@@ -50,29 +50,37 @@ function act:init()
 	display.newLine( act.group, act.xCenter, act.yCenter - dxy, act.xCenter, act.yCenter + dxy )
 	
 	-- Small green circles at the corners
-	makeGreenCircle( act.xMin, act.yMin )
-	makeGreenCircle( act.xMin, act.yMax )
-	makeGreenCircle( act.xMax, act.yMin )
-	makeGreenCircle( act.xMax, act.yMax )
-	
+	makeBlueCircle( act.xMin, act.yMin )
+	makeBlueCircle( act.xMin, act.yMax )
+	makeBlueCircle( act.xMax, act.yMin )
+	makeBlueCircle( act.xMax, act.yMax )
 
 	-- Touch location text display objects
-	local yText = act.yMin + 15   -- relative to actual top of screen
+	local yText = act.yMin + 100   -- relative to actual top of screen
 	xyText = act:newText( "", act.xMin + act.width / 3, yText )
 	xyCenterText = act:newText( "", act.xMin + act.width * 2/3, yText )
 
 	-- Flying UFO
 	local xStart = act.xMin - 100       -- start off screen to the left
 	local yStart = act.yCenter - 142    -- height from center is consistent relative to background image
-	ufo = act:newImage( "ufo.png", { x = xStart, y = yStart, height = 25 } )
+	for i=1, 2 do
+		ufo = act:newImage( "ufo.png", { x = xStart, y = yStart + math.random(-12,12), height = 25 } )
+		if i>1 then 					-- if this isn't the first ufo, take the last ufo's x and subtract 48 from it
+			ufo.x = ufos[i-1].x-48
+		end
+		ufos[i] = ufo
+	end
 end
 
 -- Handle enterFrame events
 function act:enterFrame( event )
-	-- Move UFO to the right and wrap around exactly at screen edges
-	ufo.x = ufo.x + 7
-	if ufo.x > act.xMax + ufo.width / 2 then
-		ufo.x = act.xMin - ufo.width / 2
+	for i=1, #ufos do
+		-- Move UFO to the right and wrap around exactly at screen edges
+		ufos[i].x = ufos[i].x + 7
+		if ufos[i].x > act.xMax + ufos[i].width / 2 then
+			ufos[i].x = act.xMin - ufos[i].width / 2
+			ufos[i].y = ufos[i].y
+		end
 	end
 end
 
