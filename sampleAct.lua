@@ -54,6 +54,7 @@ function act:init()
 	makeGreenCircle( act.xMin, act.yMax )
 	makeGreenCircle( act.xMax, act.yMin )
 	makeGreenCircle( act.xMax, act.yMax )
+	
 
 	-- Touch location text display objects
 	local yText = act.yMin + 15   -- relative to actual top of screen
@@ -69,7 +70,7 @@ end
 -- Handle enterFrame events
 function act:enterFrame( event )
 	-- Move UFO to the right and wrap around exactly at screen edges
-	ufo.x = ufo.x + 3
+	ufo.x = ufo.x + 7
 	if ufo.x > act.xMax + ufo.width / 2 then
 		ufo.x = act.xMin - ufo.width / 2
 	end
