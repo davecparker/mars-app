@@ -76,7 +76,7 @@ end
 function act:enterFrame( event )
 	for i=1, #ufos do
 		-- Move UFO to the right and wrap around exactly at screen edges
-		ufos[i].x = ufos[i].x + 3
+		ufos[i].x = ufos[i].x + 7
 		if ufos[i].x > act.xMax + ufos[i].width / 2 then
 			ufos[i].x = act.xMin - ufos[i].width / 2
 			ufos[i].y = ufos[i].y
