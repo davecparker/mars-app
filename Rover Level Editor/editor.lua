@@ -26,11 +26,8 @@ local level = display.newGroup()
 local toolbar = display.newGroup()
 local currentTool
 
-local toolList = {}
-
-local function noop( event )
-	-- body
-end
+local toolList = {} -- contains each tool's icon and action
+local objList = {}
 
 -- add necessary information to use the new tool
 local function newTool( file, func )
@@ -44,14 +41,18 @@ end
 
 -- draws a circle whereever the mouse clicks
 local function drawCircle(event)
-	local c = display.newCircle( level, event.x - level.x, event.y, 20 )
-	c:setFillColor( 0 )
+	if event.y < 320 then
+		local c = display.newCircle( level, event.x - level.x, event.y, 20 )
+		c:setFillColor( 0 )
+	end
 end
 
 local function drawIcon(event)
-	local c = display.newImageRect( level, "Icon.png", 60, 60 )
-	c.x, c.y = event.x - level.x, event.y
-	c:setFillColor( 0 )
+	if event.y < 320 then
+		local c = display.newImageRect( level, "Icon.png", 60, 60 )
+		c.x, c.y = event.x - level.x, event.y
+		c:setFillColor( 0 )
+	end
 end
 
 -- populates toolbar with all the tools
@@ -61,7 +62,7 @@ local function drawToolbar( )
 		local o = display.newImageRect(toolbar, toolList[i].icon, 60, 60 )
 		o.x, o.y = 35+x, 30
 		x = x + 60
-		o:addEventListener( "tap", function() changeTool(toolList[i]);end )--
+		o:addEventListener( "tap", function() changeTool(toolList[i]);end )
 	end
 end
 
@@ -71,7 +72,7 @@ function levelTouch( event )
 		level.x = event.phase == "moved" and level.xStart + event.x - event.xStart or level.x
 end
 
---
+-- uses action of the current tool
 local function useTool( event )
 	if currentTool == nil then
 		return -1;
@@ -99,7 +100,6 @@ function scene:create( event )
 	-- add tools
 	toolbar.circleTool = newTool("circle.png", drawCircle)
 	toolbar.iconTool = newTool("Icon.png", drawIcon)
-	--changeTool(toolbar.circleTool)
 
 	-- adds tools to a tool bar
 	drawToolbar()
@@ -109,6 +109,7 @@ function scene:create( event )
 	Runtime:addEventListener("touch", levelTouch)
 end
 
+-- needed to make composer work but not really needed
 function scene:show( event )
 end
 function scene:hide( event )
@@ -123,8 +124,6 @@ scene:addEventListener( "create", scene )
 scene:addEventListener( "show", scene )
 scene:addEventListener( "hide", scene )
 scene:addEventListener( "destroy", scene )
-Runtime:addEventListener( "touch", levelTouch )
-toolbar:addEventListener( "touch", noop )
 
 -----------------------------------------------------------------------------------------
 
