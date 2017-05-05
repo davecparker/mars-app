@@ -43,8 +43,8 @@ end
 local function drawCircle(event)
 	if event.y < 320 then
 		local c = display.newCircle( level, event.x - level.x, event.y, 20 )
+		c.shape = "circle"
 		c:setFillColor( 0 )
-
 	end
 end
 
@@ -52,16 +52,31 @@ local function drawIcon(event)
 	if event.y < 320 then
 		local c = display.newImageRect( level, "Icon.png", 60, 60 )
 		c.x, c.y = event.x - level.x, event.y
+		c.shape = "square"
 		c:setFillColor( 0 )
 	end
 end
 
 local function outputLevel( event )
+	-- empty the previous obj list otherwise the list will have duplicate items
+	objList = {}
+
 	-- store the object locations relative to the level in objList
 	for i = 1, level.numChildren do
 		local child = level[i]
-		objList[#objList+1] = {x = child.x, y = child.y}
+		objList[#objList+1] = {x = child.x, y = child.y, shape = child.shape}
 	end
+	print( json.prettify( objList ) )
+	
+	local path = system.pathForFile( "outfile.txt", system.DocumentsDirectory )
+	local file = io.open( path, "w" )
+
+	if file then
+		file:write( json.prettify( objList ) )
+	end
+
+	io.close( file )
+	print( "file saved in: " .. path )
 end
 
 -- populates toolbar with all the tools
