@@ -27,7 +27,7 @@ local toolbar = display.newGroup()
 local currentTool
 
 local toolList = {} -- contains each tool's icon and action
-local objList = {}
+local objList = {} -- contains each objects location in relation to the level
 
 -- add necessary information to use the new tool
 local function newTool( file, func )
@@ -44,6 +44,7 @@ local function drawCircle(event)
 	if event.y < 320 then
 		local c = display.newCircle( level, event.x - level.x, event.y, 20 )
 		c:setFillColor( 0 )
+
 	end
 end
 
@@ -52,6 +53,14 @@ local function drawIcon(event)
 		local c = display.newImageRect( level, "Icon.png", 60, 60 )
 		c.x, c.y = event.x - level.x, event.y
 		c:setFillColor( 0 )
+	end
+end
+
+local function outputLevel( event )
+	-- store the object locations relative to the level in objList
+	for i = 1, level.numChildren do
+		local child = level[i]
+		objList[#objList+1] = {x = child.x, y = child.y}
 	end
 end
 
@@ -68,8 +77,8 @@ end
 
 -- moves the level display whenever the user clicks and drags.
 function levelTouch( event )
-		level.xStart = event.phase == "began" and level.x or level.xStart
-		level.x = event.phase == "moved" and level.xStart + event.x - event.xStart or level.x
+	level.xStart = event.phase == "began" and level.x or level.xStart
+	level.x = event.phase == "moved" and level.xStart + event.x - event.xStart or level.x
 end
 
 -- uses action of the current tool
@@ -100,6 +109,7 @@ function scene:create( event )
 	-- add tools
 	toolbar.circleTool = newTool("circle.png", drawCircle)
 	toolbar.iconTool = newTool("Icon.png", drawIcon)
+	toolbar.saveTool = newTool("save.png", outputLevel)
 
 	-- adds tools to a tool bar
 	drawToolbar()
