@@ -43,21 +43,55 @@ end
 
 -- draws a circle whereever the mouse clicks
 local function drawCircle(event)
-	if event.y < 320 then
-		local c = display.newCircle( level, event.x - level.x, event.y, 20 )
-		c.shape = "circle"
-		c:setFillColor( 0 )
+	if event.phase == "ended" then
+		if event.y < 320 then
+			local c = display.newCircle( level, event.x - level.x, event.y, 20 )
+			c.shape = "circle"
+			c:setFillColor( 0 )
+		end
 	end
 end
 
 -- draws the app icon but the fill color is set to 0 so it looks like a black square
 local function drawIcon(event)
-	if event.y < 320 then
-		local c = display.newImageRect( level, "Icon.png", 60, 60 )
-		c.x, c.y = event.x - level.x, event.y
-		c.shape = "square"
-		c:setFillColor( 0 )
+	if event.phase == "ended" then
+		if event.y < 320 then
+			local c = display.newImageRect( level, "Icon.png", 60, 60 )
+			c.x, c.y = event.x - level.x, event.y
+			c.shape = "square"
+			c:setFillColor( 0 )
+		end
 	end
+end
+
+-- draws triangle with positive slope
+local function drawUpRamp( event )
+	if event.phase == "ended" then
+		if event.y < 320 then
+			local vertices = {25, 25, -60, 25, 25, -25}
+			local t = display.newPolygon( level, event.x - level.x, event.y, vertices )
+			t.shape = "upRamp"
+			t:setFillColor( 0 )
+		end
+	end
+end
+
+-- draws triangle with negative slope
+local function drawDownRamp( event )
+	if event.phase == "ended" then
+		if event.y < 320 then
+			local vertices = {-25, -25, 60, 25, -25, 25}
+			local t = display.newPolygon( level, event.x - level.x, event.y, vertices )
+			t.shape = "downRamp"
+			t:setFillColor( 0 )
+		end
+	end
+end
+
+-- moves the level display whenever the user clicks and drags.
+function levelMove( event )
+	level.xStart = event.phase == "began" and level.x or level.xStart
+	level.x = event.phase == "moved" and level.xStart + event.x - event.xStart or level.x
 end
 
 -- writes the level to outfile.txt
@@ -121,11 +155,6 @@ local function drawToolbar( )
 	end
 end
 
--- moves the level display whenever the user clicks and drags.
-function levelTouch( event )
-	level.xStart = event.phase == "began" and level.x or level.xStart
-	level.x = event.phase == "moved" and level.xStart + event.x - event.xStart or level.x
-end
 
 -- uses action of the current tool
 local function useTool( event )
@@ -169,6 +198,9 @@ function scene:create( event )
 	-- add tools in the format of toolbar.toolName = newTool("icon for the tool", function that will be called when the screen is touched)
 	toolbar.circleTool = newTool("circle.png", drawCircle)
 	toolbar.iconTool = newTool("Icon.png", drawIcon)
+	toolbar.upRampTool = newTool("upRamp.png", drawUpRamp)
+	toolbar.downRampTool = newTool("downRamp.png", drawDownRamp)
+	toolbar.moveTool = newTool("move.png", levelMove)
 	toolbar.saveTool = newTool("save.png", outputLevel)
 	-- toolbar.loadTool = newTool("load.png", inputLevel) dont use cuz it's broken
 
@@ -176,8 +208,8 @@ function scene:create( event )
 	drawToolbar()
 
 	-- Listener setup
-	Runtime:addEventListener( "tap", useTool )
-	Runtime:addEventListener("touch", levelTouch)
+	Runtime:addEventListener( "touch", useTool )
+	--Runtime:addEventListener("touch", levelTouch)
 end
 
 -- needed to make composer work but not really needed
