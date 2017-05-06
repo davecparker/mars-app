@@ -20,7 +20,7 @@ local xyCenterText	-- text display object for touch location relative to center
 local ufos = {}		-- array of UFO objects
 
 
--- Make a small blue circle centered at the given location
+-- Make a blue circle centered at the given position
 local function makeBlueCircle( x, y )
 	local c = display.newCircle( act.group, x, y, 20 )
 	c:setFillColor( 0, 0, 1 )  -- blue
@@ -56,7 +56,7 @@ function act:init()
 	makeBlueCircle( act.xMax, act.yMax )
 
 	-- Touch location text display objects
-	local yText = act.yMin + 15   -- relative to actual top of screen
+	local yText = act.yMin + 100   -- relative to actual top of screen
 	xyText = act:newText( "", act.xMin + act.width / 3, yText )
 	xyCenterText = act:newText( "", act.xMin + act.width * 2/3, yText )
 
@@ -76,7 +76,7 @@ end
 function act:enterFrame( event )
 	for i=1, #ufos do
 		-- Move UFO to the right and wrap around exactly at screen edges
-		ufos[i].x = ufos[i].x + 3
+		ufos[i].x = ufos[i].x + 7
 		if ufos[i].x > act.xMax + ufos[i].width / 2 then
 			ufos[i].x = act.xMin - ufos[i].width / 2
 			ufos[i].y = ufos[i].y
