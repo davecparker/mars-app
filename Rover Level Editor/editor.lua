@@ -39,6 +39,8 @@ local function changeTool( tool )
 	currentTool = tool
 end
 
+------------------------ TOOL LISTENERS --------------------------------
+
 -- draws a circle whereever the mouse clicks
 local function drawCircle(event)
 	if event.y < 320 then
@@ -48,6 +50,7 @@ local function drawCircle(event)
 	end
 end
 
+-- draws the app icon but the fill color is set to 0 so it looks like a black square
 local function drawIcon(event)
 	if event.y < 320 then
 		local c = display.newImageRect( level, "Icon.png", 60, 60 )
@@ -57,6 +60,7 @@ local function drawIcon(event)
 	end
 end
 
+-- writes the level to outfile.txt
 local function outputLevel( event )
 	-- empty the previous obj list otherwise the list will have duplicate items
 	objList = {}
@@ -73,10 +77,37 @@ local function outputLevel( event )
 
 	if file then
 		file:write( json.prettify( objList ) )
+		io.close( file )
 	end
 
-	io.close( file )
 	print( "file saved in: " .. path )
+end
+
+-- loads the file from infile.txt
+local function inputLevel( event )
+	-- empty the previous obj list otherwise the list will have duplicate items
+	objList = {}
+
+	local path = system.pathForFile( "infile.txt", system.DocumentsDirectory )
+	local file = io.open( path, "r" )
+
+	if file then
+		local str = file:read( "*a" )	-- Read entile file as a string (JSON encoded)
+		if str then
+			objList = json.decode( str )
+			for i = 1, objList.numChildren do
+				local child = objList[i] 
+				if child.shape == "circle" then
+					drawCircle(child) 
+				elseif child.shape == "square" then
+					drawIcon(child)
+				end
+			end
+		end
+		io.close( file )
+	end
+
+	print( "file loaded from: " .. path )
 end
 
 -- populates toolbar with all the tools
@@ -121,10 +152,25 @@ function scene:create( event )
 	toolbar.y = yMax - 60
 	toolbar.bg = display.newRect( toolbar, WIDTH / 2, 30, WIDTH, 60 )
 
-	-- add tools
+
+	--  █████╗ ██████╗ ██████╗     ███╗   ██╗███████╗██╗    ██╗                       
+	-- ██╔══██╗██╔══██╗██╔══██╗    ████╗  ██║██╔════╝██║    ██║                       
+	-- ███████║██║  ██║██║  ██║    ██╔██╗ ██║█████╗  ██║ █╗ ██║                       
+	-- ██╔══██║██║  ██║██║  ██║    ██║╚██╗██║██╔══╝  ██║███╗██║                       
+	-- ██║  ██║██████╔╝██████╔╝    ██║ ╚████║███████╗╚███╔███╔╝                       
+	-- ╚═╝  ╚═╝╚═════╝ ╚═════╝     ╚═╝  ╚═══╝╚══════╝ ╚══╝╚══╝                        
+	                                                                               
+	-- ████████╗ ██████╗  ██████╗ ██╗     ███████╗    ██╗  ██╗███████╗██████╗ ███████╗
+	-- ╚══██╔══╝██╔═══██╗██╔═══██╗██║     ██╔════╝    ██║  ██║██╔════╝██╔══██╗██╔════╝
+	--    ██║   ██║   ██║██║   ██║██║     ███████╗    ███████║█████╗  ██████╔╝█████╗  
+	--    ██║   ██║   ██║██║   ██║██║     ╚════██║    ██╔══██║██╔══╝  ██╔══██╗██╔══╝  
+	--    ██║   ╚██████╔╝╚██████╔╝███████╗███████║    ██║  ██║███████╗██║  ██║███████╗
+	--    ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝╚══════╝    ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝
+	-- add tools in the format of toolbar.toolName = newTool("icon for the tool", function that will be called when the screen is touched)
 	toolbar.circleTool = newTool("circle.png", drawCircle)
 	toolbar.iconTool = newTool("Icon.png", drawIcon)
 	toolbar.saveTool = newTool("save.png", outputLevel)
+	-- toolbar.loadTool = newTool("load.png", inputLevel) dont use cuz it's broken
 
 	-- adds tools to a tool bar
 	drawToolbar()
