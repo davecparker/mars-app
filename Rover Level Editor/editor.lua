@@ -48,6 +48,8 @@ local function drawCircle(event)
 			local c = display.newCircle( level, event.x - level.x, event.y, 20 )
 			c.shape = "circle"
 			c:setFillColor( 0 )
+
+			c:addEventListener( "touch", onObjTouch )
 		end
 	end
 end
@@ -56,10 +58,12 @@ end
 local function drawIcon(event)
 	if event.phase == "ended" then
 		if event.y < 320 then
-			local c = display.newImageRect( level, "Icon.png", 60, 60 )
+			local c = display.newImageRect( level, "Icon.png", 50, 50 )
 			c.x, c.y = event.x - level.x, event.y
 			c.shape = "square"
 			c:setFillColor( 0 )
+
+			c:addEventListener( "touch", onObjTouch )
 		end
 	end
 end
@@ -72,6 +76,8 @@ local function drawUpRamp( event )
 			local t = display.newPolygon( level, event.x - level.x, event.y, vertices )
 			t.shape = "upRamp"
 			t:setFillColor( 0 )
+
+			t:addEventListener( "touch", onObjTouch )
 		end
 	end
 end
@@ -84,6 +90,8 @@ local function drawDownRamp( event )
 			local t = display.newPolygon( level, event.x - level.x, event.y, vertices )
 			t.shape = "downRamp"
 			t:setFillColor( 0 )
+
+			t:addEventListener( "touch", onObjTouch )
 		end
 	end
 end
@@ -96,25 +104,28 @@ end
 
 -- writes the level to outfile.txt
 local function outputLevel( event )
-	-- empty the previous obj list otherwise the list will have duplicate items
-	objList = {}
+		if event.phase == "began" then
+		-- empty the previous obj list otherwise the list will have duplicate items
+		objList = {}
 
-	-- store the object locations relative to the level in objList
-	for i = 1, level.numChildren do
-		local child = level[i]
-		objList[#objList+1] = {x = child.x, y = child.y, shape = child.shape}
+		-- store the object locations relative to the level in objList
+		for i = 1, level.numChildren do
+			local child = level[i]
+			objList[#objList+1] = {x = child.x, y = child.y, shape = child.shape}
+		end
+		print( json.prettify( objList ) )
+		
+		local path = system.pathForFile( "outfile.txt", system.DocumentsDirectory )
+		local file = io.open( path, "w" )
+
+		if file then
+			file:write( json.prettify( objList ) )
+			io.close( file )
+			native.showAlert( "Save Successful!", "Level saved in: " .. path )
+		end
+
+		print( "file saved in: " .. path )
 	end
-	print( json.prettify( objList ) )
-	
-	local path = system.pathForFile( "outfile.txt", system.DocumentsDirectory )
-	local file = io.open( path, "w" )
-
-	if file then
-		file:write( json.prettify( objList ) )
-		io.close( file )
-	end
-
-	print( "file saved in: " .. path )
 end
 
 -- loads the file from infile.txt
@@ -144,6 +155,21 @@ local function inputLevel( event )
 	print( "file loaded from: " .. path )
 end
 
+-- Dragging an object allows it to be moved
+function onObjTouch(event)
+	local obj = event.target
+	if event.phase == "began" then
+		display.getCurrentStage():setFocus(obj)  -- set touch focus to object
+	elseif event.phase == "moved" then
+		-- Adjust object position while dragged
+		obj.x = event.x - level.x
+		obj.y = event.y
+	else  -- ended or cancelled
+		display.getCurrentStage():setFocus(nil)  -- release touch focus
+	end
+	return true
+end
+
 -- populates toolbar with all the tools
 local function drawToolbar( )
 	local x = 0
@@ -154,7 +180,6 @@ local function drawToolbar( )
 		o:addEventListener( "tap", function() changeTool(toolList[i]);end )
 	end
 end
-
 
 -- uses action of the current tool
 local function useTool( event )
