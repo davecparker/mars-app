@@ -104,7 +104,7 @@ end
 
 -- writes the level to outfile.txt
 local function outputLevel( event )
-		if event.phase == "began" then
+	if event.isCtrlDown and event.keyName == "s" then
 		-- empty the previous obj list otherwise the list will have duplicate items
 		objList = {}
 
@@ -126,6 +126,7 @@ local function outputLevel( event )
 
 		print( "file saved in: " .. path )
 	end
+	return false
 end
 
 -- loads the file from infile.txt
@@ -234,7 +235,7 @@ function scene:create( event )
 
 	-- Listener setup
 	Runtime:addEventListener( "touch", useTool )
-	--Runtime:addEventListener("touch", levelTouch)
+	Runtime:addEventListener( "key", outputLevel )
 end
 
 -- needed to make composer work but not really needed
