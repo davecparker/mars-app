@@ -27,7 +27,17 @@ function act:init()
 	for i = 1, #objs do
 		local  obj = objs[i]
 		if obj.shape == "square" then
-			local o = display.newRect( act.group, act.width - obj.y, obj.x, 50, 50 )
+			display.newRect( act.group, act.width - obj.y, obj.x, 50, 50 )
+		elseif obj.shape == "upRamp" then
+			local vertices = {25, 25, -60, 25, 25, -25}
+			local t = display.newPolygon( act.group, act.width - obj.y, obj.x, vertices )
+			t.rotation = 90
+		elseif obj.shape == "downRamp" then
+			local vertices = {-25, -25, 60, 25, -25, 25}
+			local t = display.newPolygon( act.group, act.width - obj.y, obj.x, vertices )
+			t.rotation = 90
+		elseif obj.shape == "circle" then
+			display.newCircle( act.group, act.width - obj.y, obj.x, 20 )
 		else
 			print( "idk how to draw: " .. obj.shape )
 		end
