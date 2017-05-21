@@ -29,6 +29,7 @@ local debugActs = {
 	"greenhouse",
 	"drillScan",
 	"drill",
+	"anotherRover",
 	"rover",
 	"rover2",
 	"shipLanding",
