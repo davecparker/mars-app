@@ -19,7 +19,8 @@ local json = require( "json" )
 function act:init()
 	-- Remember to put all display objects in act.group
 	-- loads data from media/anotherRover/level1.txt
-	-- ALL SHAPES MUST HAVE THE X and Y Coordinates filped, and the x inverted while drawing because of the orientation change
+	-- ALL SHAPES MUST HAVE THE X and Y Coordinates filped, and x needs to be subracted from act.lua 
+	-- 		while drawing because of the orientation change
 	local level = system.pathForFile( "media/anotherRover/level1.txt", system.ResourceDirectory )
 	local objs = json.decodeFile( level )
 
