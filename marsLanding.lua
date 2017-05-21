@@ -28,6 +28,19 @@ local thrustingRight = false
 local thrustingLeft = false
 -- Init the act
 local heightText
+
+local images = 
+{
+	"/media/marsLanding/Image1_1.png",
+	"/media/marsLanding/Image1_2.png",
+	"/media/marsLanding/Image1_3.png",
+	"/media/marsLanding/Image2_1.png",
+	"/media/marsLanding/Image2_2.png",
+	"/media/marsLanding/Image2_3.png",
+	"/media/marsLanding/Image3_1.png",
+	"/media/marsLanding/Image3_2.png",
+	"/media/marsLanding/Image3_3.png",
+}
 -------------------------- Local Functions ---------------------------------
 local function back()
 	game.gotoAct( "mainAct", { effect = "zoomOutIn", time = 500 } )
@@ -154,20 +167,24 @@ function act:init()
 	group1.y = act.yCenter
 	act.group:insert(group1)
 
-
+	k = 1
 	for i = -1, 1 do
 		for j = -1, 1 do
-			display.newCircle(group1, 500*j, 1000*i, 30)
+			local l = display.newImageRect( group1, images[k], 750, 1000 )
+			l.x = 750*j
+			l.y = 1000*i
+			--display.newCircle(group1, 750*j, 1000*i, 30)
+			k = k + 1
 		end
 	end
 
-	local back = {}
-	back[1] = display.newRect(act.group, act.xCenter, act.yMin + 50, act.width, 100)
-	back[2] = display.newRect(act.group, act.xMin + 20, act.yCenter, 40, act.height)
-	back[3] = display.newRect(act.group, act.xCenter, act.yMax - 50, act.width, 100)
-	back[4] = display.newRect(act.group, act.xMax - 20, act.yCenter, 40, act.height)
-	for i = 1, #back do
-		back[i]:setFillColor(.5)
+	local background = {}
+	background[1] = display.newRect(act.group, act.xCenter, act.yMin + 50, act.width, 100)
+	background[2] = display.newRect(act.group, act.xMin + 20, act.yCenter, 40, act.height)
+	background[3] = display.newRect(act.group, act.xCenter, act.yMax - 50, act.width, 100)
+	background[4] = display.newRect(act.group, act.xMax - 20, act.yCenter, 40, act.height)
+	for i = 1, #background do
+		background[i]:setFillColor(.5)
 	end
 	local heightTextOptions = 
 	{
