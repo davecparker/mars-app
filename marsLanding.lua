@@ -66,10 +66,13 @@ end
 local function autoPilot()
 	if height < 10000 and velocity[3] < -50 then
 		autopilot1 = true
+		print("autopilot1 " .. autopilot1)
 	elseif height < 20000 and velocity[3] < -100 then
 		autopilot2 = true
+		print("autopilot2 " .. autopilot2)
 	elseif height < 50000 and velocity[3] < -190 then
 		autopilot3 = true
+		print("autopilot3 " .. autopilot3)
 	end
 end
 
@@ -205,9 +208,19 @@ function act:init()
 	group1.y = act.yCenter
 	act.group:insert(group1)
 
+	local k = 1
+	for i = -1, 1 do
+		for j = -1, 1 do
+			local l = display.newImage(group1, images[k], 750, 1000)
+			l.x = 750*j
+			l.y = 1000*i
+			k = k + 1
+		end
+	end
+
 	group2 = display.newGroup( )
 	act.group:insert(group)
-	
+
 	local background = {}
 	background[1] = display.newRect(act.group, act.xCenter, act.yMin + 50, act.width, 100)
 	background[2] = display.newRect(act.group, act.xMin + 20, act.yCenter, 40, act.height)
