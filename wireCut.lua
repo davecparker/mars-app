@@ -25,12 +25,19 @@ local ledTop, ledMid, ledBottom       -- LEDs
 local toolbox
 local backButton
 local toolWindow
-local toolIcon                        -- the tool selected icon
+local toolIcon 							-- the tool selected icon
 local tapeSelected = false
 local wireCutterSelected = false
 local manual  
-local manualPage                      -- what page of the manual you are on
+local manualPage						-- what page of the manual you are on
 local gameOver = false
+local timeLeft							-- amount of seconds left
+local gameTimer 						-- if this timer runs out you lose
+local gameTimerDisplay					-- text that displays how much time is left
+local outOfTime = false 				-- bollean that says whether you've run out of time
+local countDownReset
+local resetBtn
+local actGroup
 -- audio
 local cutSFX
 local tapeSFX
@@ -56,6 +63,8 @@ local function toolBoxClose ()
 	toolWindow.manualButton = nil
 	toolWindow:removeSelf()
 	toolWindow = nil
+
+	timer.resume(gameTimer)
 end
 
 -- sets the icon over the toolbox
@@ -178,6 +187,9 @@ local function toolboxTouch (event)
 			toolWindow.manualButton.y = act.yCenter + 60
 			toolWindow.manualButton.isVisible = false
 			toolWindow.manualButton.isHitTestable = true
+
+			-- pause the timer
+			timer.pause(gameTimer)
 		end
 	end
 	return true
@@ -213,6 +225,7 @@ local function endAct()
 	transition.to( panel, { time = 1000, transition = easing.outSine, x = act.xCenter - 3, delay = 500, onStart = panelSound } )
 	transition.scaleBy( act.group, { xScale = -0.5, yScale = -0.5, time = 2000 } )
 	transition.to( act.group, { time = 2002, x = game.xCenter / 2, y = game.yCenter / 2 - 20, onComplete = endFade } )
+	timer.cancel(gameTimer)
 end
 
 -- checks the state of the game and what wires have been cut
@@ -316,7 +329,6 @@ local function wireButtonCreator ( obj, xPos, yPos, xSize, ySize )
 	w:addEventListener( "touch", wireTouch )
 	w.wire = obj
 	return w
-
 end
 
 -- function for common wire creatation code
@@ -349,6 +361,11 @@ local function bgTouch (event)
 	end
 end
 
+-- function that ticks the seconds left
+local function timeTick()
+	timeLeft = timeLeft - 1
+end
+
 -- Handle touches on the background by updating the text displays=============================================================
 --local function touched( event )
 --	-- Get touch location but pin to the act bounds
@@ -375,8 +392,9 @@ function act:init()
 	-- wire1 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire1Options = { width = 110, height = 404, numFrames = 2 }
 	local wire1Sequence = { start = 1, count = 2 }
-	local wire1ImageSheet = graphics.newImageSheet( "media/wireCut/wire1.2sheet.png", wire1Options )
+	local wire1ImageSheet = graphics.newImageSheet( "media/wireCut/WHITEwire01.png", wire1Options )
 	wire1 = display.newSprite( act.group, wire1ImageSheet, wire1Sequence )
+		wire1:setFillColor(0.2,0.9,0.2)
 	wireSet ( wire1, -65, -150 )
 
 	-- wire cutting buttons 
@@ -385,8 +403,9 @@ function act:init()
 	-- wire2 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire2Options = { width = 630, height = 253, numFrames = 2 }
 	local wire2Sequence = { start = 1, count = 2 }
-	local wire2ImageSheet = graphics.newImageSheet( "media/wireCut/wire2sheet.png", wire2Options )
+	local wire2ImageSheet = graphics.newImageSheet( "media/wireCut/WHITEwire02.png", wire2Options )
 	wire2 = display.newSprite( act.group, wire2ImageSheet, wire2Sequence )
+		wire2:setFillColor(0.2,0.9,0.2)
 	wireSet ( wire2, -57, -130 )
 
 	-- wire cutting buttons 
@@ -396,8 +415,9 @@ function act:init()
 	-- wire3 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire3Options = { width = 290, height = 155, numFrames = 2 }
 	local wire3Sequence = { name = wire3, start = 1, count = 2 }
-	local wire3ImageSheet = graphics.newImageSheet( "media/wireCut/wire3.2sheet.png", wire3Options )
+	local wire3ImageSheet = graphics.newImageSheet( "media/wireCut/WHITEwire03.png", wire3Options )
 	wire3 = display.newSprite( act.group, wire3ImageSheet, wire3Sequence )
+		wire3:setFillColor(0.2,0.9,0.2)
 	wireSet ( wire3, -120, -73 )
 
 	-- wire cutting buttons 
@@ -406,8 +426,9 @@ function act:init()
 	-- wire4 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire4Options = { width = 535, height = 508, numFrames = 2 }
 	local wire4Sequence = { name = wire4, start = 1, count = 2 }
-	local wire4ImageSheet = graphics.newImageSheet( "media/wireCut/wire4sheet.png", wire4Options )
+	local wire4ImageSheet = graphics.newImageSheet( "media/wireCut/WHITEwire04.png", wire4Options )
 	wire4 = display.newSprite( act.group, wire4ImageSheet, wire4Sequence )
+		wire4:setFillColor(0.2,0.9,0.2)
 	wireSet ( wire4, -70, 14 )
 	
 	-- wire cutting buttons 
@@ -419,8 +440,9 @@ function act:init()
 	-- wire5 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire5Options = { width = 236, height = 538, numFrames = 2 }
 	local wire5Sequence = { name = wire5, start = 1, count = 2 }
-	local wire5ImageSheet = graphics.newImageSheet( "media/wireCut/wire5sheet.png", wire5Options )
+	local wire5ImageSheet = graphics.newImageSheet( "media/wireCut/WHITEwire05.png", wire5Options )
 	wire5 = display.newSprite( act.group, wire5ImageSheet, wire5Sequence )
+		wire5:setFillColor(0.9,0.2,0.2)
 	wireSet ( wire5, -91, 34 )
 
 	--wire cutting buttons 
@@ -435,8 +457,9 @@ function act:init()
 	-- wire6 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire6Options = { width = 570, height = 261, numFrames = 2 }
 	local wire6Sequence = { name = wire6, start = 1, count = 2 }
-	local wire6ImageSheet = graphics.newImageSheet( "media/wireCut/wire6.2sheet.png", wire6Options )
+	local wire6ImageSheet = graphics.newImageSheet( "media/wireCut/WHITEwire06.png", wire6Options )
 	wire6 = display.newSprite( act.group, wire6ImageSheet, wire6Sequence )
+		wire6:setFillColor(0.2,0.9,0.2)
 	wireSet ( wire6, -69, 68 )
 
 	-- wire cutting buttons 
@@ -446,8 +469,9 @@ function act:init()
 	-- wire7 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire7Options = { width = 159, height = 247, numFrames = 2 }
 	local wire7Sequence = { name = wire7, start = 1, count = 2 }
-	local wire7ImageSheet = graphics.newImageSheet( "media/wireCut/wire7sheet.png", wire7Options )
+	local wire7ImageSheet = graphics.newImageSheet( "media/wireCut/WHITEwire07.png", wire7Options )
 	wire7 = display.newSprite( act.group, wire7ImageSheet, wire7Sequence )
+		wire7:setFillColor(0.9,0.2,0.2)
 	wireSet ( wire7, 24, -20 )
 
 	-- wire cutting buttons 
@@ -457,8 +481,9 @@ function act:init()
 	-- wire8 image sheet---------------------------------------------------------------------------------------------------------------
 	local wire8Options = { width = 275, height = 194, numFrames = 2 }
 	local wire8Sequence = { name = wire8, start = 1, count = 2 }
-	local wire8ImageSheet = graphics.newImageSheet( "media/wireCut/wire8sheet.png", wire8Options )
+	local wire8ImageSheet = graphics.newImageSheet( "media/wireCut/WHITEwire08.png", wire8Options )
 	wire8 = display.newSprite( act.group, wire8ImageSheet, wire8Sequence )
+		wire8:setFillColor(0.9,0.2,0.2)
 	wireSet ( wire8, -20, 151 )
 
 	-- wire cutting buttons 
@@ -548,6 +573,14 @@ function act:init()
 	toolboxSFX = act:loadSound ("ToolboxOpen.wav")
 	panelSFX = act:loadSound ("Panel.wav")
 
+	-- start the timer
+	timeLeft = 72 -- set the amount of seconds
+	gameTimer = timer.performWithDelay(1000, timeTick,0)
+	gameTimerDisplay = display.newText(act.group, " ", act.xMin+12, act.yMax-22, native.systemFont, 18)
+	gameTimerDisplay.anchorX = 0
+	gameTimerDisplay:setFillColor(0.2,0.2,0.2)
+	countDownReset = 10
+
 	print(game.actParam)
 
 	-- Touch location text display objects==============================================================================================
@@ -555,6 +588,113 @@ function act:init()
 	--xyText = display.newText( act.group, "", act.width / 3, yText, native.systemFont, 14 )
 	--xyCenterText = display.newText( act.group, "", act.width * 2 / 3, yText, native.systemFont, 14 )
 
+end
+
+-- If you define act:start() it will be called when the activity starts/resumes.
+function act:start()
+	if gameTimer then
+		timer.resume(gameTimer)
+	else
+		timeLeft = 72
+		gameTimer = timer.performWithDelay(1000, timeTick, 0)
+	end
+end
+
+-- If you define act:stop() it will be called when the activity suspends/ends.
+function act:stop()
+	if gameTimer then
+		timer.pause(gameTimer)
+	end
+end
+
+-- function that handles what happens when you lose
+local function onReset()
+	--reset all the wires 
+	wireCutterSelected = false
+	tapeSelected = false
+
+	local w = wire1
+	w:setFrame( 1 )
+	w.isCut = false
+	w = wire2
+	w:setFrame( 1 )
+	w.isCut = false
+	w = wire3
+	w:setFrame( 1 )
+	w.isCut = false
+	w = wire4
+	w:setFrame( 1 )
+	w.isCut = false
+	w = wire5
+	w:setFrame( 1 )
+	w.isCut = false
+	w = wire6
+	w:setFrame( 1 )
+	w.isCut = false
+	w = wire7
+	w:setFrame( 1 )
+	w.isCut = false
+	w = wire8
+	w:setFrame( 1 )
+	w.isCut = false
+
+	--reset timer
+	timeLeft = 72
+	timer.resume(gameTimer)
+	checkState()
+	if not countDownReset then
+		countDownReset = 10
+	end
+end
+
+-- If you define act:enterFrame() it will be called before every animation frame.
+
+local youLostText
+function act:enterFrame()
+	-- update the timer display
+	gameTimerDisplay.text = ""..timeLeft
+	if (timeLeft < 11) then
+		gameTimerDisplay:setFillColor(0.7,0,0)
+	elseif (timeLeft < 31) then
+		gameTimerDisplay:setFillColor(0.7,0.7,0)
+	else
+		gameTimerDisplay:setFillColor(0.4,0.4,0.4)
+	end
+
+	if outOfTime == true then
+		youLostText.text = "   Out of Time! \n Restarting in "..countDownReset
+	end
+
+	if timeLeft <= 0 and outOfTime == false then
+		outOfTime = true
+		countDownReset = 10
+		timeLeft = timeLeft + 1
+		timer.pause(gameTimer)
+		-- show lose screen
+		local bg = display.newRect(act.group, act.xCenter, act.yCenter, act.width, act.height)
+		bg:setFillColor(.6)
+		bg.alpha = 0.6
+		transition.to(bg, {time = 9900, alpha = 1})
+		youLostText = display.newText(act.group, "   Out of Time! \nRestarting in "..countDownReset, act.xCenter, act.yCenter, native.systemFont, 15)
+		local blah = timer.performWithDelay( 1000, 
+				function() 
+					countDownReset = countDownReset-1
+				end, 10)
+		local function onTimeUp()
+			bg:removeSelf()
+			youLostText:removeSelf()
+			onReset()
+			outOfTime = false
+			resetBtn.isVisible = false
+			timer.cancel( blah )
+		end
+		-- make the reset btn
+		resetBtn = widget.newButton({x = act.xCenter, y = act.yCenter + 36, onPress = onTimeUp,
+			label = "RESET", textOnly = true})
+			act.group:insert(resetBtn)
+			resetBtn.isVisible = false
+		timer.performWithDelay(11001, function() resetBtn.isVisible = true; end)
+	end
 end
 
 ------------------------- End of Activity --------------------------------------------------------
