@@ -1,0 +1,25 @@
+[{
+    "y":295,
+    "x":146,
+    "shape":"upRamp"
+  },{
+    "y":295,
+    "x":371,
+    "shape":"downRamp"
+  },{
+    "y":295,
+    "x":213,
+    "shape":"square"
+  },{
+    "y":295,
+    "x":256,
+    "shape":"square"
+  },{
+    "y":295,
+    "x":306,
+    "shape":"square"
+  },{
+    "y":278,
+    "x":711,
+    "shape":"circle"
+  }]
