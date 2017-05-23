@@ -19,21 +19,64 @@ local height = 100000
 --velocity is given in x(left/Right), y(Forward/Reverse), z(Up/Down). All together,
 --These forces can be used to calculate total magnitude
 local velocity = {0, 0, 0}
+local group
 local group1
+local group2
 local escapeVelocity = 1200
 local thrusting = false
 local thrustingUp = false
 local thrustingDown = false
 local thrustingRight = false
 local thrustingLeft = false
+local autopilot1 = false
+local autopilot2 = false
+local autopilot3 = false
 -- Init the act
 local heightText
+
+local images = 
+{
+	"/media/marsLanding/Image1_1.png",
+	"/media/marsLanding/Image1_2.png",
+	"/media/marsLanding/Image1_3.png",
+	"/media/marsLanding/Image2_1.png",
+	"/media/marsLanding/Image2_2.png",
+	"/media/marsLanding/Image2_3.png",
+	"/media/marsLanding/Image3_1.png",
+	"/media/marsLanding/Image3_2.png",
+	"/media/marsLanding/Image3_3.png",
+}
 -------------------------- Local Functions ---------------------------------
-local function back()
+local function onBack()
 	game.gotoAct( "mainAct", { effect = "zoomOutIn", time = 500 } )
 end
 
-local function thrust(event)
+local function flyTo( shipHeight ) 
+ 	if height < shipHeight and velocity[3] < 50 then
+ 		velocity[3] = velocity[3] + 3.711/5
+ 	elseif height < shipHeight then
+ 		velocity[3] = 50
+ 	else
+ 		autopilot1 = false
+ 		autopilot2 = false
+ 		autopilot3 = false
+ 	end
+end
+
+local function autoPilot()
+	if height < 10000 and velocity[3] < -50 then
+		autopilot1 = true
+		print("autopilot1 " .. autopilot1)
+	elseif height < 20000 and velocity[3] < -100 then
+		autopilot2 = true
+		print("autopilot2 " .. autopilot2)
+	elseif height < 50000 and velocity[3] < -190 then
+		autopilot3 = true
+		print("autopilot3 " .. autopilot3)
+	end
+end
+
+local function thrust( event )
 	if event.phase == "began" then
 		thrusting = true
 	elseif event.phase == "ended" then
@@ -133,10 +176,11 @@ end
 local function moveShip()
 	group1.x = group1.x + velocity[1]
 	group1.y = group1.y + velocity[2]
+	--print(group1.x, group1.y)
 	if height > 100 then
 		group1.xScale = 100 / (500 * (height/100000))
 		group1.yScale = 100 / (500 * (height/100000))
-		print(group1.xScale, group1.yScale)
+		--print(group1.xScale, group1.yScale)
 	end
 end
 ------------------------ EnterFrame Loop ---------------------------------------
@@ -144,30 +188,46 @@ function act:enterFrame()
 	gravity()
 	moving()
 	friction()
+	autoPilot()
+	if autopilot1 == true then
+		flyTo(15000)
+	elseif autopilot2 == true then
+		flyTo(25000)
+	elseif autopilot3 == true then
+		flyTo(75000)
+	end
 	moveShip()
 end
 --------------------------- Init Game ------------------------------------------
 function act:init()
 	-- Remember to put all display objects in act.group
+	group = display.newGroup( )
+	act.group:insert(group)
 	group1 = display.newGroup( )
 	group1.x = act.xCenter
 	group1.y = act.yCenter
 	act.group:insert(group1)
 
-
+	local k = 1
 	for i = -1, 1 do
 		for j = -1, 1 do
-			display.newCircle(group1, 500*j, 1000*i, 30)
+			local l = display.newImage(group1, images[k], 750, 1000)
+			l.x = 750*j
+			l.y = 1000*i
+			k = k + 1
 		end
 	end
 
-	local back = {}
-	back[1] = display.newRect(act.group, act.xCenter, act.yMin + 50, act.width, 100)
-	back[2] = display.newRect(act.group, act.xMin + 20, act.yCenter, 40, act.height)
-	back[3] = display.newRect(act.group, act.xCenter, act.yMax - 50, act.width, 100)
-	back[4] = display.newRect(act.group, act.xMax - 20, act.yCenter, 40, act.height)
-	for i = 1, #back do
-		back[i]:setFillColor(.5)
+	group2 = display.newGroup( )
+	act.group:insert(group)
+
+	local background = {}
+	background[1] = display.newRect(act.group, act.xCenter, act.yMin + 50, act.width, 100)
+	background[2] = display.newRect(act.group, act.xMin + 20, act.yCenter, 40, act.height)
+	background[3] = display.newRect(act.group, act.xCenter, act.yMax - 50, act.width, 100)
+	background[4] = display.newRect(act.group, act.xMax - 20, act.yCenter, 40, act.height)
+	for i = 1, #background do
+		background[i]:setFillColor(.5)
 	end
 	local heightTextOptions = 
 	{
@@ -190,7 +250,7 @@ function act:init()
 		fillColor = { default = { game.themeColor.r, game.themeColor.g, game.themeColor.b }, 
 			over = { game.themeHighlightColor.r, game.themeHighlightColor.g, game.themeHighlightColor.b } },
 	    labelColor = { default={ 1, 1, 1 } },
-	    onEvent = back
+	    onRelease = onBack
 	}
 	act.group:insert( backBtn )
 	--Creating the buttons
